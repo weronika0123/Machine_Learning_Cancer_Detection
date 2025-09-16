@@ -39,7 +39,16 @@ def pipeline(
         # TODO: imputacja/skaling/one-hot/ColumnTransformer/Pipeline
         pass
 
-    # 3) Wybór i inicjalizacja modelu
+    
+    # 3) Podział na train/test
+    # TODO: jeśli to klasyfikacja i masz y: stratify=y
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+
+    # 4) Trening
+    # TODO: model.fit(X_train, y_train)
+
+
+    # 5) Wybór i inicjalizacja modelu
     model_name_norm = model_name.strip().lower()
     model = None
     XAI_model = None  # "LIME" albo "SHAP"
@@ -77,13 +86,6 @@ def pipeline(
 
     else:
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
-
-    # 4) Podział na train/test
-    # TODO: jeśli to klasyfikacja i masz y: stratify=y
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
-
-    # 5) Trening
-    # TODO: model.fit(X_train, y_train)
 
     # 6) Ewaluacja
     # TODO: nalicz metryki z listy EVAL (np. accuracy, AUC ROC, Confusion matrix) i zapisz do results
