@@ -4,9 +4,18 @@ import sys
 from pathlib import Path
 import ast
 import pandas as pd
-from sklearn.model_selection import train_test_split  # TODO: użyj w kroku 4
+import numpy as np
+from sklearn.model_selection import train_test_split  
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression, RidgeClassifier, Ridge, Lasso  # Ridge/Lasso na przyszłość
+from sklearn.linear_model import LogisticRegression, RidgeClassifier, Ridge, Lasso 
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import (
+    confusion_matrix, ConfusionMatrixDisplay, classification_report,
+    accuracy_score, roc_auc_score, roc_curve, auc, 
+    precision_recall_curve, average_precision_score, fbeta_score,
+    make_scorer, recall_score
+)
+import matplotlib.pyplot as plt
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
@@ -19,20 +28,18 @@ def pipeline(
     XAI: bool,
 ):
 
-    # 1) Wczytanie danych
+    # Load data
     path = Path(dane)
     if not path.exists():
         raise FileNotFoundError(f"Nie znaleziono pliku: {path}")
+    df = pd.read_csv(path, low_memory=False)
 
-    # Uwaga na separator/encoding: jeśli masz ; albo cp1250, użyj: pd.read_csv(path, sep=';', encoding='cp1250')
-    df = pd.read_csv(path)
+    # target: cancer
+    X_df = df.iloc[:,1:-16]
+    y_df = df.cancer
 
-    # (opcjonalne) — drop ostatnich 16 kolumn
-    # TODO: df = df.iloc[:, :-16]
-
-    # 1a) TODO: wybór kolumn X i y (jeśli masz target)
-    # X = ...
-    # y = ...
+    X = X_df.to_numpy()
+    y = y_df.to_numpy()
 
     # 2) Opcjonalny preprocessing
     if preprocesing:
@@ -40,15 +47,17 @@ def pipeline(
         pass
 
     
-    # 3) Podział na train/test
-    # TODO: jeśli to klasyfikacja i masz y: stratify=y
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y)
+    # Base train/test split
+    X_train = X[df["isTraining"] == 1]
+    y_train = y[df["isTraining"] == 1]
+    X_test = X[df["isTest"] == 1]
+    y_test = y[df["isTest"] == 1]
 
-    # 4) Trening
-    # TODO: model.fit(X_train, y_train)
+    # FTO = for test only 
+    print(f"Size X_train: {X_train.shape}, y_train: {y_train.shape}")
+    print(f"Size X_test: {X_test.shape}, y_test: {y_test.shape}")
 
-
-    # 5) Wybór i inicjalizacja modelu
+    # Model selection
     model_name_norm = model_name.strip().lower()
     model = None
     XAI_model = None  # "LIME" albo "SHAP"
@@ -62,17 +71,19 @@ def pipeline(
             XAI_model_specific = "TreeExplainer"
 
     elif model_name_norm in ("logisticregression", "lr"):
-        # TODO: jeśli będziesz skalować: MinMax/StandardScaler tutaj lub w Pipeline
 
-        # Wyciągamy parametry z dict
+        # MinMax for scaling to [0,1]
+        min_max_scaler = MinMaxScaler() 
+        X_train = min_max_scaler.fit_transform(X_train)
+        X_test  = min_max_scaler.transform(X_test)
+
         max_iter = model_params.get("max_iter", 100)
         solver = model_params.get("solver", "lbfgs")
         penalty = model_params.get("penalty", "l2")
         C = model_params.get("C", 1.0)
-        class_weight = model_params.get("class_weight", "balanced")  # domyślnie balanced, ale można nadpisać
 
         model = LogisticRegression(
-            max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight=class_weight
+            max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
         )
 
         # Opcjonalne kroki — zostawione jako TODO, bo nie są zdefiniowane w argumencie
@@ -86,14 +97,56 @@ def pipeline(
 
     else:
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
+    
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
 
     # 6) Ewaluacja
-    # TODO: nalicz metryki z listy EVAL (np. accuracy, AUC ROC, Confusion matrix) i zapisz do results
-    results = {
-        # "accuracy": ...,
-        # "AUC ROC": ...,
-        # "Confusion matrix": ...,
-    }
+    results = {}
+
+    # Accuracy
+    if any(m.lower() in ["accuracy", "ac"] for m in EVAL):
+
+        results["accuracy"] = accuracy_score(y_test, y_pred)
+
+    # Confusion matrix
+    if any(m.lower() in ["confusion matrix", "confusion_matrix", "cm"] for m in EVAL):
+
+        cm = confusion_matrix(y_test, y_pred)
+
+        # Bc in results the formating is bad
+        TN, FP, FN, TP = cm.ravel()
+        print(" Confusion matrix: TN",TN,"FP",FP,"FN",FN,"TP",TP)
+
+        # plot
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+        disp.plot()
+        plt.tight_layout()
+        plt.show()
+
+        results["Confusion matrix"] = cm.tolist()
+
+    # AUC ROC
+    if any(m.lower() in ["auc roc", "auc_roc", "roc auc", "roc_auc"] for m in EVAL):
+
+        y_score = model.predict_proba(X_test)[:, 1]
+
+        fpr, tpr, _ = roc_curve(y_test, y_score)
+        roc_auc = auc(fpr, tpr)
+
+        plt.subplot(1,2,1)
+        plt.plot(fpr, tpr, label=f"ROC AUC = {roc_auc:.4f}")
+        plt.plot([0,1],[0,1],'--',lw=1)
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+        plt.title("ROC Curve")
+        plt.legend(loc="lower right")
+        plt.tight_layout()
+        plt.show()
+
+        results["AUC ROC"] = float(roc_auc_score(y_test, y_score))
+
+
 
     # 7) XAI
     if XAI:
