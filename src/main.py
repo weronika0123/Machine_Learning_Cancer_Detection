@@ -30,6 +30,7 @@ def pipeline(
 ):
 
 
+
 #region Data Prep
 
     # Flag innit
@@ -67,7 +68,7 @@ def pipeline(
 
     # 2) Opcjonalny preprocessing
     if correlation_removal:
-        # TODO: correlation removal
+            #TODO
         pass
 
     
@@ -80,6 +81,7 @@ def pipeline(
     # FTO = for test only 
     print(f"Size X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"Size X_test: {X_test.shape}, y_test: {y_test.shape}")
+
 #endregion
 
 #region Model selection + training
@@ -88,8 +90,41 @@ def pipeline(
     XAI_model_specific = None  # np. "TreeExplainer" / "KernelExplainer"
 
     if model_kind == "Decision Tree":
-        # Parametry dla drzewa (np. {"max_depth": 4, "random_state": 42})
-        model = DecisionTreeClassifier(**model_params)
+        dt_defaults = {
+            "criterion": "gini",
+            "max_depth": None,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "class_weight": "balanced",      
+            "random_state": RANDOM_STATE
+        }
+        dt_defaults.update(model_params or {})
+        model = DecisionTreeClassifier(**dt_defaults)
+
+        if feature_selection:
+            cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+            recall_scorer = make_scorer(recall_score, pos_label=1)
+
+            fs_estimator = DecisionTreeClassifier(**dt_defaults)
+            rfecv = RFECV(
+                estimator=fs_estimator,
+                step=1,                        # drzewa często lubią małe kroki
+                scoring=recall_scorer,
+                cv=cv,
+                min_features_to_select=20,
+                n_jobs=-1
+            )
+            rfecv.fit(X_train, y_train)
+            mask = rfecv.support_
+            k_selected = rfecv.n_features_
+            print(f"[RFECV DT] Wybrane k (opt pod RECALL): {k_selected}")
+
+            X_train = X_train[:, mask]
+            X_test  = X_test[:,  mask]
+
+            # przebuduj model na tych samych (finalnych) parametrach
+            model = DecisionTreeClassifier(**dt_defaults)
+
         if XAI:
             XAI_model = "SHAP"
             XAI_model_specific = "TreeExplainer"
@@ -316,6 +351,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-
-
-#j
