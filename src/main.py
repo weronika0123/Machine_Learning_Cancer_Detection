@@ -27,6 +27,7 @@ def pipeline(
     EVAL: list,
     XAI: bool,
 ):
+#region Data Prep
 
     # Load data
     path = Path(dane)
@@ -43,7 +44,7 @@ def pipeline(
 
     # 2) Opcjonalny preprocessing
     if preprocesing:
-        # TODO: imputacja/skaling/one-hot/ColumnTransformer/Pipeline
+        # TODO: imputacja/one-hot/ColumnTransformer/Pipeline
         pass
 
     
@@ -56,8 +57,9 @@ def pipeline(
     # FTO = for test only 
     print(f"Size X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"Size X_test: {X_test.shape}, y_test: {y_test.shape}")
+#endregion
 
-    # Model selection
+#region Model selection + training
     model_name_norm = model_name.strip().lower()
     model = None
     XAI_model = None  # "LIME" albo "SHAP"
@@ -100,8 +102,10 @@ def pipeline(
     
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
+#endregion
 
-    # 6) Ewaluacja
+#region Ewaluacja
+
     results = {}
 
     # Accuracy
@@ -146,7 +150,27 @@ def pipeline(
 
         results["AUC ROC"] = float(roc_auc_score(y_test, y_score))
 
+    # Precision-Recall AUC
+    if any(m.lower() in ["auc pr", "auc_pr", "pr auc", "pr_auc", "average precision", "ap"] for m in EVAL):
+            
+            y_score = model.predict_proba(X_test)[:, 1]
+    
+            precision, recall, _ = precision_recall_curve(y_test, y_score)
+            pr_auc = auc(recall, precision)
+            ap = average_precision_score(y_test, y_score)
+    
+            plt.subplot(1,2,2)
+            plt.plot(recall, precision, label=f"PR AUC = {pr_auc:.4f} (AP={ap:.4f})")
+            plt.xlabel("Recall")
+            plt.ylabel("Precision")
+            plt.title("Precision-Recall Curve")
+            plt.legend(loc="lower left")
+            plt.tight_layout()
+            plt.show()
+    
+            results["AUC PR"] = float(ap)
 
+#endregion
 
     # 7) XAI
     if XAI:
