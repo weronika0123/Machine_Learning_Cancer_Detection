@@ -5,7 +5,8 @@ from pathlib import Path
 import ast
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split  
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.feature_selection import RFECV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression, RidgeClassifier, Ridge, Lasso 
 from sklearn.preprocessing import MinMaxScaler
@@ -13,7 +14,7 @@ from sklearn.metrics import (
     confusion_matrix, ConfusionMatrixDisplay, classification_report,
     accuracy_score, roc_auc_score, roc_curve, auc, 
     precision_recall_curve, average_precision_score, fbeta_score,
-    make_scorer, recall_score
+    make_scorer, recall_score, precision_score, f1_score, balanced_accuracy_score
 )
 import matplotlib.pyplot as plt
 
@@ -21,13 +22,35 @@ RANDOM_STATE = 42  # dla powtarzalności wyników
 
 def pipeline(
     dane: str,
-    preprocesing: bool,
+    preprocesing: list,
     model_name: str,
     model_params: dict,
     EVAL: list,
     XAI: bool,
 ):
+
+
 #region Data Prep
+
+    # Flag innit
+    feature_selection = False
+    correlation_removal = False
+
+    # 1) Identify model kind (string)
+    model_name_norm = model_name.strip().lower()
+    if model_name_norm in ("logisticregression", "lr"):
+        model_kind = "Logistic Regression"
+    elif model_name_norm in ("decisiontree", "dt"):
+        model_kind = "Decision Tree"
+    else:
+        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
+
+    # 2) Identify preprocessing steps (list of strings)
+    steps = [str(s).strip().lower() for s in (preprocesing or [])]
+    if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
+        feature_selection = True
+    if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
+        correlation_removal = True
 
     # Load data
     path = Path(dane)
@@ -43,8 +66,8 @@ def pipeline(
     y = y_df.to_numpy()
 
     # 2) Opcjonalny preprocessing
-    if preprocesing:
-        # TODO: imputacja/one-hot/ColumnTransformer/Pipeline
+    if correlation_removal:
+        # TODO: correlation removal
         pass
 
     
@@ -60,19 +83,18 @@ def pipeline(
 #endregion
 
 #region Model selection + training
-    model_name_norm = model_name.strip().lower()
-    model = None
+    
     XAI_model = None  # "LIME" albo "SHAP"
     XAI_model_specific = None  # np. "TreeExplainer" / "KernelExplainer"
 
-    if model_name_norm in ("decisiontree", "dt"):
+    if model_kind == "Decision Tree":
         # Parametry dla drzewa (np. {"max_depth": 4, "random_state": 42})
         model = DecisionTreeClassifier(**model_params)
         if XAI:
             XAI_model = "SHAP"
             XAI_model_specific = "TreeExplainer"
 
-    elif model_name_norm in ("logisticregression", "lr"):
+    elif model_kind == "Logistic Regression":
 
         # MinMax for scaling to [0,1]
         min_max_scaler = MinMaxScaler() 
@@ -88,9 +110,36 @@ def pipeline(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
         )
 
-        # Opcjonalne kroki — zostawione jako TODO, bo nie są zdefiniowane w argumencie
-        # TODO: feature selection
-        # TODO: correlation removal
+        # feature selection
+        if(feature_selection):
+
+            cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+            recall_scorer = make_scorer(recall_score, pos_label=1)
+
+            rfecv = RFECV(
+                estimator=model,
+                step=50,                       
+                scoring=recall_scorer,         
+                cv=cv,
+                min_features_to_select=20,
+                n_jobs=-1
+            )
+
+            rfecv.fit(X_train, y_train)
+
+            mask = rfecv.support_
+            k_selected = rfecv.n_features_
+            print(f"[RFECV balanced] Wybrane k (opt pod RECALL): {k_selected}")
+
+            # przycięcie danych do wybranych cech
+            X_train = X_train[:, mask]
+            X_test  = X_test[:,  mask]
+
+            #model
+            model = LogisticRegression(
+                max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
+            )
+        
         # TODO: threshold tuning
 
         if XAI:
@@ -102,6 +151,7 @@ def pipeline(
     
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
+
 #endregion
 
 #region Ewaluacja
@@ -112,6 +162,26 @@ def pipeline(
     if any(m.lower() in ["accuracy", "ac"] for m in EVAL):
 
         results["accuracy"] = accuracy_score(y_test, y_pred)
+    
+    # Precision
+    if any(m.lower() in ["precision", "prec", "p"] for m in EVAL):
+    # Out of all predicted "cancer = 1" cases, how many are truly cancer.
+    # High precision = few false positives (healthy people predicted as sick).
+
+        results["precision"] = precision_score(y_test, y_pred, zero_division=0)
+
+    # Recall (Sensitivity)
+    if any(m.lower() in ["recall", "sensitivity", "r"] for m in EVAL):
+    # Out of all true "cancer = 1" cases, how many did the model catch.
+    # High recall = few false negatives (sick people missed by the model).
+
+        results["recall"] = recall_score(y_test, y_pred, zero_division=0)
+
+    # F1-score
+    if any(m.lower() in ["f1", "f1-score", "f1score"] for m in EVAL):
+    # Harmonic mean of precision and recall, balances both metrics.
+    # In our context: good when we want both few false positives and few false negatives.
+        results["f1"] = f1_score(y_test, y_pred, zero_division=0)
 
     # Confusion matrix
     if any(m.lower() in ["confusion matrix", "confusion_matrix", "cm"] for m in EVAL):
@@ -196,7 +266,11 @@ def pipeline(
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="Bazowy szkielet pipeline ML (TODO w środku).")
     p.add_argument("--data", required=True, help="Ścieżka do pliku CSV.")
-    p.add_argument("--preprocess", action="store_true", help="Włącz preprocessing.")
+    p.add_argument(
+        "--preprocess",
+        default="[]",
+        help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr']\""
+    )
     p.add_argument(
         "--model",
         required=True,
@@ -216,6 +290,9 @@ def main(argv=None):
     try:
         params = ast.literal_eval(args.params)
         eval_list = ast.literal_eval(args.eval)
+        preprocess_list = ast.literal_eval(args.preprocess)
+        if not isinstance(preprocess_list, list):
+            raise ValueError("--preprocess musi być listą Pythona (np. ['feature selection','corr'])")
         if not isinstance(params, dict):
             raise ValueError("--params musi być słownikiem Pythona (np. {'max_iter': 1000})")
         if not isinstance(eval_list, list):
@@ -227,7 +304,7 @@ def main(argv=None):
 
     out = pipeline(
         dane=args.data,
-        preprocesing=args.preprocess,
+        preprocesing=preprocess_list,
         model_name=args.model,
         model_params=params,
         EVAL=eval_list,

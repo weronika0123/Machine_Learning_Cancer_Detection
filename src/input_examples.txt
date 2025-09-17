@@ -3,6 +3,7 @@ cd C:\Users\weron\Downloads\Machine_Learning_Cancer_Detection-main\Machine_Learn
 
 python .\main.py `
   --data "liquid_biopsy_data.csv" `
+  --preprocess "['feature_selection','corr']" `
   --model LR `
   --params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0, 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC', 'auc pr','accuracy', 'Confusion Matrix']"
+  --eval "['AUC ROC', 'auc pr','accuracy', 'Confusion Matrix', 'F1', 'auc_roc', 'r', 'p']"
