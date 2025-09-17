@@ -5,4 +5,4 @@ python .\main.py `
   --data "liquid_biopsy_data.csv" `
   --model LR `
   --params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0, 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC','accuracy', 'Confusion Matrix']"
+  --eval "['AUC ROC', 'auc pr','accuracy', 'Confusion Matrix']"
