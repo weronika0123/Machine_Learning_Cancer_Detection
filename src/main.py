@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
+
 def pipeline(
     dane: str,
     preprocesing: list,
@@ -28,6 +29,9 @@ def pipeline(
     EVAL: list,
     XAI: bool,
 ):
+    
+
+
 
 
 
@@ -66,11 +70,10 @@ def pipeline(
     X = X_df.to_numpy()
     y = y_df.to_numpy()
 
-    # 2) Opcjonalny preprocessing
+    # Corr removal
     if correlation_removal:
             #TODO
         pass
-
     
     # Base train/test split
     X_train = X[df["isTraining"] == 1]
@@ -79,8 +82,8 @@ def pipeline(
     y_test = y[df["isTest"] == 1]
 
     # FTO = for test only 
-    print(f"Size X_train: {X_train.shape}, y_train: {y_train.shape}")
-    print(f"Size X_test: {X_test.shape}, y_test: {y_test.shape}")
+    print(f"Data sliced: Size X_train: {X_train.shape}, y_train: {y_train.shape}")
+    print(f"Data sliced: Size X_test: {X_test.shape}, y_test: {y_test.shape}")
 
 #endregion
 
@@ -102,13 +105,14 @@ def pipeline(
         model = DecisionTreeClassifier(**dt_defaults)
 
         if feature_selection:
+            print("[RFECV DT] Uruchamiam RFECV...")
             cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
             recall_scorer = make_scorer(recall_score, pos_label=1)
 
             fs_estimator = DecisionTreeClassifier(**dt_defaults)
             rfecv = RFECV(
                 estimator=fs_estimator,
-                step=1,                        # drzewa często lubią małe kroki
+                step=30,                        # drzewa często lubią małe kroki
                 scoring=recall_scorer,
                 cv=cv,
                 min_features_to_select=20,
@@ -124,6 +128,24 @@ def pipeline(
 
             # przebuduj model na tych samych (finalnych) parametrach
             model = DecisionTreeClassifier(**dt_defaults)
+            # plot recall vs K
+            scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
+            k_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
+            order = np.argsort(k_list)[::-1]
+            k_plot = k_list[order]
+            scores_plot = scores[order]
+            plt.figure(figsize=(7,4))
+            plt.plot(k_plot, scores_plot, marker="o", linewidth=1)
+            plt.axvline(rfecv.n_features_, ls="--", color="red",
+            label=f"Optymalne k (CV) = {rfecv.n_features_}")
+            plt.xlabel("Liczba cech (k)")
+            plt.ylabel("Średni recall (CV na TRAIN)")
+            plt.title("RFECV: recall (CV) vs liczba cech")
+            plt.gca().invert_xaxis()
+            plt.grid(True, ls=":")
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
 
         if XAI:
             XAI_model = "SHAP"
@@ -147,7 +169,7 @@ def pipeline(
 
         # feature selection
         if(feature_selection):
-
+            print("[RFECV LR] Uruchamiam RFECV...")
             cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
             recall_scorer = make_scorer(recall_score, pos_label=1)
 
@@ -174,6 +196,24 @@ def pipeline(
             model = LogisticRegression(
                 max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
             )
+            # plot recall vs K
+            scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
+            k_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
+            order = np.argsort(k_list)[::-1]
+            k_plot = k_list[order]
+            scores_plot = scores[order]
+            plt.figure(figsize=(7,4))
+            plt.plot(k_plot, scores_plot, marker="o", linewidth=1)
+            plt.axvline(rfecv.n_features_, ls="--", color="red",
+            label=f"Optymalne k (CV) = {rfecv.n_features_}")
+            plt.xlabel("Liczba cech (k)")
+            plt.ylabel("Średni recall (CV na TRAIN)")
+            plt.title("RFECV: recall (CV) vs liczba cech")
+            plt.gca().invert_xaxis()
+            plt.grid(True, ls=":")
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
         
         # TODO: threshold tuning
 
@@ -277,7 +317,8 @@ def pipeline(
 
 #endregion
 
-    # 7) XAI
+#region XAI
+    
     if XAI:
         if XAI_model == "LIME":
             # TODO: LIME (train/test)
@@ -296,6 +337,7 @@ def pipeline(
         # "xai_method": XAI_model,
         # "xai_specific": XAI_model_specific,
     }
+#endregion
 
 
 def parse_args(argv=None):
@@ -351,3 +393,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+
