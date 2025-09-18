@@ -1,3 +1,8 @@
 1. zapisac feature selection jako funkcje 
     parametry (jak estimator) zalżne od wybranego modelu ->  damy jako argumenty
     np step - dla dt lepszy jest m niejszy ae im mniejszy step tym dluzsze myslenie. musimy zrobc ograniczenie ze step nie moze byc nizszy niz costam
+
+2. wykminić jak MinMax scaler ma sie do feature selection? przed czy po czy jak?
+
+2. ogl musimy nałożyc blokady np zeby max_itter nie bylo za małe albo za dluzsze
+    zeby to zrobic musimy znalezc literature ktr mniej wiecej potwierdzi czm nakladamy blokady aurat na np 5000
