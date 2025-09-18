@@ -1,0 +1,3 @@
+1. zapisac feature selection jako funkcje 
+    parametry (jak estimator) zalżne od wybranego modelu ->  damy jako argumenty
+    np step - dla dt lepszy jest m niejszy ae im mniejszy step tym dluzsze myslenie. musimy zrobc ograniczenie ze step nie moze byc nizszy niz costam

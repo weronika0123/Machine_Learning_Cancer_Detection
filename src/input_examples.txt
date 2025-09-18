@@ -6,7 +6,7 @@ python .\main.py `
   --preprocess "['feature_selection','corr']" `
   --model LR `
   --params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0, 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC', 'auc pr','accuracy', 'Confusion Matrix', 'F1', 'auc_roc', 'r', 'p']"
+  --eval "['AUC ROC', 'auc pr','accuracy', 'Confusion Matrix', 'F1', 'r', 'p']"
 
 
 PS C:\Users\user\Documents\GitHub\Machine_Learning_Cancer_Detection\src>
