@@ -17,12 +17,76 @@ from sklearn.metrics import (
     make_scorer, recall_score, precision_score, f1_score, balanced_accuracy_score
 )
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
+#region Correlation Removal
+
+def correlation_removal(X_train, X_test, threshold=0.90):
+
+    print(f"[CORR] Starting correlation-based feature removal with threshold={threshold}...")
+
+    n_features = X_train.shape[1]
+
+    #  Drop constant features (zero variance)
+    variances = X_train.var(axis=0)
+    nonconst_mask = variances > 0.0
+    dropped_const = int((~nonconst_mask).sum())
+
+    X_train_nc = X_train[:, nonconst_mask]
+    X_test_nc  = X_test[:, nonconst_mask]
+
+    #  Correlation matrix (train only)
+    corr = np.corrcoef(X_train_nc, rowvar=False)
+    m = corr.shape[0]
+    keep = np.ones(m, dtype=bool)
+
+    # Scan upper triangle
+    for i in range(m):
+        if not keep[i]:
+            continue
+        high_corr = np.where(np.abs(corr[i, (i+1):]) > threshold)[0]
+        if high_corr.size > 0:
+            drop_idx = (i+1) + high_corr
+            keep[drop_idx] = False
+
+    # Final mask relative to original feature set
+    final_mask = np.zeros(n_features, dtype=bool)
+    final_mask[nonconst_mask] = keep
+
+    X_train_red = X_train[:, final_mask]
+    X_test_red  = X_test[:,  final_mask]
+
+    info = {
+        "initial_features": n_features,
+        "dropped_constant": dropped_const,
+        "dropped_corr": int(nonconst_mask.sum() - keep.sum()),
+        "kept": int(final_mask.sum()),
+        "threshold": threshold,
+    }
+    
+    print(f"[CORR] threshold={threshold} | "
+          f"kept={info['kept']} out of {info['initial_features']} "
+          f"(dropped_const={info['dropped_constant']}, "
+          f"dropped_corr={info['dropped_corr']})")
+    
+    # Plot correlation heatmap (train only, after dropping constants)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(corr, cmap="coolwarm", center=0,
+                    xticklabels=False, yticklabels=False)
+    plt.title(f"Correlation matrix (train, after dropping constants)\nThreshold = {threshold}")
+    plt.show()
+
+    return X_train_red, X_test_red, final_mask, info
+
+#endregion
+
+#region Feature Selection
+
 def feature_selection(steps:int, X_train, y_train, X_test, model_name):
 
-    print("[RFECV] Uruchamiam RFECV... It might take a while...")
+    print("[RFECV] Starting RFECV... It might take a while, but worry not, it's working well :)")
     
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
     recall_scorer = make_scorer(recall_score, pos_label=1)
@@ -44,7 +108,7 @@ def feature_selection(steps:int, X_train, y_train, X_test, model_name):
         
     rfecv = RFECV(
         estimator=fs_estimator,
-        step=steps,                        # drzewa często lubią małe kroki
+        step=steps,                       # usuń co 'step' cech na iterację
         scoring=recall_scorer,
         cv=cv,
         min_features_to_select=20,
@@ -75,7 +139,7 @@ def feature_selection(steps:int, X_train, y_train, X_test, model_name):
     plt.show()
 
     return X_train_sel, X_test_sel, mask, rfecv
-
+#endregion
 
 def pipeline(
     dane: str,
@@ -90,14 +154,16 @@ def pipeline(
 
     # Flag innit
     feature_selection_flag = False
-    correlation_removal = False
+    correlation_removal_flag = False
 
     # 1) Identify model kind (string)
     model_name_norm = model_name.strip().lower()
     if model_name_norm in ("logisticregression", "lr"):
         model_kind = "Logistic Regression"
+        step = 50  # dla FS = dla regresji ma sens większy krok
     elif model_name_norm in ("decisiontree", "dt"):
         model_kind = "Decision Tree"
+        step = 30  # dla FS = drzew ma sens mały krok
     else:
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
 
@@ -106,7 +172,7 @@ def pipeline(
     if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
         feature_selection_flag = True
     if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
-        correlation_removal = True
+        correlation_removal_flag = True
 
     # Load data
     path = Path(dane)
@@ -120,11 +186,6 @@ def pipeline(
 
     X = X_df.to_numpy()
     y = y_df.to_numpy()
-
-    # Corr removal
-    if correlation_removal:
-            #TODO
-        pass
     
     # Base train/test split
     X_train = X[df["isTraining"] == 1]
@@ -135,6 +196,28 @@ def pipeline(
     # FTO = for test only 
     print(f"Data sliced: BASE size X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"Data sliced: BASE size X_test: {X_test.shape}, y_test: {y_test.shape}")
+
+    # MinMax for scaling to [0,1]
+    if model_kind == "Logistic Regression":
+        scaler = MinMaxScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test  = scaler.transform(X_test)
+
+    if correlation_removal_flag:
+        X_train, X_test, corr_mask, corr_info = correlation_removal(
+        X_train, X_test, threshold=0.90
+    )
+
+    # Feature selection
+    if feature_selection_flag:
+        fs_mask, rfecv = None, None
+
+        X_train, X_test, fs_mask, rfecv = feature_selection(
+                                                            steps=step,
+                                                            X_train=X_train, y_train=y_train, X_test=X_test,
+                                                            model_name=model_kind,
+                                                            )
+
 
 #endregion
 
@@ -156,19 +239,11 @@ def pipeline(
         dt_defaults.update(model_params or {})
         model = DecisionTreeClassifier(**dt_defaults)
 
-        if feature_selection_flag:
-            feature_selection(steps=30, X_train=X_train, y_train=y_train, X_test=X_test, model_name=model_kind)
-
         if XAI:
             XAI_model = "SHAP"
             XAI_model_specific = "TreeExplainer"
 
     elif model_kind == "Logistic Regression":
-
-        # MinMax for scaling to [0,1]
-        min_max_scaler = MinMaxScaler() 
-        X_train = min_max_scaler.fit_transform(X_train)
-        X_test  = min_max_scaler.transform(X_test)
 
         max_iter = model_params.get("max_iter", 100)
         solver = model_params.get("solver", "lbfgs")
@@ -178,16 +253,6 @@ def pipeline(
         model = LogisticRegression(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
         )
-
-        # feature selection
-        if(feature_selection_flag):
-              fs_mask, rfecv = None, None
-
-              X_train, X_test, fs_mask, rfecv = feature_selection(
-                                                                steps=50,
-                                                                X_train=X_train, y_train=y_train, X_test=X_test,
-                                                                model_name=model_kind,
-                                                            )
         
         # TODO: threshold tuning
 
