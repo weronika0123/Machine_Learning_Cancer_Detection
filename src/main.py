@@ -20,6 +20,62 @@ import matplotlib.pyplot as plt
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
+def feature_selection(steps:int, X_train, y_train, X_test, model_name):
+
+    print("[RFECV] Uruchamiam RFECV... It might take a while...")
+    
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+    recall_scorer = make_scorer(recall_score, pos_label=1)
+    fs_estimator = None
+
+    if(model_name == "Logistic Regression"):
+        fs_estimator = LogisticRegression(
+            max_iter=2000, solver="lbfgs", penalty="l2", C=1.0, class_weight="balanced", random_state=RANDOM_STATE
+        )
+    elif(model_name == "Decision Tree"):
+        fs_estimator = DecisionTreeClassifier(
+            criterion="gini",
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            class_weight="balanced",      
+            random_state=RANDOM_STATE
+        )
+        
+    rfecv = RFECV(
+        estimator=fs_estimator,
+        step=steps,                        # drzewa często lubią małe kroki
+        scoring=recall_scorer,
+        cv=cv,
+        min_features_to_select=20,
+        n_jobs=-1
+    )
+    rfecv.fit(X_train, y_train)
+    mask = rfecv.support_
+    k_selected = rfecv.n_features_
+    print(f"[RFECV] Wybrane k (opt pod RECALL): {k_selected}")
+
+    X_train_sel = X_train[:, mask]
+    X_test_sel  = X_test[:,  mask]
+
+     # recall vs liczba cech
+    scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
+    n_features_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
+    plt.figure(figsize=(7,4))
+    plt.plot(n_features_list, scores, marker="o", linewidth=1)
+    plt.axvline(rfecv.n_features_, ls="--", color="red", label=f"Optymalne k ={rfecv.n_features_}")
+    plt.xlabel("Liczba cech (k) — TRAIN (CV)")
+    plt.ylabel("Średni recall — TRAIN (CV)")
+    14
+    plt.title("RFECV (balanced): recall (CV) vs liczba cech")
+    plt.gca().invert_xaxis()
+    plt.grid(True, ls=":")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    return X_train_sel, X_test_sel, mask, rfecv
+
 
 def pipeline(
     dane: str,
@@ -29,16 +85,11 @@ def pipeline(
     EVAL: list,
     XAI: bool,
 ):
-    
-
-
-
-
 
 #region Data Prep
 
     # Flag innit
-    feature_selection = False
+    feature_selection_flag = False
     correlation_removal = False
 
     # 1) Identify model kind (string)
@@ -53,7 +104,7 @@ def pipeline(
     # 2) Identify preprocessing steps (list of strings)
     steps = [str(s).strip().lower() for s in (preprocesing or [])]
     if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
-        feature_selection = True
+        feature_selection_flag = True
     if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
         correlation_removal = True
 
@@ -82,8 +133,8 @@ def pipeline(
     y_test = y[df["isTest"] == 1]
 
     # FTO = for test only 
-    print(f"Data sliced: Size X_train: {X_train.shape}, y_train: {y_train.shape}")
-    print(f"Data sliced: Size X_test: {X_test.shape}, y_test: {y_test.shape}")
+    print(f"Data sliced: BASE size X_train: {X_train.shape}, y_train: {y_train.shape}")
+    print(f"Data sliced: BASE size X_test: {X_test.shape}, y_test: {y_test.shape}")
 
 #endregion
 
@@ -93,6 +144,7 @@ def pipeline(
     XAI_model_specific = None  # np. "TreeExplainer" / "KernelExplainer"
 
     if model_kind == "Decision Tree":
+
         dt_defaults = {
             "criterion": "gini",
             "max_depth": None,
@@ -104,48 +156,8 @@ def pipeline(
         dt_defaults.update(model_params or {})
         model = DecisionTreeClassifier(**dt_defaults)
 
-        if feature_selection:
-            print("[RFECV DT] Uruchamiam RFECV...")
-            cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
-            recall_scorer = make_scorer(recall_score, pos_label=1)
-
-            fs_estimator = DecisionTreeClassifier(**dt_defaults)
-            rfecv = RFECV(
-                estimator=fs_estimator,
-                step=30,                        # drzewa często lubią małe kroki
-                scoring=recall_scorer,
-                cv=cv,
-                min_features_to_select=20,
-                n_jobs=-1
-            )
-            rfecv.fit(X_train, y_train)
-            mask = rfecv.support_
-            k_selected = rfecv.n_features_
-            print(f"[RFECV DT] Wybrane k (opt pod RECALL): {k_selected}")
-
-            X_train = X_train[:, mask]
-            X_test  = X_test[:,  mask]
-
-            # przebuduj model na tych samych (finalnych) parametrach
-            model = DecisionTreeClassifier(**dt_defaults)
-            # plot recall vs K
-            scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
-            k_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
-            order = np.argsort(k_list)[::-1]
-            k_plot = k_list[order]
-            scores_plot = scores[order]
-            plt.figure(figsize=(7,4))
-            plt.plot(k_plot, scores_plot, marker="o", linewidth=1)
-            plt.axvline(rfecv.n_features_, ls="--", color="red",
-            label=f"Optymalne k (CV) = {rfecv.n_features_}")
-            plt.xlabel("Liczba cech (k)")
-            plt.ylabel("Średni recall (CV na TRAIN)")
-            plt.title("RFECV: recall (CV) vs liczba cech")
-            plt.gca().invert_xaxis()
-            plt.grid(True, ls=":")
-            plt.legend()
-            plt.tight_layout()
-            plt.show()
+        if feature_selection_flag:
+            feature_selection(steps=30, X_train=X_train, y_train=y_train, X_test=X_test, model_name=model_kind)
 
         if XAI:
             XAI_model = "SHAP"
@@ -168,52 +180,14 @@ def pipeline(
         )
 
         # feature selection
-        if(feature_selection):
-            print("[RFECV LR] Uruchamiam RFECV...")
-            cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-            recall_scorer = make_scorer(recall_score, pos_label=1)
+        if(feature_selection_flag):
+              fs_mask, rfecv = None, None
 
-            rfecv = RFECV(
-                estimator=model,
-                step=50,                       
-                scoring=recall_scorer,         
-                cv=cv,
-                min_features_to_select=20,
-                n_jobs=-1
-            )
-
-            rfecv.fit(X_train, y_train)
-
-            mask = rfecv.support_
-            k_selected = rfecv.n_features_
-            print(f"[RFECV balanced] Wybrane k (opt pod RECALL): {k_selected}")
-
-            # przycięcie danych do wybranych cech
-            X_train = X_train[:, mask]
-            X_test  = X_test[:,  mask]
-
-            #model
-            model = LogisticRegression(
-                max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
-            )
-            # plot recall vs K
-            scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
-            k_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
-            order = np.argsort(k_list)[::-1]
-            k_plot = k_list[order]
-            scores_plot = scores[order]
-            plt.figure(figsize=(7,4))
-            plt.plot(k_plot, scores_plot, marker="o", linewidth=1)
-            plt.axvline(rfecv.n_features_, ls="--", color="red",
-            label=f"Optymalne k (CV) = {rfecv.n_features_}")
-            plt.xlabel("Liczba cech (k)")
-            plt.ylabel("Średni recall (CV na TRAIN)")
-            plt.title("RFECV: recall (CV) vs liczba cech")
-            plt.gca().invert_xaxis()
-            plt.grid(True, ls=":")
-            plt.legend()
-            plt.tight_layout()
-            plt.show()
+              X_train, X_test, fs_mask, rfecv = feature_selection(
+                                                                steps=50,
+                                                                X_train=X_train, y_train=y_train, X_test=X_test,
+                                                                model_name=model_kind,
+                                                            )
         
         # TODO: threshold tuning
 
@@ -223,6 +197,9 @@ def pipeline(
 
     else:
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
+    
+    print("Used X_train shape:", X_train.shape)
+    print("Used X_test shape:", X_test.shape)
     
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
