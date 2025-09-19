@@ -1,0 +1,33 @@
+Priorytet:
+
+1. Tekst :(  - link jest w README oraz w inzyneirka_razem.docx
+    po koleji rozdziały (szblon już w pliku) - literatura jest ważna = ograniecie narzędzia mandeley
+
+2. Skad sie wział dataset? Piotr nam o wysłał, ale skąd on jest dokładnie (oryginal source/sources) i co było na nim robione?
+    jak zrobili, ze tam jest podział na Test i Train? skad jest kolumna "cancer"? bo oni je chyba dorobili. Ale kto? Może sie do nich odezwiemy?
+
+
+Na później (3/4 dni od 18.09)
+
+1. Threshold tuning (już?)
+2. ogl musimy nałożyc blokady np zeby max_itter nie bylo za małe albo za dluzsze itd
+    zeby to zrobic musimy znalezc literature ktr mniej wiecej potwierdzi czm nakladamy blokady aurat na np 5000
+
+
+
+
+Na później (1 tyg czy cos od 18.09)
+
+1. kolejne 2 algorytmy
+
+
+
+
+Na dużo później (2 tyg czy cos od 18.09)
+
+1. heatmapa w corr removal trzeba "uładnić", bo nic nie widać teraz
+
+2. zrobic tak, zeby program działał na różnych datasetach
+
+
+Link do dysku na ktr wstawiamy do Piotra: https://drive.pg.edu.pl/s/LnDVTTtqFMLgFax
