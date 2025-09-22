@@ -18,6 +18,8 @@ from sklearn.metrics import (
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import TunedThresholdClassifierCV
+from sklearn.base import clone
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
@@ -72,11 +74,11 @@ def correlation_removal(X_train, X_test, threshold=0.90):
           f"dropped_corr={info['dropped_corr']})")
     
     # Plot correlation heatmap (train only, after dropping constants)
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(corr, cmap="coolwarm", center=0,
-                    xticklabels=False, yticklabels=False)
-    plt.title(f"Correlation matrix (train, after dropping constants)\nThreshold = {threshold}")
-    plt.show()
+    #plt.figure(figsize=(8, 6))
+    #sns.heatmap(corr, cmap="coolwarm", center=0,
+    #                xticklabels=False, yticklabels=False)
+    #plt.title(f"Correlation matrix (train, after dropping constants)\nThreshold = {threshold}")
+    #plt.show()
 
     return X_train_red, X_test_red, final_mask, info
 
@@ -146,6 +148,7 @@ def pipeline(
     preprocesing: list,
     model_name: str,
     model_params: dict,
+    postprocess: bool,
     EVAL: list,
     XAI: bool,
 ):
@@ -173,6 +176,11 @@ def pipeline(
         feature_selection_flag = True
     if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
         correlation_removal_flag = True
+
+    # 3) Postprocessing (threshold tuning)
+    postprocess_flag = False
+    if(postprocess):
+        postprocess_flag = True
 
     # Load data
     path = Path(dane)
@@ -271,7 +279,27 @@ def pipeline(
 
 #endregion
 
+#region Post-processing = Threshold tuning
+    if(postprocess_flag):
 
+        print("[POSTPROCESS] Starting threshold tuning...")
+
+
+
+        tuned_model = TunedThresholdClassifierCV(
+        estimator=clone(model), # model params copied, weights NOT copied
+        scoring="f1",  # optymalizacja pod f1
+        store_cv_results=True,  # necessary to inspect all results
+        thresholds=500,  # liczba thresholdów do przeszukania
+        cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42),  # 5-fold CV
+        n_jobs=-1,  # równoległe przeszukiwanie
+        )
+        model=tuned_model
+        model.fit(X_train, y_train) 
+        y_pred = model.predict(X_test)
+        print(f"{model.best_threshold_=:0.3f}")
+
+#endregion
 
 #region Ewaluacja
 
@@ -399,6 +427,7 @@ def parse_args(argv=None):
         help="Wybór modelu."
     )
     p.add_argument("--params", default="{}", help="Parametry modelu jako słownik Pythona, np. {'max_depth': 4}")
+    p.add_argument("--postprocess", action="store_true", help="Włącz postprocessing i.e threshold tuning.")
     p.add_argument("--eval", default="['AUC ROC','accuracy','Confusion matrix']", help="Lista metryk jako lista Pythona.")
     p.add_argument("--xai", action="store_true", help="Włącz XAI.")
     return p.parse_args(argv)
@@ -428,6 +457,7 @@ def main(argv=None):
         preprocesing=preprocess_list,
         model_name=args.model,
         model_params=params,
+        postprocess=args.postprocess,
         EVAL=eval_list,
         XAI=args.xai,
     )
