@@ -271,6 +271,8 @@ def pipeline(
 
 #endregion
 
+
+
 #region Ewaluacja
 
     results = {}
