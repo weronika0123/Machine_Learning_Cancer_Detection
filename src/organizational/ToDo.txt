@@ -6,10 +6,12 @@ Priorytet:
 2. Skad sie wział dataset? Piotr nam o wysłał, ale skąd on jest dokładnie (oryginal source/sources) i co było na nim robione?
     jak zrobili, ze tam jest podział na Test i Train? skad jest kolumna "cancer"? bo oni je chyba dorobili. Ale kto? Może sie do nich odezwiemy?
 
+3. Mamy w liquid_biopsy_data.csv dostepny VALIDACYJNY SPLIT (jak odpalisz "analysis.py" to w results widać). Uywamy go chyba nie? trzeba go inkorporowac w caly kod i te funkcje ktore potrzbują
+
 
 Na później (3/4 dni od 18.09)
 
-1. Threshold tuning (już?)
+1. Threshold tuning - DONE
 2. ogl musimy nałożyc blokady np zeby max_itter nie bylo za małe albo za dluzsze itd
     zeby to zrobic musimy znalezc literature ktr mniej wiecej potwierdzi czm nakladamy blokady aurat na np 5000
 
@@ -25,7 +27,7 @@ Na później (1 tyg czy cos od 18.09)
 
 Na dużo później (2 tyg czy cos od 18.09)
 
-1. heatmapa w corr removal trzeba "uładnić", bo nic nie widać teraz
+1. heatmapa w corr removal trzeba "uładnić", bo nic nie widać teraz - na razie zakomentowana
 
 2. zrobic tak, zeby program działał na różnych datasetach
 

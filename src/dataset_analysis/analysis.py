@@ -4,7 +4,7 @@ import pandas as pd
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE183635   ->   https://ftp.ncbi.nlm.nih.gov/geo/series/GSE183nnn/GSE183635/matrix/
 
 
-df = pd.read_csv("data_sources/liquid_biopsy_data.csv", sep=",", low_memory=False)
+df = pd.read_csv("C:/Users/weron/Downloads/Machine_Learning_Cancer_Detection-main/Machine_Learning_Cancer_Detection/src/data_sources/liquid_biopsy_data.csv", sep=",", low_memory=False)
 
 print("Liczba wierszy:", len(df))
 print("Liczba kolumn:", len(df.columns))
