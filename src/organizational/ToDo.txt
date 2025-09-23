@@ -12,9 +12,12 @@ Priorytet:
 Na później (3/4 dni od 18.09)
 
 1. Threshold tuning - DONE
-    1.1 To do still: Dodac vizualizacje
+    1.1 Dodac vizualizacje DONE
 2. ogl musimy nałożyc blokady np zeby max_itter nie bylo za małe albo za dluzsze itd
     zeby to zrobic musimy znalezc literature ktr mniej wiecej potwierdzi czm nakladamy blokady aurat na np 5000
+3. CLI opisać, zrobic presety, moze config?
+    https://www.youtube.com/watch?v=ADWAwzGXJjM&t=564s a potem: https://www.youtube.com/watch?v=J51vxXAWigI&t=317s 
+
 
 
 
