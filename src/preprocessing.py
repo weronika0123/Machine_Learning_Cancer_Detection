@@ -6,6 +6,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import make_scorer, recall_score
+from sklearn.svm import LinearSVC
 
 RANDOM_STATE = 42
 
@@ -86,6 +87,22 @@ def feature_selection(steps:int, X_train, y_train, X_test, model_name):
             min_samples_leaf=1,
             class_weight="balanced",      
             random_state=RANDOM_STATE
+        )
+    elif model_name == "SVM":
+        # Używamy linearnego SVM do RFECV, bo ma coef_.
+        fs_estimator = LinearSVC(
+            C=1.0,
+            class_weight="balanced",
+            max_iter=20000,   # stabilniejsza zbieżność w high-dim
+            tol=1e-3,
+            dual=True,
+        )
+    else:
+        # Bezpieczny fallback – LogisticRegression
+        print("[RFECV] [WARN] Nieznany model_name dla FS – używam LogisticRegression jako fallback.")
+        fs_estimator = LogisticRegression(
+            max_iter=2000, solver="lbfgs", penalty="l2", C=1.0,
+            class_weight="balanced", random_state=RANDOM_STATE
         )
         
     rfecv = RFECV(

@@ -21,6 +21,9 @@ import seaborn as sns
 from sklearn.model_selection import TunedThresholdClassifierCV
 from sklearn.base import clone
 from preprocessing import correlation_removal, feature_selection
+from sklearn.svm import SVC, LinearSVC
+from sklearn.calibration import CalibratedClassifierCV
+
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
@@ -73,6 +76,9 @@ def pipeline(
     elif model_name_norm in ("decisiontree", "dt"):
         model_kind = "Decision Tree"
         step = 30  # dla FS = drzew ma sens mały krok
+    elif model_name_norm in ("svm", "svc"):
+        model_kind = "SVM"
+        step = 30
     else:
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
 
@@ -112,7 +118,7 @@ def pipeline(
     print(f"Data sliced: BASE size X_test: {X_test.shape}, y_test: {y_test.shape}")
 
     # MinMax for scaling to [0,1]
-    if model_kind == "Logistic Regression":
+    if model_kind in ("Logistic Regression", "SVM"):
         scaler = MinMaxScaler()
         X_train = scaler.fit_transform(X_train)
         X_test  = scaler.transform(X_test)
@@ -174,8 +180,60 @@ def pipeline(
             XAI_model = "LIME"
             XAI_model_specific = "KernelExplainer"
 
+    elif model_kind == "SVM":
+            # SVM z sklearn – różne podejścia w zależności od kernela
+            # LinearSVC jest szybszy dla dużych, rzadkich, wysokowymiarowych danych
+            # ale nie ma predict_proba. Można to obejść kalibracją (CalibratedClassifierCV).
+            # Dla nieliniowych kernelów (RBF, poly, sigmoid) używamy SVC z probability=True.
+            # To jest wolniejsze przy wielu cechach i dużym N.
+    
+
+        svm_defaults = {
+        "kernel": "linear",          # 'linear' | 'rbf' | 'poly' | 'sigmoid'
+        "C": 1.0,
+        "gamma": "scale",            # dla rbf/poly/sigmoid
+        "degree": 3,                 # dla poly
+        "class_weight": "balanced",  #zawsze
+        "use_calibrated": True,      # tylko dla linear: LinearSVC + CalibratedClassifierCV
+        "calibration_method": "sigmoid",  # 'sigmoid' | 'isotonic'
+        "cv_calibration": 5,
+        "probability": True          # dla SVC (nieliniowe kernele) – żeby mieć predict_proba
+    }
+        svm_defaults.update(model_params or {})
+
+        kernel = svm_defaults["kernel"]
+
+        if kernel == "linear" and svm_defaults["use_calibrated"]:
+            # Szybka wersja do wysokowymiarowych danych: LinearSVC + kalibracja
+            base = LinearSVC(
+                C=svm_defaults["C"],
+                class_weight=svm_defaults["class_weight"],
+                # dual=True (domyślnie) – w wielu cechach i mniejszej liczbie próbek jest OK
+                # random_state nie jest wymagany
+            )
+            model = CalibratedClassifierCV(
+                estimator=base,
+                method=svm_defaults["calibration_method"],
+                cv=svm_defaults["cv_calibration"],
+            )
+        else:
+            # Pełny SVC z proba=True (wolniejszy przy tysiącach cech i dużym N)
+            model = SVC(
+                kernel=kernel,
+                C=svm_defaults["C"],
+                gamma=svm_defaults["gamma"],
+                degree=svm_defaults["degree"],
+                class_weight=svm_defaults["class_weight"],
+                probability=True,          # konieczne dla ROC/PR i tuningu progu
+            )
+
+        if XAI:
+            # Dla SVM zwykle LIME/Kernel SHAP (czarna skrzynka)
+            XAI_model = "LIME"
+            XAI_model_specific = "KernelExplainer"
+
     else:
-        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
+        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC")
     
     print("Used X_train shape:", X_train.shape)
     print("Used X_test shape:", X_test.shape)
@@ -328,7 +386,7 @@ def parse_args(argv=None):
     p.add_argument(
         "--model",
         required=True,
-        choices=["DecisionTree", "DT", "LogisticRegression", "LR"],
+        choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],
         help="Wybór modelu."
     )
     p.add_argument("--params", default="{}", help="Parametry modelu jako słownik Pythona, np. {'max_depth': 4}")
