@@ -12,7 +12,7 @@ python .\main.py `
 
 PS C:\Users\user\Documents\GitHub\Machine_Learning_Cancer_Detection\src>
   python .\main.py `
-  --data "liquid_biopsy_data.csv" `
+  --data "data_sources\liquid_biopsy_data.csv" `
   --preprocess "['feature_selection','corr']" `
   --model DT `
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
@@ -25,5 +25,45 @@ PS C:\Users\user\Documents\GitHub\Machine_Learning_Cancer_Detection\src>
   --model DT `
   --postprocess `
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
+  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+  --xai
+
+PARAMS DO SVM:
+
+1. SAFE_LINEAR (domyślny, baseline)
+{
+  "kernel": "linear",
+  "C": 1.0,
+  "class_weight": "balanced",
+  "use_calibrated": True,
+  "calibration_method": "sigmoid",
+  "cv_calibration": 5
+}
+
+2. SAFE_RBF (opcjonalny, nieliniowy test) - Po FS cech ≤ ~500
+  {
+  "kernel": "rbf",
+  "C": 2.0,
+  "gamma": "scale",
+  "class_weight": "balanced"
+}
+
+3.example
+
+  python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --preprocess "['corr']" `
+  --model SVM `
+  --postprocess `
+  --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
+  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+  --xai
+
+  python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --preprocess "['fs','corr']" `
+  --model SVM `
+  --postprocess `
+  --params "{'kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
