@@ -80,7 +80,8 @@ def pipeline(
         model_kind = "SVM"
         step = 30
     else:
-        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR")
+        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC")
+
 
     # 2) Identify preprocessing steps (list of strings)
     steps = [str(s).strip().lower() for s in (preprocesing or [])]
@@ -110,33 +111,41 @@ def pipeline(
     # Base train/test split
     X_train = X[df["isTraining"] == 1]
     y_train = y[df["isTraining"] == 1]
+    X_val = X[df["isValidation"] == 1]
+    y_val = y[df["isValidation"] == 1]
     X_test = X[df["isTest"] == 1]
     y_test = y[df["isTest"] == 1]
 
     # FTO = for test only 
     print(f"Data sliced: BASE size X_train: {X_train.shape}, y_train: {y_train.shape}")
+    print(f"Data sliced: BASE size X_val: {X_val.shape}, y_val: {y_val.shape}")
     print(f"Data sliced: BASE size X_test: {X_test.shape}, y_test: {y_test.shape}")
 
     # MinMax for scaling to [0,1]
     if model_kind in ("Logistic Regression", "SVM"):
         scaler = MinMaxScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test  = scaler.transform(X_test)
+        X_train = scaler.fit_transform(X_train)  
+        X_val   = scaler.transform(X_val)        
+        X_test  = scaler.transform(X_test)      
 
+    corr_mask = None
     if correlation_removal_flag:
         X_train, X_test, corr_mask, corr_info = correlation_removal(
         X_train, X_test, threshold=0.90
     )
+    if corr_mask is not None:
+        X_val = X_val[:, corr_mask]
 
     # Feature selection
+    fs_mask = None
     if feature_selection_flag:
-        fs_mask, rfecv = None, None
-
         X_train, X_test, fs_mask, rfecv = feature_selection(
-                                                            steps=step,
-                                                            X_train=X_train, y_train=y_train, X_test=X_test,
-                                                            model_name=model_kind,
-                                                            )
+            steps=step,
+            X_train=X_train, y_train=y_train, X_test=X_test,
+            model_name=model_kind,
+        )
+    if fs_mask is not None:
+        X_val = X_val[:, fs_mask]
 
 
 #endregion
@@ -146,8 +155,7 @@ def pipeline(
     XAI_model = None  # "LIME" albo "SHAP"
     XAI_model_specific = None  # np. "TreeExplainer" / "KernelExplainer"
 
-    if model_kind == "Decision Tree":
-
+    if model_kind == "Decision Tree":    
         dt_defaults = {
             "criterion": "gini",
             "max_depth": None,
@@ -234,33 +242,44 @@ def pipeline(
 
     else:
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC")
-    
+
     print("Used X_train shape:", X_train.shape)
     print("Used X_test shape:", X_test.shape)
     
     model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
 
 #endregion
 
 #region Post-processing = Threshold tuning
-    if(postprocess_flag):
+    if postprocess_flag:
 
-        print("[POSTPROCESS] Starting threshold tuning...")
+        print("[POSTPROCESS] Threshold tuning na zbiorze walidacyjnym...")
 
-        tuned_model = TunedThresholdClassifierCV(
-        estimator=clone(model), # model params copied, weights NOT copied
-        scoring="f1",  # optymalizacja pod f1
-        store_cv_results=True,  # necessary to inspect all results
-        thresholds=500,  # liczba thresholdów do przeszukania
-        cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42),  # 5-fold CV
-        n_jobs=-1,  # równoległe przeszukiwanie
-        )
-        model=tuned_model
-        model.fit(X_train, y_train) 
+        if X_val.shape[0] == 0:
+            print("[POSTPROCESS][WARN] Zbiór walidacyjny jest pusty — pomijam tuning progu.")
+            y_pred = model.predict(X_test)
+        else:
+            # scores on VAL
+            if not hasattr(model, "predict_proba"):
+                raise RuntimeError("Threshold tuning wymaga predict_proba (LR/DT/SVC(probability)/Calibrated).")
+
+            y_score_val = model.predict_proba(X_val)[:, 1]
+            thresholds = np.linspace(0, 1, 500)
+
+            best_thr, best_score = 0.5, -1.0
+            for thr in thresholds:
+                y_pred_val = (y_score_val >= thr).astype(int)
+                sc = f1_score(y_val, y_pred_val, zero_division=0)  # optimize for F1 (change if needed)
+                if sc > best_score:
+                    best_score, best_thr = sc, thr
+
+            print(f"Wybrany threshold={best_thr:.3f} (F1@val={best_score:.3f})")
+
+            # final decision on TEST with tuned threshold
+            y_score_test = model.predict_proba(X_test)[:, 1]
+            y_pred = (y_score_test >= best_thr).astype(int)
+    else:
         y_pred = model.predict(X_test)
-        print(f"{model.best_threshold_=:0.3f}")
-        plot_threshold_curve(model)
 
 #endregion
 
@@ -268,88 +287,74 @@ def pipeline(
 
     results = {}
 
-    # Accuracy
-    if any(m.lower() in ["accuracy", "ac"] for m in EVAL):
+    # flags (aliases)
+    eval_lower = [m.lower() for m in (EVAL or [])]
+    want_acc = any(m in ["accuracy", "ac"] for m in eval_lower)
+    want_prec = any(m in ["precision", "prec", "p"] for m in eval_lower)
+    want_rec = any(m in ["recall", "sensitivity", "r"] for m in eval_lower)
+    want_f1 = any(m in ["f1", "f1-score", "f1score"] for m in eval_lower)
+    want_cm = any(m in ["confusion matrix", "confusion_matrix", "cm"] for m in eval_lower)
+    want_roc = any(m in ["auc roc", "auc_roc", "roc auc", "roc_auc"] for m in eval_lower)
+    want_pr  = any(m in ["auc pr", "auc_pr", "pr auc", "pr_auc", "average precision", "ap"] for m in eval_lower)
 
+    # point metrics (TEST)
+    if want_acc:
         results["accuracy"] = accuracy_score(y_test, y_pred)
-    
-    # Precision
-    if any(m.lower() in ["precision", "prec", "p"] for m in EVAL):
-    # Out of all predicted "cancer = 1" cases, how many are truly cancer.
-    # High precision = few false positives (healthy people predicted as sick).
-
+    if want_prec:
         results["precision"] = precision_score(y_test, y_pred, zero_division=0)
-
-    # Recall (Sensitivity)
-    if any(m.lower() in ["recall", "sensitivity", "r"] for m in EVAL):
-    # Out of all true "cancer = 1" cases, how many did the model catch.
-    # High recall = few false negatives (sick people missed by the model).
-
+    if want_rec:
         results["recall"] = recall_score(y_test, y_pred, zero_division=0)
-
-    # F1-score
-    if any(m.lower() in ["f1", "f1-score", "f1score"] for m in EVAL):
-    # Harmonic mean of precision and recall, balances both metrics.
-    # In our context: good when we want both few false positives and few false negatives.
+    if want_f1:
         results["f1"] = f1_score(y_test, y_pred, zero_division=0)
 
-    # Confusion matrix
-    if any(m.lower() in ["confusion matrix", "confusion_matrix", "cm"] for m in EVAL):
-
+    # confusion matrix (TEST)
+    if want_cm:
         cm = confusion_matrix(y_test, y_pred)
-
-        # Bc in results the formating is bad
         TN, FP, FN, TP = cm.ravel()
-        print(" Confusion matrix: TN",TN,"FP",FP,"FN",FN,"TP",TP)
-
-        # plot
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-        disp.plot()
+        print(" Confusion matrix: TN", TN, "FP", FP, "FN", FN, "TP", TP)
+        ConfusionMatrixDisplay(confusion_matrix=cm).plot()
+        plt.title("Confusion Matrix — Test")
         plt.tight_layout()
         plt.show()
-
         results["Confusion matrix"] = cm.tolist()
 
-    # AUC ROC
-    if any(m.lower() in ["auc roc", "auc_roc", "roc auc", "roc_auc"] for m in EVAL):
-
+    # ROC + PR on a single figure (1x2)
+    if (want_roc or want_pr) and hasattr(model, "predict_proba"):
         y_score = model.predict_proba(X_test)[:, 1]
 
-        fpr, tpr, _ = roc_curve(y_test, y_score)
-        roc_auc = auc(fpr, tpr)
+        # prepare figure
+        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 
-        plt.subplot(1,2,1)
-        plt.plot(fpr, tpr, label=f"ROC AUC = {roc_auc:.4f}")
-        plt.plot([0,1],[0,1],'--',lw=1)
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title("ROC Curve")
-        plt.legend(loc="lower right")
-        plt.tight_layout()
-        plt.show()
+        # ROC
+        if want_roc:
+            fpr, tpr, _ = roc_curve(y_test, y_score)
+            roc_auc = auc(fpr, tpr)
+            ax[0].plot(fpr, tpr, label=f"AUC = {roc_auc:.4f}")
+            ax[0].plot([0, 1], [0, 1], "--", lw=1)
+            ax[0].set_xlabel("False Positive Rate")
+            ax[0].set_ylabel("True Positive Rate")
+            ax[0].set_title("ROC Curve — Test")
+            ax[0].legend(loc="lower right")
+            results["AUC ROC"] = float(roc_auc)
+        else:
+            ax[0].axis("off")  # keep layout clean if only PR requested
 
-        results["AUC ROC"] = float(roc_auc_score(y_test, y_score))
-
-    # Precision-Recall AUC
-    if any(m.lower() in ["auc pr", "auc_pr", "pr auc", "pr_auc", "average precision", "ap"] for m in EVAL):
-            
-            y_score = model.predict_proba(X_test)[:, 1]
-    
+        # PR
+        if want_pr:
             precision, recall, _ = precision_recall_curve(y_test, y_score)
             pr_auc = auc(recall, precision)
             ap = average_precision_score(y_test, y_score)
-    
-            plt.subplot(1,2,2)
-            plt.plot(recall, precision, label=f"PR AUC = {pr_auc:.4f} (AP={ap:.4f})")
-            plt.xlabel("Recall")
-            plt.ylabel("Precision")
-            plt.title("Precision-Recall Curve")
-            plt.legend(loc="lower left")
-            plt.tight_layout()
-            plt.show()
-    
-            results["AUC PR"] = float(ap)
+            ax[1].plot(recall, precision, label=f"AUC = {pr_auc:.4f} (AP={ap:.4f})")
+            ax[1].set_xlabel("Recall")
+            ax[1].set_ylabel("Precision")
+            ax[1].set_title("Precision-Recall — Test")
+            ax[1].legend(loc="lower left")
+            results["AUC PR"] = float(ap)  # store AP as in previous style
+        else:
+            ax[1].axis("off")
 
+        plt.tight_layout()
+        plt.show()
 #endregion
 
 #region XAI
