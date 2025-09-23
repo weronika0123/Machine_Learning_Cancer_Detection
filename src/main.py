@@ -23,6 +23,29 @@ from sklearn.base import clone
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
+#for threshold tuning
+def plot_threshold_curve(tuned_model):
+    thresholds = tuned_model.cv_results_["thresholds"]
+    scores = tuned_model.cv_results_["scores"]
+
+    plt.figure(figsize=(7,5))
+    plt.plot(thresholds, scores, label="Score vs threshold")
+    plt.plot(
+        tuned_model.best_threshold_,
+        tuned_model.best_score_,
+        "o",
+        markersize=10,
+        color="tab:orange",
+        label=f"Best thr={tuned_model.best_threshold_:.3f}"
+    )
+    plt.xlabel("Threshold")
+    plt.ylabel("Score (CV)")
+    plt.title("Threshold tuning curve")
+    plt.legend()
+    plt.grid(ls=":")
+    plt.tight_layout()
+    plt.show()
+
 #region Correlation Removal
 
 def correlation_removal(X_train, X_test, threshold=0.90):
@@ -284,8 +307,6 @@ def pipeline(
 
         print("[POSTPROCESS] Starting threshold tuning...")
 
-
-
         tuned_model = TunedThresholdClassifierCV(
         estimator=clone(model), # model params copied, weights NOT copied
         scoring="f1",  # optymalizacja pod f1
@@ -298,6 +319,7 @@ def pipeline(
         model.fit(X_train, y_train) 
         y_pred = model.predict(X_test)
         print(f"{model.best_threshold_=:0.3f}")
+        plot_threshold_curve(model)
 
 #endregion
 
