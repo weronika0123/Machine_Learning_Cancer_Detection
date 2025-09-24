@@ -85,8 +85,12 @@ def pipeline(
 
     # 2) Identify preprocessing steps (list of strings)
     steps = [str(s).strip().lower() for s in (preprocesing or [])]
+
+
     if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
         feature_selection_flag = True
+        
+        
     if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
         correlation_removal_flag = True
 
@@ -108,7 +112,7 @@ def pipeline(
     X = X_df.to_numpy()
     y = y_df.to_numpy()
     
-    # Base train/test split
+    # Base train/val/test split
     X_train = X[df["isTraining"] == 1]
     y_train = y[df["isTraining"] == 1]
     X_val = X[df["isValidation"] == 1]
@@ -132,20 +136,24 @@ def pipeline(
     if correlation_removal_flag:
         X_train, X_test, corr_mask, corr_info = correlation_removal(
         X_train, X_test, threshold=0.90
-    )
-    if corr_mask is not None:
-        X_val = X_val[:, corr_mask]
+        )
+        if corr_mask is not None:
+            X_val = X_val[:, corr_mask]
 
     # Feature selection
     fs_mask = None
     if feature_selection_flag:
+
+        fs_method=model_params.get("fs_method", "rfecv" )
+        prefilter_k = model_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
+
         X_train, X_test, fs_mask, rfecv = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
-            model_name=model_kind,
+            model_name=model_kind,fs_method=fs_method, prefilter_k=prefilter_k
         )
-    if fs_mask is not None:
-        X_val = X_val[:, fs_mask]
+        if fs_mask is not None:
+            X_val = X_val[:, fs_mask]
 
 
 #endregion
@@ -260,24 +268,35 @@ def pipeline(
             y_pred = model.predict(X_test)
         else:
             # scores on VAL
-            if not hasattr(model, "predict_proba"):
-                raise RuntimeError("Threshold tuning wymaga predict_proba (LR/DT/SVC(probability)/Calibrated).")
+            if hasattr(model, "predict_proba"):
+                response_method = "predict_proba"
+            elif hasattr(model, "decision_function"):
+                response_method = "decision_function"
+            else:
+                print("[POSTPROCESS][WARN] Model nie ma predict_proba ani decision_function — pomijam tuning progu.")
+                y_pred = model.predict(X_test)
+                response_method = None
 
-            y_score_val = model.predict_proba(X_val)[:, 1]
-            thresholds = np.linspace(0, 1, 500)
+            #Potrzebujesz danych, których model nie widział podczas trenowania parametrów, żeby realistycznie ocenić, który threshold działa najlepiej — 
+            # i tu właśnie wchodzi zbiór walidacyjny.
 
-            best_thr, best_score = 0.5, -1.0
-            for thr in thresholds:
-                y_pred_val = (y_score_val >= thr).astype(int)
-                sc = f1_score(y_val, y_pred_val, zero_division=0)  # optimize for F1 (change if needed)
-                if sc > best_score:
-                    best_score, best_thr = sc, thr
+            # Uwaga: model jest już wytrenowany na TRAIN.
+            # Tutaj TYLKO stroimy próg na WALIDACJI.
+            tuned = TunedThresholdClassifierCV(
+                estimator=model,                # prefit estimator
+                cv="prefit",                   # NIE robi CV, używa przekazanych danych do strojenia progu
+                scoring="f1",                  # zmień jeśli chcesz inną metrykę
+                thresholds=500,                # gęstość siatki progów
+                response_method=response_method,
+                refit=False                     # bc estimator is already fitted (prefit)
+            )
 
-            print(f"Wybrany threshold={best_thr:.3f} (F1@val={best_score:.3f})")
+            # To NIE trenuje modelu; z cv='prefit' stroi tylko próg na (X_val, y_val)
+            tuned.fit(X_val, y_val)
+            print(f"[POSTPROCESS] Wybrany threshold={tuned.best_threshold_:.3f} (score={tuned.best_score_:.3f})")
 
-            # final decision on TEST with tuned threshold
-            y_score_test = model.predict_proba(X_test)[:, 1]
-            y_pred = (y_score_test >= best_thr).astype(int)
+            # Finalna decyzja na TEŚCIE z dobranym progiem:
+            y_pred = tuned.predict(X_test)  # użyje base_estimator + best_threshold_
     else:
         y_pred = model.predict(X_test)
 
