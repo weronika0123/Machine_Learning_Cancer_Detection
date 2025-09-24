@@ -63,6 +63,6 @@ PARAMS DO SVM:
   --preprocess "['fs','corr']" `
   --model SVM `
   --postprocess `
-  --params "{'kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
+  --params "{'fs_method':'kbest+rfecv','prefilter_k':1200,'kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
