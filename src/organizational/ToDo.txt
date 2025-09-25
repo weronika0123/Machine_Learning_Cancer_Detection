@@ -23,7 +23,7 @@ Na później (3/4 dni od 18.09)
 
 5. DONE = FS = implement selekctKBest / selectkBest+fs/ fs to choose from
 
-
+6. if to jest liquid_biopsy_data.csv to ucinamy 16 ostatnich kolumn, jezeli nie to nie ucinamy nic
 
 
 
