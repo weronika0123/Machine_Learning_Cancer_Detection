@@ -18,12 +18,10 @@ Na później (3/4 dni od 18.09)
 3. CLI opisać, zrobic presety, moze config?
     https://www.youtube.com/watch?v=ADWAwzGXJjM&t=564s a potem: https://www.youtube.com/watch?v=J51vxXAWigI&t=317s 
 
-4. SVM
-    ConvergenceWarning przy LinearSVC w RFECV możesz praktycznie wyciszyć zwiększając max_iter i/lub zmniejszając C (np. 0.5) - zrobione ale nadal dlugo mieli
+4. DONE = SVM
+    DONE = ConvergenceWarning przy LinearSVC w RFECV możesz praktycznie wyciszyć zwiększając max_iter i/lub zmniejszając C (np. 0.5) - zrobione ale nadal dlugo mieli
 
-4. FS = Jeśli RFECV będzie wolny przy 5k cech, najpierw zbij do ~2–3k prostym filtrem (np. SelectKBest po wariancji/miarach jednowymiarowych), a potem RFECV dociśnie do ~500 — to turbo przyspiesza.
-
-
+5. DONE = FS = implement selekctKBest / selectkBest+fs/ fs to choose from
 
 
 
