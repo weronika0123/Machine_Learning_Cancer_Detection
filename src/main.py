@@ -106,7 +106,12 @@ def pipeline(
     df = pd.read_csv(path, low_memory=False)
 
     # target: cancer
-    X_df = df.iloc[:,1:-16]
+    if str(path)==r"data_sources\liquid_biopsy_data.csv":
+        print("Using liquid_biopsy_data.csv dataset")
+        X_df = df.iloc[:,1:-16]
+    else:
+        print("Using your dataset, assuming last column is target")
+        X_df = df.iloc[:,:-1]
     y_df = df.cancer
 
     X = X_df.to_numpy()
