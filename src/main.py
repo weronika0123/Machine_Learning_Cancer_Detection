@@ -55,6 +55,7 @@ def plot_threshold_curve(tuned_model):
 def pipeline(
     dane: str,
     preprocesing: list,
+    feature_selection_method: str,
     model_name: str,
     model_params: dict,
     postprocess: bool,
@@ -149,7 +150,7 @@ def pipeline(
     fs_mask = None
     if feature_selection_flag:
 
-        fs_method=model_params.get("fs_method", "rfecv" )
+        fs_method=feature_selection_method.lower()
         prefilter_k = model_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
 
         X_train, X_test, fs_mask, rfecv = feature_selection(
@@ -194,8 +195,6 @@ def pipeline(
         model = LogisticRegression(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
         )
-        
-        # TODO: threshold tuning
 
         if XAI:
             XAI_model = "LIME"
@@ -413,6 +412,10 @@ def parse_args(argv=None):
         help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr']\""
     )
     p.add_argument(
+        "--feature_selection_method",
+        default="rfecv", help="Metoda selekcji cech: 'rfecv' lub 'kbest' lub 'kbest+rfecv' (domyślnie 'rfecv')."
+    )
+    p.add_argument(
         "--model",
         required=True,
         choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],
@@ -447,6 +450,7 @@ def main(argv=None):
     out = pipeline(
         dane=args.data,
         preprocesing=preprocess_list,
+        feature_selection_method=args.feature_selection_method,
         model_name=args.model,
         model_params=params,
         postprocess=args.postprocess,
