@@ -25,3 +25,22 @@ PS C:\Users\user\Documents\GitHub\Machine_Learning_Cancer_Detection\src>
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
+
+    python .\main.py `
+  --data "C:\Users\weron\inzynierka\datasets\liquid_biopsy_data.csv" `
+  --preprocess "[feature_selection', correlation removal]" `
+  --model SVM `
+  --feature_selection_method ['kBest+rfecv']`
+  --postprocess TRUE`
+  --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
+  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+
+
+    python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --preprocess "['corr']" `
+  --model SVM `
+  --postprocess `
+  --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
+  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+  --xai

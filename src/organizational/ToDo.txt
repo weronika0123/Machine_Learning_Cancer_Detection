@@ -31,3 +31,16 @@ Na dużo później (2 tyg czy cos od 18.09)
 
 
 Link do dysku na ktr wstawiamy do Piotra: https://drive.pg.edu.pl/s/LnDVTTtqFMLgFax
+
+
+top_features = numeric_df.mean()
+
+# Tworzymy wykres
+plt.figure(figsize=(12,6))
+top_features.plot(kind='bar')
+plt.title(" features by mean expression/value")
+plt.ylabel("Mean value")
+plt.xlabel("Feature")
+plt.xticks(rotation=75)
+plt.tight_layout()
+plt.show()
