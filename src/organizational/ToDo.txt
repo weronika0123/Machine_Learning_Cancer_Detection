@@ -27,12 +27,11 @@ Na później (3/4 dni od 18.09)
 
 7. zapisac statystyki o naszym datasecie (np) ogórlne min, max, mean, std, ilosc NA etc o oficjialnego pliku
 
+8. DONE = dodac feature_selection_method argument
 
+9 stworzyc zapisaywanie do folderu ( tak jak opisane w Functional Requiremenets )
 
-Na później (1 tyg czy cos od 18.09)
-
-1. kolejne 2 algorytmy
-
+10. zrobic NA's check. Jak sa jajkiekolwiek NA's w eksprecjach to shootujemy komunikat i  blokujemy program. 
 
 
 
@@ -40,7 +39,7 @@ Na dużo później (2 tyg czy cos od 18.09)
 
 1. heatmapa w corr removal trzeba "uładnić", bo nic nie widać teraz - na razie zakomentowana
 
-2. zrobic tak, zeby program działał na różnych datasetach
+2. DONE = zrobic tak, zeby program działał na różnych datasetach
 
 
 Link do dysku na ktr wstawiamy do Piotra: https://drive.pg.edu.pl/s/LnDVTTtqFMLgFax
