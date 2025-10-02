@@ -53,15 +53,15 @@ def plot_threshold_curve(tuned_model):
 
 
 def pipeline(
-    dane: str,
-    preprocesing: list,
-    feature_selection_method: str,
-    model_name: str,
-    model_params: dict,
-    postprocess: bool,
-    EVAL: list,
-    XAI: bool,
-):
+                dane: str,
+                preprocesing: list,
+                feature_selection_method: str,
+                model_name: str,
+                model_params: dict,
+                postprocess: bool,
+                EVAL: list,
+                XAI: bool,
+                ):
 
 #region Data Prep
 
@@ -87,10 +87,8 @@ def pipeline(
     # 2) Identify preprocessing steps (list of strings)
     steps = [str(s).strip().lower() for s in (preprocesing or [])]
 
-
     if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
         feature_selection_flag = True
-        
         
     if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
         correlation_removal_flag = True
@@ -102,8 +100,15 @@ def pipeline(
 
     # Load data
     path = Path(dane)
+
+    # Validations
     if not path.exists():
-        raise FileNotFoundError(f"Nie znaleziono pliku: {path}")
+        raise FileNotFoundError(f"We cannot find the file: {path} \nPlease provide the correct path.")
+    if(not str(path).endswith(".csv")):
+        raise ValueError("Only .csv files are supported. Please provide a valid CSV file.")
+    if path.stat().st_size == 0:
+        raise ValueError("The provided CSV file is empty. Please provide a non-empty, valid CSV file.")
+    
     df = pd.read_csv(path, low_memory=False)
 
     # target: cancer
