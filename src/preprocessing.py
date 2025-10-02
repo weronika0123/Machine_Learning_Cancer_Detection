@@ -15,7 +15,7 @@ import warnings
 
 RANDOM_STATE = 42
 
-
+# region Correlation removal
 def correlation_removal(X_train, X_test, threshold=0.90):
     
     print(f"[CORR] Starting correlation-based feature removal with threshold={threshold}...")
@@ -72,7 +72,8 @@ def correlation_removal(X_train, X_test, threshold=0.90):
     #plt.show()
 
     return X_train_red, X_test_red, final_mask, info
-
+#endregion
+#region Feature Selection
 def prefilter_select_kbest(X_train, y_train, X_test, k=1500):
     
     #Zwraca X_train/X_test zredukowane do top-k cech wg ANOVA F (f_classif),
@@ -212,3 +213,4 @@ def feature_selection(steps:int, X_train, y_train, X_test,
     plt.show()
 
     return X_train_sel, X_test_sel, mask_rfe_full, rfecv
+#endregion
