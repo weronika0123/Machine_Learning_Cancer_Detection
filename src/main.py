@@ -145,8 +145,9 @@ def pipeline(
 
     corr_mask = None
     if correlation_removal_flag:
+        corr_threshold = float(model_params.get("corr_threshold", 0.90))  # default threshold
         X_train, X_test, corr_mask, corr_info = correlation_removal(
-        X_train, X_test, threshold=0.90
+        X_train, X_test, corr_threshold
         )
         if corr_mask is not None:
             X_val = X_val[:, corr_mask]
