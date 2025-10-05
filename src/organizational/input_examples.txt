@@ -129,3 +129,13 @@ python .\main.py `
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
+
+#Logistic Regression with threshold tuning
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --model LR `
+  --postprocess `
+  --params "{'max_iter': 1000, 'C': 1.0}" `
+  --eval "['AUC ROC','accuracy','F1','recall','precision','Confusion Matrix']"

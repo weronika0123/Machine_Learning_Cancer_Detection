@@ -18,37 +18,14 @@ from sklearn.metrics import (
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import TunedThresholdClassifierCV
 from sklearn.base import clone
 from preprocessing import correlation_removal, feature_selection
+from postprocessing import tune_threshold
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
-
-#for threshold tuning
-def plot_threshold_curve(tuned_model):
-    thresholds = tuned_model.cv_results_["thresholds"]
-    scores = tuned_model.cv_results_["scores"]
-
-    plt.figure(figsize=(7,5))
-    plt.plot(thresholds, scores, label="Score vs threshold")
-    plt.plot(
-        tuned_model.best_threshold_,
-        tuned_model.best_score_,
-        "o",
-        markersize=10,
-        color="tab:orange",
-        label=f"Best thr={tuned_model.best_threshold_:.3f}"
-    )
-    plt.xlabel("Threshold")
-    plt.ylabel("Score (CV)")
-    plt.title("Threshold tuning curve")
-    plt.legend()
-    plt.grid(ls=":")
-    plt.tight_layout()
-    plt.show()
 
 #Flexible data splitting with validation handling options
 def prepare_data_split(X, y, df, use_validation="separate"):
@@ -318,44 +295,17 @@ def pipeline(
 #endregion
 
 #region Post-processing = Threshold tuning
+    tuning_info = None
     if postprocess_flag:
-
-        print("[POSTPROCESS] Threshold tuning na zbiorze walidacyjnym...")
-
-        if X_val.shape[0] == 0:
-            print("[POSTPROCESS][WARN] Zbiór walidacyjny jest pusty — pomijam tuning progu.")
-            y_pred = model.predict(X_test)
-        else:
-            # scores on VAL
-            if hasattr(model, "predict_proba"):
-                response_method = "predict_proba"
-            elif hasattr(model, "decision_function"):
-                response_method = "decision_function"
-            else:
-                print("[POSTPROCESS][WARN] Model nie ma predict_proba ani decision_function — pomijam tuning progu.")
-                y_pred = model.predict(X_test)
-                response_method = None
-
-            #Potrzebujesz danych, których model nie widział podczas trenowania parametrów, żeby realistycznie ocenić, który threshold działa najlepiej — 
-            # i tu właśnie wchodzi zbiór walidacyjny.
-
-            # Uwaga: model jest już wytrenowany na TRAIN.
-            # Tutaj TYLKO stroimy próg na WALIDACJI.
-            tuned = TunedThresholdClassifierCV(
-                estimator=model,                # prefit estimator
-                cv="prefit",                   # NIE robi CV, używa przekazanych danych do strojenia progu
-                scoring="f1",                  # zmień jeśli chcesz inną metrykę
-                thresholds=500,                # gęstość siatki progów
-                response_method=response_method,
-                refit=False                     # bc estimator is already fitted (prefit)
-            )
-
-            # To NIE trenuje modelu; z cv='prefit' stroi tylko próg na (X_val, y_val)
-            tuned.fit(X_val, y_val)
-            print(f"[POSTPROCESS] Wybrany threshold={tuned.best_threshold_:.3f} (score={tuned.best_score_:.3f})")
-
-            # Finalna decyzja na TEŚCIE z dobranym progiem:
-            y_pred = tuned.predict(X_test)  # użyje base_estimator + best_threshold_
+        y_pred, tuning_info = tune_threshold(
+            model=model,
+            X_val=X_val,
+            y_val=y_val,
+            X_test=X_test,
+            scoring="f1",
+            thresholds=500,
+            plot_curve=False
+        )
     else:
         y_pred = model.predict(X_test)
 
@@ -447,7 +397,15 @@ def pipeline(
         else:
             print("[XAI] Nieznana metoda XAI (użyj: LIME lub SHAP).", file=sys.stderr)
 
-    # 8) Zwrócenie wyniku (na razie tylko szkic)
+    # Add threshold tuning info to results if performed
+    if tuning_info is not None and tuning_info['tuning_performed']:
+        results["threshold_tuning"] = {
+            "best_threshold": float(tuning_info['best_threshold']),
+            "best_score": float(tuning_info['best_score']),
+            "tuning_performed": tuning_info['tuning_performed']
+        }
+    
+    # 8) Zwrócenie wyniku
     return {
         "model": model.__class__.__name__,
         "metrics_requested": EVAL,
