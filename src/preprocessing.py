@@ -74,18 +74,24 @@ def correlation_removal(X_train, X_test, threshold):
 #region Feature Selection
 def prefilter_select_kbest(X_train, y_train, X_test, k=1500):
     
-    #Zwraca X_train/X_test zredukowane do top-k cech wg ANOVA F (f_classif),
-    #oraz maskę bool (względem wejścia), które cechy zostały zachowane.
-    
+    # Validation - k must not be grater than number of features
     k = min(k, X_train.shape[1])
+
+    # [*sel1] SelectKBest with ANOVA F-value
     selector = SelectKBest(score_func=f_classif, k=k)
+
+    # calculating F-score scores, keeping top-k
     X_train_k = selector.fit_transform(X_train, y_train)
+
+    # Applies the same top-k 
     X_test_k  = selector.transform(X_test)
-    mask_k = selector.get_support()  # bool mask względem WEJŚCIA (po corr)
+
+    mask_k = selector.get_support() 
     print(f"[KBest] Wybrano top-{X_train_k.shape[1]} cech (z {X_train.shape[1]}) wg f_classif.")
+
     return X_train_k, X_test_k, mask_k
 
-def feature_selection(steps:int, X_train, y_train, X_test,
+def feature_selection(steps:int, X_train, y_train, X_test, 
                       model_name:str, fs_method:str="rfecv", prefilter_k:int=1500):
 
     print("[FS] Start feature_selection...")
