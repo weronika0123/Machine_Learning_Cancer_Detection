@@ -50,10 +50,47 @@ def plot_threshold_curve(tuned_model):
     plt.tight_layout()
     plt.show()
 
+#Flexible data splitting with validation handling options
+def prepare_data_split(X, y, df, use_validation="separate"):
+
+    # First, extract base splits
+    X_train_base = X[df["isTraining"] == 1]
+    y_train_base = y[df["isTraining"] == 1]
+    X_val_base = X[df["isValidation"] == 1]
+    y_val_base = y[df["isValidation"] == 1]
+    X_test_base = X[df["isTest"] == 1]
+    y_test_base = y[df["isTest"] == 1]
+    
+     # Option A: separate train/validation/test
+    if use_validation == "separate":
+        return X_train_base, X_val_base, X_test_base, y_train_base, y_val_base, y_test_base
+    
+    #Option B: Split validation 80/20 into train/test
+    elif use_validation == "merge_train_test":
+        if X_val_base.shape[0] > 0:
+            X_val_train, X_val_test, y_val_train, y_val_test = train_test_split(
+                X_val_base, y_val_base,
+                test_size=0.2,
+                stratify=y_val_base,
+                random_state=RANDOM_STATE
+            )
+            X_train = np.vstack([X_train_base, X_val_train])
+            y_train = np.concatenate([y_train_base, y_val_train])
+            X_test = np.vstack([X_test_base, X_val_test])
+            y_test = np.concatenate([y_test_base, y_val_test])
+            X_val = np.array([]).reshape(0, X.shape[1])  
+            y_val = np.array([])
+            print(f"[DATA] Merged validation: +{X_val_train.shape[0]} to train, +{X_val_test.shape[0]} to test")
+        else:
+            X_train, X_val, X_test = X_train_base, X_val_base, X_test_base
+            y_train, y_val, y_test = y_train_base, y_val_base, y_test_base
+        
+        return X_train, X_val, X_test, y_train, y_val, y_test
 
 
 def pipeline(
                 dane: str,
+                use_validation: str,
                 preprocesing: list,
                 feature_selection_method: str,
                 model_name: str,
@@ -98,6 +135,14 @@ def pipeline(
     if(postprocess):
         postprocess_flag = True
 
+    #Validate postprocess and merge_train_test combination
+    if postprocess_flag and use_validation == "merge_train_test":
+        raise ValueError(
+            "Cannot use --postprocess (threshold tuning) with --use_validation merge_train_test. "
+            "Threshold tuning requires a validation set. Please use --use_validation separate "
+            "or remove the --postprocess flag."
+        )
+
     # Load data
     path = Path(dane)
 
@@ -123,32 +168,30 @@ def pipeline(
     X = X_df.to_numpy()
     y = y_df.to_numpy()
     
-    # Base train/val/test split
-    X_train = X[df["isTraining"] == 1]
-    y_train = y[df["isTraining"] == 1]
-    X_val = X[df["isValidation"] == 1]
-    y_val = y[df["isValidation"] == 1]
-    X_test = X[df["isTest"] == 1]
-    y_test = y[df["isTest"] == 1]
+    # Call prepare_data_split to get train/val/test splits
+    X_train, X_val, X_test, y_train, y_val, y_test = prepare_data_split(
+        X, y, df, use_validation=use_validation
+    )
 
-    # FTO = for test only 
-    print(f"Data sliced: BASE size X_train: {X_train.shape}, y_train: {y_train.shape}")
-    print(f"Data sliced: BASE size X_val: {X_val.shape}, y_val: {y_val.shape}")
-    print(f"Data sliced: BASE size X_test: {X_test.shape}, y_test: {y_test.shape}")
+    # Log the split sizes
+    print(f"Data split: X_train: {X_train.shape}, y_train: {y_train.shape}")
+    print(f"Data split: X_val: {X_val.shape}, y_val: {y_val.shape}")
+    print(f"Data split: X_test: {X_test.shape}, y_test: {y_test.shape}")
 
     # MinMax for scaling to [0,1]
     if model_kind in ("Logistic Regression", "SVM"):
         scaler = MinMaxScaler()
-        X_train = scaler.fit_transform(X_train)  
-        X_val   = scaler.transform(X_val)        
-        X_test  = scaler.transform(X_test)      
+        X_train = scaler.fit_transform(X_train)
+        if X_val.shape[0] > 0:  # Only transform if validation set exists
+            X_val = scaler.transform(X_val)
+        X_test = scaler.transform(X_test)
 
     corr_mask = None
     if correlation_removal_flag:
         X_train, X_test, corr_mask, corr_info = correlation_removal(
         X_train, X_test, threshold=0.90
         )
-        if corr_mask is not None:
+        if corr_mask is not None and X_val.shape[0] > 0:
             X_val = X_val[:, corr_mask]
 
     # Feature selection
@@ -163,7 +206,7 @@ def pipeline(
             X_train=X_train, y_train=y_train, X_test=X_test,
             model_name=model_kind,fs_method=fs_method, prefilter_k=prefilter_k
         )
-        if fs_mask is not None:
+        if fs_mask is not None and X_val.shape[0] > 0:
             X_val = X_val[:, fs_mask]
 
 
@@ -411,21 +454,10 @@ def pipeline(
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="Bazowy szkielet pipeline ML (TODO w środku).")
     p.add_argument("--data", required=True, help="Ścieżka do pliku CSV.")
-    p.add_argument(
-        "--preprocess",
-        default="[]",
-        help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr']\""
-    )
-    p.add_argument(
-        "--feature_selection_method",
-        default="rfecv", help="Metoda selekcji cech: 'rfecv' lub 'kbest' lub 'kbest+rfecv' (domyślnie 'rfecv')."
-    )
-    p.add_argument(
-        "--model",
-        required=True,
-        choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],
-        help="Wybór modelu."
-    )
+    p.add_argument("--use_validation",default="separate",choices=["separate", "merge_train_test"],help="Strategy for validation set: 'separate' keeps it separate, 'merge_train_test' merges 80%% into train and 20%% into test")
+    p.add_argument("--preprocess",default="[]",help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr']\"")
+    p.add_argument("--feature_selection_method",default="rfecv", help="Metoda selekcji cech: 'rfecv' lub 'kbest' lub 'kbest+rfecv' (domyślnie 'rfecv').")
+    p.add_argument("--model",required=True,choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],help="Wybór modelu.")
     p.add_argument("--params", default="{}", help="Parametry modelu jako słownik Pythona, np. {'max_depth': 4}")
     p.add_argument("--postprocess", action="store_true", help="Włącz postprocessing i.e threshold tuning.")
     p.add_argument("--eval", default="['AUC ROC','accuracy','Confusion matrix']", help="Lista metryk jako lista Pythona.")
@@ -454,6 +486,7 @@ def main(argv=None):
 
     out = pipeline(
         dane=args.data,
+        use_validation=args.use_validation,
         preprocesing=preprocess_list,
         feature_selection_method=args.feature_selection_method,
         model_name=args.model,
@@ -468,4 +501,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-
