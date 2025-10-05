@@ -4,7 +4,7 @@ cd C:\Users\weron\Downloads\Machine_Learning_Cancer_Detection-main\Machine_Learn
 #Using merge_train_test mode to get more training data
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation merge_train_test
+  --use_validation "merge_train_test" `
   --preprocess "['fs','corr']" `
   --feature_selection_method "kbest+rfecv" `
   --model LR `
@@ -14,7 +14,7 @@ python .\main.py `
 #Separate validation for threshold tuning
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation separate
+  --use_validation "separate" `
   --preprocess "['corr']" `
   --model LR `
   --postprocess `
@@ -22,18 +22,18 @@ python .\main.py `
   --eval "['AUC ROC','accuracy','F1']" `
 
   --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
   --preprocess "['fs','corr']" `
   --feature_selection_method "kbest+rfecv" `
   --model LR `
   --postprocess `
   --params "{'prefilter_k':1000,'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0, 'class_weight': 'balanced'}" `
   --eval "['AUC ROC','auc pr','accuracy','Confusion Matrix','F1','r','p']"
-  --use_validation separate
 
 
   python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation separate
+  --use_validation "separate" `
   --preprocess "['feature_selection','corr']" `
   --model DT `
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
@@ -42,7 +42,7 @@ python .\main.py `
 
   python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation separate
+  --use_validation "separate" `
   --preprocess "['corr']" `
   --model DT `
   --postprocess `
@@ -53,7 +53,7 @@ python .\main.py `
 #Decision Tree with merge_train_test (more training data, no threshold tuning)
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation merge_train_test `
+  --use_validation "merge_train_test" `
   --preprocess "['feature_selection','corr']" `
   --model DT `
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
@@ -83,7 +83,7 @@ PARAMS DO SVM:
 
   python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation separate
+  --use_validation "separate" `
   --preprocess "['corr']" `
   --model SVM `
   --postprocess `
@@ -93,7 +93,7 @@ PARAMS DO SVM:
 
   python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation separate
+  --use_validation "separate" `
   --preprocess "['fs','corr']" `
   --model SVM `
   --postprocess `
@@ -104,7 +104,7 @@ PARAMS DO SVM:
 #SVM Linear with merge_train_test (maximum training data)
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation merge_train_test `
+  --use_validation "merge_train_test" `
   --preprocess "['corr']" `
   --model SVM `
   --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
@@ -113,7 +113,7 @@ python .\main.py `
 #SVM RBF with merge_train_test and feature selection
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation merge_train_test `
+  --use_validation "merge_train_tes"t `
   --preprocess "['fs','corr']" `
   --feature_selection_method "kbest+rfecv" `
   --model SVM `
@@ -122,7 +122,7 @@ python .\main.py `
 
   python .\main.py `
   --data "data_sources" `
-  --use_validation separate
+  --use_validation "separate" `
   --preprocess "['feature_selection','corr']" `
   --model DT `
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
