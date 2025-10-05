@@ -156,13 +156,20 @@ def pipeline(
     
     df = pd.read_csv(path, low_memory=False)
 
-    # target: cancer
+    
     if str(path)==r"data_sources\liquid_biopsy_data.csv":
         print("Using liquid_biopsy_data.csv dataset")
         X_df = df.iloc[:,1:-16]
     else:
         print("Using your dataset, assuming last column is target")
         X_df = df.iloc[:,:-1]
+
+    # missing values check - close the pipeline if found
+    if X_df.isnull().values.any():
+        print("Missing values detected. Please enter data without any missing values.")
+        sys.exit(1)
+    
+    # target: cancer
     y_df = df.cancer
 
     X = X_df.to_numpy()
