@@ -143,13 +143,6 @@ def pipeline(
     print(f"Data sliced: BASE size X_val: {X_val.shape}, y_val: {y_val.shape}")
     print(f"Data sliced: BASE size X_test: {X_test.shape}, y_test: {y_test.shape}")
 
-    # MinMax for scaling to [0,1]
-    if model_kind in ("Logistic Regression", "SVM"):
-        scaler = MinMaxScaler()
-        X_train = scaler.fit_transform(X_train)  
-        X_val   = scaler.transform(X_val)        
-        X_test  = scaler.transform(X_test)      
-
     corr_mask = None
     if correlation_removal_flag:
         corr_threshold = float(model_params.get("corr_threshold", 0.90))  # default threshold
@@ -173,6 +166,20 @@ def pipeline(
         )
         if fs_mask is not None:
             X_val = X_val[:, fs_mask]
+
+    # MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
+    if model_kind in ("Logistic Regression", "SVM"):
+        print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models: LR/SVM)")
+        scaler = MinMaxScaler()
+        X_train = scaler.fit_transform(X_train)  # Learn min/max from train, then scale
+        
+        if X_val.shape[0] > 0:
+            X_val = scaler.transform(X_val)  # Apply train statistics (no data leakage)
+            print(f"[SCALING] Applied to validation set: {X_val.shape}")
+        X_test = scaler.transform(X_test)  # Apply train statistics (no data leakage)
+        print(f"[SCALING] Feature ranges after scaling: [{X_train.min():.3f}, {X_train.max():.3f}]")
+    else:
+        print(f"[SCALING] Skipped for {model_kind} (tree-based models don't require scaling)")
 
 
 #endregion
@@ -476,4 +483,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-
