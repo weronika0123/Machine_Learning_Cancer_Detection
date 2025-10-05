@@ -16,37 +16,41 @@ import warnings
 RANDOM_STATE = 42
 
 # region Correlation removal
-def correlation_removal(X_train, X_test, threshold=0.90):
+def correlation_removal(X_train, X_test, threshold):
     
     print(f"[CORR] Starting correlation-based feature removal with threshold={threshold}...")
 
+    # initial number of features
     n_features = X_train.shape[1]
 
-    #  Drop constant features (zero variance)
+    # [* corr1] Dropping constant features (zero variance) 
     variances = X_train.var(axis=0)
-    nonconst_mask = variances > 0.0
-    dropped_const = int((~nonconst_mask).sum())
+    nonconst_mask = variances > 0.0 # True = keep
+    dropped_const = (~nonconst_mask).sum()
 
-    X_train_nc = X_train[:, nonconst_mask]
-    X_test_nc  = X_test[:, nonconst_mask]
+    # [*corr2] Only train set involved
+    X_train_non_const = X_train[:, nonconst_mask]
 
-    #  Correlation matrix (train only)
-    corr = np.corrcoef(X_train_nc, rowvar=False)
-    m = corr.shape[0]
-    keep = np.ones(m, dtype=bool)
+    # [*corr3] Pearsons Correlation matrix 
+    corr = np.corrcoef(X_train_non_const, rowvar=False)
+    candidate_nr = corr.shape[0]
+    start_mask = np.ones(candidate_nr, dtype=bool) # True = keep
 
-    # Scan upper triangle
-    for i in range(m):
-        if not keep[i]:
+    # Scaning upper triangle only
+    for i in range(candidate_nr):
+        if not start_mask[i]:
             continue
-        high_corr = np.where(np.abs(corr[i, (i+1):]) > threshold)[0]
-        if high_corr.size > 0:
-            drop_idx = (i+1) + high_corr
-            keep[drop_idx] = False
+
+        column_mask = np.abs(corr[i, (i+1):]) > threshold # TRUE = drop
+        relative_indexes = np.where(column_mask)[0]
+
+        if relative_indexes.size > 0:
+            drop_idx = (i+1) + relative_indexes
+            start_mask[drop_idx] = False
 
     # Final mask relative to original feature set
-    final_mask = np.zeros(n_features, dtype=bool)
-    final_mask[nonconst_mask] = keep
+    final_mask = np.zeros(n_features, dtype=bool) # True = keep
+    final_mask[nonconst_mask] = start_mask
 
     X_train_red = X_train[:, final_mask]
     X_test_red  = X_test[:,  final_mask]
@@ -54,7 +58,7 @@ def correlation_removal(X_train, X_test, threshold=0.90):
     info = {
         "initial_features": n_features,
         "dropped_constant": dropped_const,
-        "dropped_corr": int(nonconst_mask.sum() - keep.sum()),
+        "dropped_corr": int(nonconst_mask.sum() - start_mask.sum()),
         "kept": int(final_mask.sum()),
         "threshold": threshold,
     }
@@ -63,13 +67,7 @@ def correlation_removal(X_train, X_test, threshold=0.90):
           f"kept={info['kept']} out of {info['initial_features']} "
           f"(dropped_const={info['dropped_constant']}, "
           f"dropped_corr={info['dropped_corr']})")
-    
-    # Plot correlation heatmap (train only, after dropping constants)
-    #plt.figure(figsize=(8, 6))
-    #sns.heatmap(corr, cmap="coolwarm", center=0,
-    #                xticklabels=False, yticklabels=False)
-    #plt.title(f"Correlation matrix (train, after dropping constants)\nThreshold = {threshold}")
-    #plt.show()
+        
 
     return X_train_red, X_test_red, final_mask, info
 #endregion
