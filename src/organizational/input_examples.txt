@@ -21,6 +21,7 @@ python .\main.py `
   --params "{'max_iter': 1000}" `
   --eval "['AUC ROC','accuracy','F1']" `
 
+python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['fs','corr']" `
@@ -86,7 +87,6 @@ PARAMS DO SVM:
   --use_validation "separate" `
   --preprocess "['corr']" `
   --model SVM `
-  --postprocess `
   --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
@@ -97,7 +97,8 @@ PARAMS DO SVM:
   --preprocess "['fs','corr']" `
   --model SVM `
   --postprocess `
-  --params "{'fs_method':'kbest+rfecv','prefilter_k':1200,'kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
+  --feature_selection_method "kbest+rfecv" `
+  --params "{'prefilter_k':1200,'corr_threshold':'0.87','kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
 
