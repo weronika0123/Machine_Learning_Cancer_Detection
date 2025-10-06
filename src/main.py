@@ -192,25 +192,17 @@ def pipeline(
     print(f"Data split: X_val: {X_val.shape}, y_val: {y_val.shape}")
     print(f"Data split: X_test: {X_test.shape}, y_test: {y_test.shape}")
 
-    corr_mask = None
-    if correlation_removal_flag:
-        corr_threshold = float(model_params.get("corr_threshold", 0.90))  # default threshold
-        X_train, X_test, corr_mask, corr_info = correlation_removal(
-        X_train, X_test, corr_threshold
-        )
-        if corr_mask is not None and X_val.shape[0] > 0:
-            X_val = X_val[:, corr_mask]
-
     # Feature selection
     fs_mask = None
     if feature_selection_flag:
 
+        corr_threshold = float(model_params.get("corr_threshold", 0.90))  # default threshold
         prefilter_k = model_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
 
-        X_train, X_test, fs_mask, rfecv = feature_selection(
+        X_train, X_test, fs_mask = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
-            model_name=model_kind,fs_methods=fs_method, prefilter_k=prefilter_k
+            model_name=model_kind,fs_methods=fs_method, prefilter_k=prefilter_k, corr_threshold=corr_threshold
         )
         if fs_mask is not None and X_val.shape[0] > 0:
             X_val = X_val[:, fs_mask]

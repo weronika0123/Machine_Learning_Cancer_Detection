@@ -15,8 +15,8 @@ import warnings
 
 RANDOM_STATE = 42
 
-# region Correlation removal
-def correlation_removal(X_train, X_test, threshold):
+
+def correlation_removal(X_train, X_test, threshold, full_mask):
     
     print(f"[CORR] Starting correlation-based feature removal with threshold={threshold}...")
 
@@ -55,6 +55,8 @@ def correlation_removal(X_train, X_test, threshold):
     X_train_red = X_train[:, final_mask]
     X_test_red  = X_test[:,  final_mask]
 
+    full_mask &= final_mask
+
     info = {
         "initial_features": n_features,
         "dropped_constant": dropped_const,
@@ -69,10 +71,9 @@ def correlation_removal(X_train, X_test, threshold):
           f"dropped_corr={info['dropped_corr']})")
         
 
-    return X_train_red, X_test_red, final_mask, info
-#endregion
-#region Feature Selection
-def prefilter_select_kbest(X_train, y_train, X_test, k=1500):
+    return X_train_red, X_test_red, full_mask, info
+
+def prefilter_select_kbest(X_train, y_train, X_test, full_mask,k=1500):
     
     # Validation - k must not be grater than number of features
     k = min(k, X_train.shape[1])
@@ -89,7 +90,13 @@ def prefilter_select_kbest(X_train, y_train, X_test, k=1500):
     mask_k = selector.get_support() 
     print(f"[KBest] Wybrano top-{X_train_k.shape[1]} cech (z {X_train.shape[1]}) wg f_classif.")
 
-    return X_train_k, X_test_k, mask_k
+     # wstaw maskę kbest w miejsca ŻYWYCH kolumn wg full_mask
+    idx_alive = np.where(full_mask)[0]    # indeksy kolumn, które przetrwały dotąd
+    new_full_mask = np.zeros_like(full_mask)
+    new_full_mask[idx_alive] = mask_k
+    full_mask = new_full_mask
+
+    return X_train_k, X_test_k, full_mask
 
 def estimator(model_name:str):
     # 2) Dobór estymatora do RFECV (gołe modele – bez Pipeline)
@@ -119,111 +126,78 @@ def estimator(model_name:str):
         )
     return fs_estimator
 
+def rfecv(steps:int, X_train, y_train, X_test, model_name, full_mask):
+
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+    recall_scorer = make_scorer(recall_score, pos_label=1)
+
+    fs_estimator = estimator(model_name)
+    print("[FS] Tryb: czysty RFECV (bez prefiltracji)")
+    rfecv_model = RFECV(
+        estimator=fs_estimator,
+        step=steps,
+        scoring=recall_scorer,
+        cv=cv,
+        min_features_to_select=50,
+        n_jobs=-1
+    )
+    rfecv_model.fit(X_train, y_train)
+
+    mask_rfe_full = rfecv_model.support_
+    print(f"[RFECV] Wybrane k (opt pod RECALL): {rfecv_model.n_features_}")
+
+    X_train_sel = X_train[:, mask_rfe_full]
+    X_test_sel  = X_test[:,  mask_rfe_full]
+
+    scores = np.asarray(rfecv_model.cv_results_["mean_test_score"]).ravel()
+    n_features_list = np.asarray(rfecv_model.cv_results_["n_features"]).ravel()
+    plt.figure(figsize=(7,4))
+    plt.plot(n_features_list, scores, marker="o", linewidth=1)
+    plt.axvline(rfecv_model.n_features_, ls="--", color="red", label=f"Optymalne k = {rfecv_model.n_features_}")
+    best_idx = int(np.argmax(scores))
+    plt.scatter([n_features_list[best_idx]], [scores[best_idx]], s=60, zorder=3)
+    plt.xlabel("Liczba cech (k) — TRAIN (CV)")
+    plt.ylabel("Średni recall — TRAIN (CV)")
+    plt.title("RFECV (balanced): recall (CV) vs liczba cech")
+    plt.gca().invert_xaxis()
+    plt.grid(True, ls=":")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    idx_alive = np.where(full_mask)[0]
+    new_full_mask = np.zeros_like(full_mask)
+    new_full_mask[idx_alive] = mask_rfe_full
+    full_mask = new_full_mask
+
+    return X_train_sel, X_test_sel, full_mask, rfecv_model
+
 def feature_selection(steps:int, X_train, y_train, X_test, 
-                      model_name:str, fs_methods:list, prefilter_k:int=1500):
+                      model_name:str, fs_methods:list, prefilter_k:int=1500, corr_threshold:float=0.95):
 
     print("[FS] Start feature_selection...")
 
+    n0 = X_train.shape[1]                     # liczba cech w oryginale (np. 5277)
+    mask_best = np.ones(n0, dtype=bool)       # pełna maska wzgledem oryginału
 
-    # 1) TYLKO KBEST -> pełna maska (po corr), zgodna z X_val
+    if "corr" in fs_methods:
+        
+        X_train, X_test, mask_best, corr_info = correlation_removal(X_train, X_test, corr_threshold, mask_best)
+        # corr_mask JEST już względem oryginału (tak budujesz w correlation_removal)
+        
+        print(f"[DEBUG CORR] full_mask sum={mask_best.sum()}")
+        print(f"[DEBUG CORR] full_mask shape={mask_best.shape}")
+
     if "kbest" in fs_methods:
-        X_train_k, X_test_k, mask_kbest_full = prefilter_select_kbest(X_train, y_train, X_test, k=prefilter_k)
 
+        X_train, X_test, mask_best = prefilter_select_kbest(X_train, y_train, X_test,mask_best, k=prefilter_k)
+        print(f"[DEBUG KBest] full_mask sum={mask_best.sum()}")
+        print(f"[DEBUG KBest] full_mask shape={mask_best.shape}")
+
+    if "rfecv" in fs_methods:
         
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
-    recall_scorer = make_scorer(recall_score, pos_label=1)
-    fs_estimator=estimator(model_name)
-
+        X_train, X_test, mask_best, rfecv_model = rfecv(steps, X_train, y_train, X_test, model_name, mask_best)
+        print(f"[DEBUG RFECV] full_mask sum={mask_best.sum()}")
+        print(f"[DEBUG RFECV] full_mask shape={mask_best.shape}")
     
-
-    # 3) KBEST+RFECV -> RFECV na zredukowanym X, a potem składanie pełnej maski
-    if "kbest" in fs_methods and "rfecv" in fs_methods:
-        
-
-        print("[RFECV] Odpalam RFECV na danych po KBest...")
-        n_features_full = X_train.shape[1]  
-        rfecv = RFECV(
-            estimator=fs_estimator,
-            step=steps,
-            scoring=recall_scorer,
-            cv=cv,
-            min_features_to_select=50,
-            n_jobs=-1
-        )
-        rfecv.fit(X_train_k, y_train)
-
-        # maska RFECV w PRZESTRZENI KBEST (długość = prefilter_k)
-        mask_rfe_on_k = rfecv.support_
-        print(f"[RFECV] Wybrane k (opt pod RECALL): {rfecv.n_features_} z {X_train_k.shape[1]} (po KBest)")
-
-        # --- SKŁADANIE MASKI PEŁNEJ (względem 5098 kolumn po corr) ---
-        full_mask = np.zeros(n_features_full, dtype=bool)
-        idx_kbest = np.flatnonzero(mask_kbest_full)   # indeksy cech, które przeszły KBest
-        selected_idx_full = idx_kbest[mask_rfe_on_k]  # wybór tych, które przeszły także RFECV
-        full_mask[selected_idx_full] = True
-
-        # projekcja na oryginalne X (po corr)
-        X_train_sel = X_train[:, full_mask]
-        X_test_sel  = X_test[:,  full_mask]
-
-        # wykres (opcjonalnie) — nadal pokazujemy krzywą RFECV
-        scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
-        n_features_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
-        plt.figure(figsize=(7,4))
-        plt.plot(n_features_list, scores, marker="o", linewidth=1)
-        plt.axvline(rfecv.n_features_, ls="--", color="red", label=f"Optymalne k = {rfecv.n_features_}")
-        best_idx = int(np.argmax(scores))
-        plt.scatter([n_features_list[best_idx]], [scores[best_idx]], s=60, zorder=3)
-        plt.xlabel("Liczba cech (k) — TRAIN (CV) [po KBest]")
-        plt.ylabel("Średni recall — TRAIN (CV)")
-        plt.title("RFECV (po KBest): recall (CV) vs liczba cech")
-        plt.gca().invert_xaxis()
-        plt.grid(True, ls=":")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-
-        # ZWRACAMY pełną maskę (5098), więc w main.py:
-        # X_val = X_val[:, fs_mask] będzie działać poprawnie.
-        return X_train_sel, X_test_sel, full_mask, rfecv
-    
-    if "kbest"  not in fs_methods and "rfecv" in fs_methods:
-
-        # 4) Czysty RFECV (bez KBest) – maska od razu jest w pełnej przestrzeni
-        print("[FS] Tryb: czysty RFECV (bez prefiltracji)")
-        rfecv = RFECV(
-            estimator=fs_estimator,
-            step=steps,
-            scoring=recall_scorer,
-            cv=cv,
-            min_features_to_select=50,
-            n_jobs=-1
-        )
-        rfecv.fit(X_train, y_train)
-
-        mask_rfe_full = rfecv.support_
-        print(f"[RFECV] Wybrane k (opt pod RECALL): {rfecv.n_features_}")
-
-        X_train_sel = X_train[:, mask_rfe_full]
-        X_test_sel  = X_test[:,  mask_rfe_full]
-
-        scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
-        n_features_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
-        plt.figure(figsize=(7,4))
-        plt.plot(n_features_list, scores, marker="o", linewidth=1)
-        plt.axvline(rfecv.n_features_, ls="--", color="red", label=f"Optymalne k = {rfecv.n_features_}")
-        best_idx = int(np.argmax(scores))
-        plt.scatter([n_features_list[best_idx]], [scores[best_idx]], s=60, zorder=3)
-        plt.xlabel("Liczba cech (k) — TRAIN (CV)")
-        plt.ylabel("Średni recall — TRAIN (CV)")
-        plt.title("RFECV (balanced): recall (CV) vs liczba cech")
-        plt.gca().invert_xaxis()
-        plt.grid(True, ls=":")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-
-        return X_train_sel, X_test_sel, mask_rfe_full, rfecv
-    
-    return X_train_k, X_test_k, mask_kbest_full, None
-#endregion
+    return X_train, X_test, mask_best
