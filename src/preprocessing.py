@@ -129,10 +129,13 @@ def estimator(model_name:str):
 def rfecv(steps:int, X_train, y_train, X_test, model_name, full_mask):
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+
+    # [*rfecv1] scorer based on recall for the positive class (label=1)
     recall_scorer = make_scorer(recall_score, pos_label=1)
 
+    # [*rfecv2] base estimator for RFECV with predetermined estimator
     fs_estimator = estimator(model_name)
-    print("[FS] Tryb: czysty RFECV (bez prefiltracji)")
+
     rfecv_model = RFECV(
         estimator=fs_estimator,
         step=steps,
@@ -141,6 +144,7 @@ def rfecv(steps:int, X_train, y_train, X_test, model_name, full_mask):
         min_features_to_select=50,
         n_jobs=-1
     )
+    # fit RFECV (on TRAIN set only)
     rfecv_model.fit(X_train, y_train)
 
     mask_rfe_full = rfecv_model.support_
@@ -149,24 +153,31 @@ def rfecv(steps:int, X_train, y_train, X_test, model_name, full_mask):
     X_train_sel = X_train[:, mask_rfe_full]
     X_test_sel  = X_test[:,  mask_rfe_full]
 
+    # CV history: mean recall per iteration and the corresponding number of features
     scores = np.asarray(rfecv_model.cv_results_["mean_test_score"]).ravel()
     n_features_list = np.asarray(rfecv_model.cv_results_["n_features"]).ravel()
+
+    # Plot: RFECV - recall vs number of features (k)
     plt.figure(figsize=(7,4))
     plt.plot(n_features_list, scores, marker="o", linewidth=1)
-    plt.axvline(rfecv_model.n_features_, ls="--", color="red", label=f"Optymalne k = {rfecv_model.n_features_}")
+    # Marking the optimal k
+    plt.axvline(rfecv_model.n_features_, ls="--", color="red", label=f"Optimal k = {rfecv_model.n_features_}")
     best_idx = int(np.argmax(scores))
     plt.scatter([n_features_list[best_idx]], [scores[best_idx]], s=60, zorder=3)
-    plt.xlabel("Liczba cech (k) — TRAIN (CV)")
-    plt.ylabel("Średni recall — TRAIN (CV)")
-    plt.title("RFECV (balanced): recall (CV) vs liczba cech")
+
+    plt.xlabel("number of features (k) — TRAIN (CV)")
+    plt.ylabel("Mean recall — TRAIN (CV)")
+    plt.title("RFECV: recall (CV) vs number of features")
     plt.gca().invert_xaxis()
     plt.grid(True, ls=":")
     plt.legend()
     plt.tight_layout()
     plt.show()
 
+    # Map selection back to the original feature space
     idx_alive = np.where(full_mask)[0]
     new_full_mask = np.zeros_like(full_mask)
+    # inject into previous full_mask
     new_full_mask[idx_alive] = mask_rfe_full
     full_mask = new_full_mask
 
