@@ -92,7 +92,6 @@ def pipeline(
                 dane: str,
                 use_validation: str,
                 preprocesing: list,
-                feature_selection_method: str,
                 model_name: str,
                 model_params: dict,
                 postprocess: bool,
@@ -122,13 +121,21 @@ def pipeline(
 
 
     # 2) Identify preprocessing steps (list of strings)
-    steps = [str(s).strip().lower() for s in (preprocesing or [])]
+    if preprocesing:
+        fs_method = []
+        steps = [str(s).strip().lower() for s in (preprocesing or [])]
 
-    if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
+        if(any(s in ("recursive feature elimination with cross-validation","recursive feature elimination" , "rfecv", "rfe") for s in steps)):
+            fs_method.append("rfecv")
+            
+        if(any(s in ("kbest", "selectkbest", "select_k_best", "k best") for s in steps)):
+            fs_method.append("kbest")
+
+        if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
+            fs_method.append("corr")
+            correlation_removal_flag = True
+
         feature_selection_flag = True
-        
-    if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
-        correlation_removal_flag = True
 
     # 3) Postprocessing (threshold tuning)
     postprocess_flag = False
@@ -198,13 +205,12 @@ def pipeline(
     fs_mask = None
     if feature_selection_flag:
 
-        fs_method=feature_selection_method.lower()
         prefilter_k = model_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
 
         X_train, X_test, fs_mask, rfecv = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
-            model_name=model_kind,fs_method=fs_method, prefilter_k=prefilter_k
+            model_name=model_kind,fs_methods=fs_method, prefilter_k=prefilter_k
         )
         if fs_mask is not None and X_val.shape[0] > 0:
             X_val = X_val[:, fs_mask]
@@ -469,8 +475,7 @@ def parse_args(argv=None):
     p = argparse.ArgumentParser(description="Bazowy szkielet pipeline ML (TODO w środku).")
     p.add_argument("--data", required=True, help="Ścieżka do pliku CSV.")
     p.add_argument("--use_validation",default="separate",choices=["separate", "merge_train_test"],help="Strategy for validation set: 'separate' keeps it separate, 'merge_train_test' merges 80%% into train and 20%% into test")
-    p.add_argument("--preprocess",default="[]",help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr']\"")
-    p.add_argument("--feature_selection_method",default="rfecv", help="Metoda selekcji cech: 'rfecv' lub 'kbest' lub 'kbest+rfecv' (domyślnie 'rfecv').")
+    p.add_argument("--preprocess",default="[]",help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr','kbest']\"")
     p.add_argument("--model",required=True,choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],help="Wybór modelu.")
     p.add_argument("--params", default="{}", help="Parametry modelu jako słownik Pythona, np. {'max_depth': 4}")
     p.add_argument("--postprocess", action="store_true", help="Włącz postprocessing i.e threshold tuning.")
@@ -488,7 +493,7 @@ def main(argv=None):
         eval_list = ast.literal_eval(args.eval)
         preprocess_list = ast.literal_eval(args.preprocess)
         if not isinstance(preprocess_list, list):
-            raise ValueError("--preprocess musi być listą Pythona (np. ['feature selection','corr'])")
+            raise ValueError("--preprocess musi być listą Pythona (np. ['feature selection','corr','selectKBest'])")
         if not isinstance(params, dict):
             raise ValueError("--params musi być słownikiem Pythona (np. {'max_iter': 1000})")
         if not isinstance(eval_list, list):
@@ -502,7 +507,6 @@ def main(argv=None):
         dane=args.data,
         use_validation=args.use_validation,
         preprocesing=preprocess_list,
-        feature_selection_method=args.feature_selection_method,
         model_name=args.model,
         model_params=params,
         postprocess=args.postprocess,

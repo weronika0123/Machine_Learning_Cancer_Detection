@@ -91,19 +91,7 @@ def prefilter_select_kbest(X_train, y_train, X_test, k=1500):
 
     return X_train_k, X_test_k, mask_k
 
-def feature_selection(steps:int, X_train, y_train, X_test, 
-                      model_name:str, fs_method:str="rfecv", prefilter_k:int=1500):
-
-    print("[FS] Start feature_selection...")
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
-    recall_scorer = make_scorer(recall_score, pos_label=1)
-
-    # 1) TYLKO KBEST -> pełna maska (po corr), zgodna z X_val
-    if fs_method.lower() == "kbest":
-        X_train_k, X_test_k, mask_kbest_full = prefilter_select_kbest(X_train, y_train, X_test, k=prefilter_k)
-        print(f"[FS] Tryb: tylko SelectKBest (k={prefilter_k}) — pomijam RFECV.")
-        return X_train_k, X_test_k, mask_kbest_full, None
-
+def estimator(model_name:str):
     # 2) Dobór estymatora do RFECV (gołe modele – bez Pipeline)
     if model_name == "Logistic Regression":
         fs_estimator = LogisticRegression(
@@ -129,14 +117,31 @@ def feature_selection(steps:int, X_train, y_train, X_test,
             max_iter=3000, solver="lbfgs", penalty="l2",
             C=0.5, class_weight="balanced", random_state=RANDOM_STATE
         )
+    return fs_estimator
 
-    # 3) KBEST+RFECV -> RFECV na zredukowanym X, a potem składanie pełnej maski
-    if fs_method.lower() == "kbest+rfecv":
-        print(f"[FS] Tryb: SelectKBest (k={prefilter_k}) + RFECV")
-        n_features_full = X_train.shape[1]               # = 5098 po corr
+def feature_selection(steps:int, X_train, y_train, X_test, 
+                      model_name:str, fs_methods:list, prefilter_k:int=1500):
+
+    print("[FS] Start feature_selection...")
+
+
+    # 1) TYLKO KBEST -> pełna maska (po corr), zgodna z X_val
+    if "kbest" in fs_methods:
         X_train_k, X_test_k, mask_kbest_full = prefilter_select_kbest(X_train, y_train, X_test, k=prefilter_k)
 
+        
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+    recall_scorer = make_scorer(recall_score, pos_label=1)
+    fs_estimator=estimator(model_name)
+
+    
+
+    # 3) KBEST+RFECV -> RFECV na zredukowanym X, a potem składanie pełnej maski
+    if "kbest" in fs_methods and "rfecv" in fs_methods:
+        
+
         print("[RFECV] Odpalam RFECV na danych po KBest...")
+        n_features_full = X_train.shape[1]  
         rfecv = RFECV(
             estimator=fs_estimator,
             step=steps,
@@ -181,40 +186,44 @@ def feature_selection(steps:int, X_train, y_train, X_test,
         # ZWRACAMY pełną maskę (5098), więc w main.py:
         # X_val = X_val[:, fs_mask] będzie działać poprawnie.
         return X_train_sel, X_test_sel, full_mask, rfecv
+    
+    if "kbest"  not in fs_methods and "rfecv" in fs_methods:
 
-    # 4) Czysty RFECV (bez KBest) – maska od razu jest w pełnej przestrzeni
-    print("[FS] Tryb: czysty RFECV (bez prefiltracji)")
-    rfecv = RFECV(
-        estimator=fs_estimator,
-        step=steps,
-        scoring=recall_scorer,
-        cv=cv,
-        min_features_to_select=50,
-        n_jobs=-1
-    )
-    rfecv.fit(X_train, y_train)
+        # 4) Czysty RFECV (bez KBest) – maska od razu jest w pełnej przestrzeni
+        print("[FS] Tryb: czysty RFECV (bez prefiltracji)")
+        rfecv = RFECV(
+            estimator=fs_estimator,
+            step=steps,
+            scoring=recall_scorer,
+            cv=cv,
+            min_features_to_select=50,
+            n_jobs=-1
+        )
+        rfecv.fit(X_train, y_train)
 
-    mask_rfe_full = rfecv.support_
-    print(f"[RFECV] Wybrane k (opt pod RECALL): {rfecv.n_features_}")
+        mask_rfe_full = rfecv.support_
+        print(f"[RFECV] Wybrane k (opt pod RECALL): {rfecv.n_features_}")
 
-    X_train_sel = X_train[:, mask_rfe_full]
-    X_test_sel  = X_test[:,  mask_rfe_full]
+        X_train_sel = X_train[:, mask_rfe_full]
+        X_test_sel  = X_test[:,  mask_rfe_full]
 
-    scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
-    n_features_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
-    plt.figure(figsize=(7,4))
-    plt.plot(n_features_list, scores, marker="o", linewidth=1)
-    plt.axvline(rfecv.n_features_, ls="--", color="red", label=f"Optymalne k = {rfecv.n_features_}")
-    best_idx = int(np.argmax(scores))
-    plt.scatter([n_features_list[best_idx]], [scores[best_idx]], s=60, zorder=3)
-    plt.xlabel("Liczba cech (k) — TRAIN (CV)")
-    plt.ylabel("Średni recall — TRAIN (CV)")
-    plt.title("RFECV (balanced): recall (CV) vs liczba cech")
-    plt.gca().invert_xaxis()
-    plt.grid(True, ls=":")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+        scores = np.asarray(rfecv.cv_results_["mean_test_score"]).ravel()
+        n_features_list = np.asarray(rfecv.cv_results_["n_features"]).ravel()
+        plt.figure(figsize=(7,4))
+        plt.plot(n_features_list, scores, marker="o", linewidth=1)
+        plt.axvline(rfecv.n_features_, ls="--", color="red", label=f"Optymalne k = {rfecv.n_features_}")
+        best_idx = int(np.argmax(scores))
+        plt.scatter([n_features_list[best_idx]], [scores[best_idx]], s=60, zorder=3)
+        plt.xlabel("Liczba cech (k) — TRAIN (CV)")
+        plt.ylabel("Średni recall — TRAIN (CV)")
+        plt.title("RFECV (balanced): recall (CV) vs liczba cech")
+        plt.gca().invert_xaxis()
+        plt.grid(True, ls=":")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
 
-    return X_train_sel, X_test_sel, mask_rfe_full, rfecv
+        return X_train_sel, X_test_sel, mask_rfe_full, rfecv
+    
+    return X_train_k, X_test_k, mask_kbest_full, None
 #endregion
