@@ -175,6 +175,7 @@ def pipeline(
     if X_df.isnull().values.any():
         print("Missing values detected. Please enter data without any missing values.")
         sys.exit(1)
+
     
     # target: cancer
     y_df = df.cancer

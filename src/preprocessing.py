@@ -12,6 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.svm import LinearSVC
 import warnings
+# sklearn version = 1.7.1
 
 RANDOM_STATE = 42
 
@@ -99,30 +100,30 @@ def prefilter_select_kbest(X_train, y_train, X_test, full_mask,k=1500):
     return X_train_k, X_test_k, full_mask
 
 def estimator(model_name:str):
-    # 2) Dobór estymatora do RFECV (gołe modele – bez Pipeline)
+
     if model_name == "Logistic Regression":
         fs_estimator = LogisticRegression(
-            max_iter=3000, solver="lbfgs", penalty="l2",
-            C=0.5, class_weight="balanced", random_state=RANDOM_STATE
+            max_iter=1000, 
+            class_weight="balanced", 
+            random_state=RANDOM_STATE
         )
     elif model_name == "Decision Tree":
         fs_estimator = DecisionTreeClassifier(
-            criterion="gini",
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
             class_weight="balanced",
             random_state=RANDOM_STATE
         )
     elif model_name == "SVM":
         fs_estimator = LinearSVC(
-            C=0.5, class_weight="balanced", max_iter=100_000, tol=5e-3, dual=True
+            max_iter=100000,
+            class_weight="balanced", 
+            random_state=RANDOM_STATE
         )
     else:
-        print("[RFECV][WARN] Nieznany model_name — fallback: LogisticRegression.")
+        print("[RFECV][WARN] Model_name unknown - fallback: LogisticRegression.")
         fs_estimator = LogisticRegression(
-            max_iter=3000, solver="lbfgs", penalty="l2",
-            C=0.5, class_weight="balanced", random_state=RANDOM_STATE
+            max_iter=1000, 
+            class_weight="balanced", 
+            random_state=RANDOM_STATE
         )
     return fs_estimator
 
@@ -188,27 +189,19 @@ def feature_selection(steps:int, X_train, y_train, X_test,
 
     print("[FS] Start feature_selection...")
 
-    n0 = X_train.shape[1]                     # liczba cech w oryginale (np. 5277)
-    mask_best = np.ones(n0, dtype=bool)       # pełna maska wzgledem oryginału
+    n0 = X_train.shape[1]                     # original number of features
+    mask_best = np.ones(n0, dtype=bool)       # full mask relative to original feature set
 
     if "corr" in fs_methods:
         
         X_train, X_test, mask_best, corr_info = correlation_removal(X_train, X_test, corr_threshold, mask_best)
-        # corr_mask JEST już względem oryginału (tak budujesz w correlation_removal)
-        
-        print(f"[DEBUG CORR] full_mask sum={mask_best.sum()}")
-        print(f"[DEBUG CORR] full_mask shape={mask_best.shape}")
 
     if "kbest" in fs_methods:
 
         X_train, X_test, mask_best = prefilter_select_kbest(X_train, y_train, X_test,mask_best, k=prefilter_k)
-        print(f"[DEBUG KBest] full_mask sum={mask_best.sum()}")
-        print(f"[DEBUG KBest] full_mask shape={mask_best.shape}")
 
     if "rfecv" in fs_methods:
         
         X_train, X_test, mask_best, rfecv_model = rfecv(steps, X_train, y_train, X_test, model_name, mask_best)
-        print(f"[DEBUG RFECV] full_mask sum={mask_best.sum()}")
-        print(f"[DEBUG RFECV] full_mask shape={mask_best.shape}")
     
     return X_train, X_test, mask_best
