@@ -5,50 +5,24 @@ from pathlib import Path
 import ast
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.feature_selection import RFECV
+from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression, RidgeClassifier, Ridge, Lasso 
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import (
-    confusion_matrix, ConfusionMatrixDisplay, classification_report,
-    accuracy_score, roc_auc_score, roc_curve, auc, 
-    precision_recall_curve, average_precision_score, fbeta_score,
-    make_scorer, recall_score, precision_score, f1_score, balanced_accuracy_score
+    confusion_matrix, ConfusionMatrixDisplay,
+    accuracy_score, roc_curve, auc, 
+    precision_recall_curve, average_precision_score,
+    recall_score, precision_score, f1_score
 )
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import TunedThresholdClassifierCV
-from sklearn.base import clone
 from preprocessing import correlation_removal, feature_selection
+from postprocessing import threshold_tuning
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
-
-#for threshold tuning
-def plot_threshold_curve(tuned_model):
-    thresholds = tuned_model.cv_results_["thresholds"]
-    scores = tuned_model.cv_results_["scores"]
-
-    plt.figure(figsize=(7,5))
-    plt.plot(thresholds, scores, label="Score vs threshold")
-    plt.plot(
-        tuned_model.best_threshold_,
-        tuned_model.best_score_,
-        "o",
-        markersize=10,
-        color="tab:orange",
-        label=f"Best thr={tuned_model.best_threshold_:.3f}"
-    )
-    plt.xlabel("Threshold")
-    plt.ylabel("Score (CV)")
-    plt.title("Threshold tuning curve")
-    plt.legend()
-    plt.grid(ls=":")
-    plt.tight_layout()
-    plt.show()
 
 #Flexible data splitting with validation handling options
 def prepare_data_split(X, y, df, use_validation="separate"):
@@ -91,7 +65,7 @@ def prepare_data_split(X, y, df, use_validation="separate"):
 def pipeline(
                 dane: str,
                 use_validation: str,
-                preprocesing: list,
+                preprocessing: list,
                 feature_selection_method: str,
                 model_name: str,
                 model_params: dict,
@@ -102,6 +76,16 @@ def pipeline(
 
 #region Data Prep
 
+    # Define parameter categories to separate concerns
+    PREPROCESS_PARAMS = {'corr_threshold', 'prefilter_k'}
+    POSTPROCESS_PARAMS = {'tuning_method', 'cost_fn', 'cost_fp', 'show_tuning_plots'}
+    
+    # Separate parameters by category
+    preprocess_params = {k: v for k, v in (model_params or {}).items() if k in PREPROCESS_PARAMS}
+    postprocess_params = {k: v for k, v in (model_params or {}).items() if k in POSTPROCESS_PARAMS}
+    model_only_params = {k: v for k, v in (model_params or {}).items() 
+                         if k not in PREPROCESS_PARAMS | POSTPROCESS_PARAMS}
+    
     # Flag innit
     feature_selection_flag = False
     correlation_removal_flag = False
@@ -122,7 +106,7 @@ def pipeline(
 
 
     # 2) Identify preprocessing steps (list of strings)
-    steps = [str(s).strip().lower() for s in (preprocesing or [])]
+    steps = [str(s).strip().lower() for s in (preprocessing or [])]
 
     if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
         feature_selection_flag = True
@@ -187,8 +171,8 @@ def pipeline(
 
     corr_mask = None
     if correlation_removal_flag:
-        corr_threshold = float(model_params.get("corr_threshold", 0.90))  # default threshold
-        X_train, X_test, corr_mask, corr_info = correlation_removal(
+        corr_threshold = float(preprocess_params.get("corr_threshold", 0.90))  # default threshold
+        X_train, X_test, corr_mask, _ = correlation_removal(
         X_train, X_test, corr_threshold
         )
         if corr_mask is not None and X_val.shape[0] > 0:
@@ -199,9 +183,9 @@ def pipeline(
     if feature_selection_flag:
 
         fs_method=feature_selection_method.lower()
-        prefilter_k = model_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
+        prefilter_k = preprocess_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
 
-        X_train, X_test, fs_mask, rfecv = feature_selection(
+        X_train, X_test, fs_mask, _ = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
             model_name=model_kind,fs_method=fs_method, prefilter_k=prefilter_k
@@ -240,7 +224,7 @@ def pipeline(
             "class_weight": "balanced",      
             "random_state": RANDOM_STATE
         }
-        dt_defaults.update(model_params or {})
+        dt_defaults.update(model_only_params)
         model = DecisionTreeClassifier(**dt_defaults)
 
         if XAI:
@@ -249,10 +233,10 @@ def pipeline(
 
     elif model_kind == "Logistic Regression":
 
-        max_iter = model_params.get("max_iter", 100)
-        solver = model_params.get("solver", "lbfgs")
-        penalty = model_params.get("penalty", "l2")
-        C = model_params.get("C", 1.0)
+        max_iter = model_only_params.get("max_iter", 100)
+        solver = model_only_params.get("solver", "lbfgs")
+        penalty = model_only_params.get("penalty", "l2")
+        C = model_only_params.get("C", 1.0)
 
         model = LogisticRegression(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
@@ -281,7 +265,7 @@ def pipeline(
         "cv_calibration": 5,
         "probability": True          # dla SVC (nieliniowe kernele) – żeby mieć predict_proba
     }
-        svm_defaults.update(model_params or {})
+        svm_defaults.update(model_only_params)
 
         kernel = svm_defaults["kernel"]
 
@@ -325,44 +309,26 @@ def pipeline(
 #endregion
 
 #region Post-processing = Threshold tuning
+    tuning_info = None
     if postprocess_flag:
-
-        print("[POSTPROCESS] Threshold tuning na zbiorze walidacyjnym...")
-
-        if X_val.shape[0] == 0:
-            print("[POSTPROCESS][WARN] Zbiór walidacyjny jest pusty — pomijam tuning progu.")
-            y_pred = model.predict(X_test)
-        else:
-            # scores on VAL
-            if hasattr(model, "predict_proba"):
-                response_method = "predict_proba"
-            elif hasattr(model, "decision_function"):
-                response_method = "decision_function"
-            else:
-                print("[POSTPROCESS][WARN] Model nie ma predict_proba ani decision_function — pomijam tuning progu.")
-                y_pred = model.predict(X_test)
-                response_method = None
-
-            #Potrzebujesz danych, których model nie widział podczas trenowania parametrów, żeby realistycznie ocenić, który threshold działa najlepiej — 
-            # i tu właśnie wchodzi zbiór walidacyjny.
-
-            # Uwaga: model jest już wytrenowany na TRAIN.
-            # Tutaj TYLKO stroimy próg na WALIDACJI.
-            tuned = TunedThresholdClassifierCV(
-                estimator=model,                # prefit estimator
-                cv="prefit",                   # NIE robi CV, używa przekazanych danych do strojenia progu
-                scoring="f1",                  # zmień jeśli chcesz inną metrykę
-                thresholds=500,                # gęstość siatki progów
-                response_method=response_method,
-                refit=False                     # bc estimator is already fitted (prefit)
-            )
-
-            # To NIE trenuje modelu; z cv='prefit' stroi tylko próg na (X_val, y_val)
-            tuned.fit(X_val, y_val)
-            print(f"[POSTPROCESS] Wybrany threshold={tuned.best_threshold_:.3f} (score={tuned.best_score_:.3f})")
-
-            # Finalna decyzja na TEŚCIE z dobranym progiem:
-            y_pred = tuned.predict(X_test)  # użyje base_estimator + best_threshold_
+        # Extract postprocessing parameters from model_params
+        tuning_method = model_params.get("tuning_method", "recall")  # default: recall (medical priority)
+        cost_fn = model_params.get("cost_fn", 10.0)  # False Negative cost
+        cost_fp = model_params.get("cost_fp", 1.0)   # False Positive cost
+        show_plots = model_params.get("show_tuning_plots", True)
+        
+        y_pred, tuning_info = threshold_tuning(
+            model=model,
+            X_val=X_val,
+            y_val=y_val,
+            X_test=X_test,
+            y_test=y_test,
+            method=tuning_method,
+            cost_fn=cost_fn,
+            cost_fp=cost_fp,
+            thresholds=500,
+            show_plots=show_plots
+        )
     else:
         y_pred = model.predict(X_test)
 
@@ -454,7 +420,15 @@ def pipeline(
         else:
             print("[XAI] Nieznana metoda XAI (użyj: LIME lub SHAP).", file=sys.stderr)
 
-    # 8) Zwrócenie wyniku (na razie tylko szkic)
+    # Add threshold tuning info to results if performed
+    if tuning_info is not None and tuning_info['tuning_performed']:
+        results["threshold_tuning"] = {
+            "best_threshold": float(tuning_info['best_threshold']),
+            "best_score": float(tuning_info['best_score']),
+            "tuning_performed": tuning_info['tuning_performed']
+        }
+    
+    # 8) Zwrócenie wyniku
     return {
         "model": model.__class__.__name__,
         "metrics_requested": EVAL,
@@ -501,7 +475,7 @@ def main(argv=None):
     out = pipeline(
         dane=args.data,
         use_validation=args.use_validation,
-        preprocesing=preprocess_list,
+        preprocessing=preprocess_list,
         feature_selection_method=args.feature_selection_method,
         model_name=args.model,
         model_params=params,
