@@ -91,17 +91,6 @@ PARAMS DO SVM:
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
 
-  python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['fs','corr']" `
-  --model SVM `
-  --postprocess `
-  --feature_selection_method "kbest+rfecv" `
-  --params "{'prefilter_k':1200,'corr_threshold':'0.87','kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
-  --xai
-
 #SVM Linear with merge_train_test (maximum training data)
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
@@ -111,26 +100,7 @@ python .\main.py `
   --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']"
 
-#SVM RBF with merge_train_test and feature selection
-python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "merge_train_tes"t `
-  --preprocess "['fs','corr']" `
-  --feature_selection_method "kbest+rfecv" `
-  --model SVM `
-  --params "{'prefilter_k':1200,'kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1']"
-
-  python .\main.py `
-  --data "data_sources" `
-  --use_validation "separate" `
-  --preprocess "['feature_selection','corr']" `
-  --model DT `
-  --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
-  --xai
-
-#Logistic Regression with threshold tuning
+#Logistic Regression with threshold tuning (default: recall optimization)
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
@@ -139,3 +109,39 @@ python .\main.py `
   --postprocess `
   --params "{'max_iter': 1000, 'C': 1.0}" `
   --eval "['AUC ROC','accuracy','F1','recall','precision','Confusion Matrix']"
+
+# ============================================================================
+# THRESHOLD TUNING EXAMPLES (NEW POSTPROCESSING MODULE)
+# ============================================================================
+
+#Example 1: Recall optimization (default - medical priority)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['fs','corr']" `
+  --feature_selection_method "kbest+rfecv" `
+  --model LR `
+  --postprocess `
+  --params "{'prefilter_k':1000,'max_iter': 1000, 'tuning_method': 'recall'}" `
+  --eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision']"
+
+#Example 4: Youden's J optimization (maximize TPR - FPR)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --model LR `
+  --postprocess `
+  --params "{'max_iter': 1000, 'tuning_method': 'youden'}" `
+  --eval "['AUC ROC','accuracy','recall','precision','Confusion Matrix']"
+
+#Example 7: Threshold tuning without plots (faster execution)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --model LR `
+  --postprocess `
+  --params "{'max_iter': 1000, 'show_tuning_plots': False}" `
+  --eval "['AUC ROC','accuracy','F1']"
+

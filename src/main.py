@@ -5,22 +5,19 @@ from pathlib import Path
 import ast
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.feature_selection import RFECV
+from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression, RidgeClassifier, Ridge, Lasso 
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import (
-    confusion_matrix, ConfusionMatrixDisplay, classification_report,
-    accuracy_score, roc_auc_score, roc_curve, auc, 
-    precision_recall_curve, average_precision_score, fbeta_score,
-    make_scorer, recall_score, precision_score, f1_score, balanced_accuracy_score
+    confusion_matrix, ConfusionMatrixDisplay,
+    accuracy_score, roc_curve, auc, 
+    precision_recall_curve, average_precision_score,
+    recall_score, precision_score, f1_score
 )
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.base import clone
 from preprocessing import correlation_removal, feature_selection
-from postprocessing import tune_threshold
+from postprocessing import threshold_tuning
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 
@@ -68,7 +65,7 @@ def prepare_data_split(X, y, df, use_validation="separate"):
 def pipeline(
                 dane: str,
                 use_validation: str,
-                preprocesing: list,
+                preprocessing: list,
                 feature_selection_method: str,
                 model_name: str,
                 model_params: dict,
@@ -79,6 +76,16 @@ def pipeline(
 
 #region Data Prep
 
+    # Define parameter categories to separate concerns
+    PREPROCESS_PARAMS = {'corr_threshold', 'prefilter_k'}
+    POSTPROCESS_PARAMS = {'tuning_method', 'cost_fn', 'cost_fp', 'show_tuning_plots'}
+    
+    # Separate parameters by category
+    preprocess_params = {k: v for k, v in (model_params or {}).items() if k in PREPROCESS_PARAMS}
+    postprocess_params = {k: v for k, v in (model_params or {}).items() if k in POSTPROCESS_PARAMS}
+    model_only_params = {k: v for k, v in (model_params or {}).items() 
+                         if k not in PREPROCESS_PARAMS | POSTPROCESS_PARAMS}
+    
     # Flag innit
     feature_selection_flag = False
     correlation_removal_flag = False
@@ -99,7 +106,7 @@ def pipeline(
 
 
     # 2) Identify preprocessing steps (list of strings)
-    steps = [str(s).strip().lower() for s in (preprocesing or [])]
+    steps = [str(s).strip().lower() for s in (preprocessing or [])]
 
     if(any(s in ("feature selection", "feature_selection", "fs" , "f s") for s in steps)):
         feature_selection_flag = True
@@ -157,8 +164,8 @@ def pipeline(
 
     corr_mask = None
     if correlation_removal_flag:
-        corr_threshold = float(model_params.get("corr_threshold", 0.90))  # default threshold
-        X_train, X_test, corr_mask, corr_info = correlation_removal(
+        corr_threshold = float(preprocess_params.get("corr_threshold", 0.90))  # default threshold
+        X_train, X_test, corr_mask, _ = correlation_removal(
         X_train, X_test, corr_threshold
         )
         if corr_mask is not None and X_val.shape[0] > 0:
@@ -169,9 +176,9 @@ def pipeline(
     if feature_selection_flag:
 
         fs_method=feature_selection_method.lower()
-        prefilter_k = model_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
+        prefilter_k = preprocess_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
 
-        X_train, X_test, fs_mask, rfecv = feature_selection(
+        X_train, X_test, fs_mask, _ = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
             model_name=model_kind,fs_method=fs_method, prefilter_k=prefilter_k
@@ -210,7 +217,7 @@ def pipeline(
             "class_weight": "balanced",      
             "random_state": RANDOM_STATE
         }
-        dt_defaults.update(model_params or {})
+        dt_defaults.update(model_only_params)
         model = DecisionTreeClassifier(**dt_defaults)
 
         if XAI:
@@ -219,10 +226,10 @@ def pipeline(
 
     elif model_kind == "Logistic Regression":
 
-        max_iter = model_params.get("max_iter", 100)
-        solver = model_params.get("solver", "lbfgs")
-        penalty = model_params.get("penalty", "l2")
-        C = model_params.get("C", 1.0)
+        max_iter = model_only_params.get("max_iter", 100)
+        solver = model_only_params.get("solver", "lbfgs")
+        penalty = model_only_params.get("penalty", "l2")
+        C = model_only_params.get("C", 1.0)
 
         model = LogisticRegression(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
@@ -251,7 +258,7 @@ def pipeline(
         "cv_calibration": 5,
         "probability": True          # dla SVC (nieliniowe kernele) – żeby mieć predict_proba
     }
-        svm_defaults.update(model_params or {})
+        svm_defaults.update(model_only_params)
 
         kernel = svm_defaults["kernel"]
 
@@ -297,14 +304,23 @@ def pipeline(
 #region Post-processing = Threshold tuning
     tuning_info = None
     if postprocess_flag:
-        y_pred, tuning_info = tune_threshold(
+        # Extract postprocessing parameters from model_params
+        tuning_method = model_params.get("tuning_method", "recall")  # default: recall (medical priority)
+        cost_fn = model_params.get("cost_fn", 10.0)  # False Negative cost
+        cost_fp = model_params.get("cost_fp", 1.0)   # False Positive cost
+        show_plots = model_params.get("show_tuning_plots", True)
+        
+        y_pred, tuning_info = threshold_tuning(
             model=model,
             X_val=X_val,
             y_val=y_val,
             X_test=X_test,
-            scoring="f1",
+            y_test=y_test,
+            method=tuning_method,
+            cost_fn=cost_fn,
+            cost_fp=cost_fp,
             thresholds=500,
-            plot_curve=False
+            show_plots=show_plots
         )
     else:
         y_pred = model.predict(X_test)
@@ -452,7 +468,7 @@ def main(argv=None):
     out = pipeline(
         dane=args.data,
         use_validation=args.use_validation,
-        preprocesing=preprocess_list,
+        preprocessing=preprocess_list,
         feature_selection_method=args.feature_selection_method,
         model_name=args.model,
         model_params=params,
