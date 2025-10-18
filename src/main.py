@@ -250,13 +250,7 @@ def pipeline(
         )
 
     elif model_kind == "SVM":
-            # SVM z sklearn – różne podejścia w zależności od kernela
-            # LinearSVC jest szybszy dla dużych, rzadkich, wysokowymiarowych danych
-            # ale nie ma predict_proba. Można to obejść kalibracją (CalibratedClassifierCV).
-            # Dla nieliniowych kernelów (RBF, poly, sigmoid) używamy SVC z probability=True.
-            # To jest wolniejsze przy wielu cechach i dużym N.
     
-
         svm_defaults = {
         "kernel": "linear",          # 'linear' | 'rbf' | 'poly' | 'sigmoid'
         "C": 1.0,
@@ -285,6 +279,7 @@ def pipeline(
                 method=svm_defaults["calibration_method"],
                 cv=svm_defaults["cv_calibration"],
             )
+            model_kind="SVM linear calibrated"
         else:
             # Pełny SVC z proba=True (wolniejszy przy tysiącach cech i dużym N)
             model = SVC(
@@ -295,7 +290,7 @@ def pipeline(
                 class_weight=svm_defaults["class_weight"],
                 probability=True,          # konieczne dla ROC/PR i tuningu progu
             )
-        if kernel == "linear":
+        if (kernel == "linear" and model_kind!="SVM linear calibrated"):
             model_kind="SVM linear"
 
     else:

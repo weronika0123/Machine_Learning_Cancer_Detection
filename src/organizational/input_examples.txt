@@ -129,20 +129,20 @@ python .\main.py `
   --use_validation "separate" `
   --preprocess "['rfecv','corr','kbest']" `
   --model LR `
-  --postprocess `
   --params "{'prefilter_k':1000,'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0, 'class_weight': 'balanced', 'tuning_method': 'f1'}" `
-  --eval "['AUC ROC','auc pr','accuracy','Confusion Matrix','F1','r','p']"`
+  --eval "['accuracy','Confusion Matrix','F1','r','p']"`
   --xai
 
     python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
-  --preprocess "['rfecv','corr','kbest']" `
+  --preprocess "['corr','kbest']" `
   --model SVM `
-  --postprocess `
-  --params "{'prefilter_k':500,'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
+  --params "{'prefilter_k':100,'kernel': 'rbf', 'C': 1.0, 'cv_calibration': 5}" `
   --eval "['accuracy','F1','recall','precision']" `
   --xai
+
+  'use_calibrated': True,
 
     python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
