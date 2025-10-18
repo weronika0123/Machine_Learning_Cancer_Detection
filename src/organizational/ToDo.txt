@@ -43,3 +43,6 @@ Na dużo później (2 tyg czy cos od 18.09)
 
 
 Link do dysku na ktr wstawiamy do Piotra: https://drive.pg.edu.pl/s/LnDVTTtqFMLgFax
+
+Problem 2: chciałabym aby można było scrollować te features na plocie 
+Problem 3: chciałabym aby plot pokazywał top 15 najbardziej wpływowych cech 
