@@ -15,7 +15,6 @@ def explain_lr_with_coeffs(model, feature_names, top_k=15):
     ax.set_xlabel("Coefficient (β)")
     ax.set_title(f"Top {top_k} most important features (Logistic Regression)")
     ax.invert_yaxis()
-
     fig.tight_layout()
     plt.show()
     return df
@@ -27,13 +26,10 @@ def auto_left_margin(labels):
     return min(0.55, 0.18 + 0.012 * L)
 
 def SHAP(mode, model, X_train, X_test, X_val):
-    # Placeholder for SHAP explanation logic
 
     explainer = None
     if mode == "linear":
         explainer = shap.LinearExplainer(model, X_train)
-    elif mode == "tree":
-        explainer = shap.TreeExplainer(model)
     elif mode == "deep":
         explainer = shap.DeepExplainer(model, X_train)
     else:
@@ -79,19 +75,14 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
     if model_kind== "Logistic Regression":
 
         explain_lr_with_coeffs(model, feature_names, top_k=15)
-
         return "Success"
 
     # Decision Tree
     elif model_kind == "Decision Tree":
-        print("[XAI] Using LIME for Decision Tree (simple and local explanation)")
-
-
-        return "LIME for DT"
+        return "DT"
 
     # SVM (linear)
     elif (model_kind == "SVM linear" or model_kind == "SVM linear calibrated"):
-        print("[XAI] Using SHAP LinearExplainer for linear SVM")
 
         if model_kind == "SVM linear calibrated":
             base_model = model.calibrated_classifiers_[0].estimator
@@ -103,16 +94,13 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
 
     # SVM (non-linear, e.g. RBF)
     elif model_kind == "SVM":
-        print("[XAI] Using Kernel SHAP or LIME (model-agnostic) for kernel SVM")
         SHAP("kernel", model, X_train, X_test, X_val)
 
         return "Kernel SHAP / LIME for SVM-RBF"
 
     # Deep Neural Network
     elif model_kind == "DNN":
-        print("[XAI] Using SHAP (DeepExplainer)")
         SHAP("deep", model, X_train, X_test, X_val)
-
 
         return "Deep SHAP for DNN"
 
