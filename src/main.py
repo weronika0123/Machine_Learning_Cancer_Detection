@@ -18,6 +18,7 @@ from sklearn.metrics import (
 import matplotlib.pyplot as plt
 from preprocessing import correlation_removal, feature_selection
 from postprocessing import threshold_tuning
+from xai import run_xai
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 
@@ -134,6 +135,11 @@ def pipeline(
             "Threshold tuning requires a validation set. Please use --use_validation separate "
             "or remove the --postprocess flag."
         )
+    
+    # XAI idenitification
+    xai_flag = False
+    if XAI:
+        xai_flag = True
 
     # Load data
     path = Path(dane)
@@ -148,10 +154,11 @@ def pipeline(
     
     df = pd.read_csv(path, low_memory=False)
 
-    
+
     if str(path)==r"data_sources\liquid_biopsy_data.csv":
         print("Using liquid_biopsy_data.csv dataset")
         X_df = df.iloc[:,1:-16]
+
     else:
         print("Using your dataset, assuming last column is target")
         X_df = df.iloc[:,:-1]
@@ -164,6 +171,9 @@ def pipeline(
     
     # target: cancer
     y_df = df.cancer
+
+    # Gene names for future referances
+    feature_names = X_df.columns.to_list() 
 
     X = X_df.to_numpy()
     y = y_df.to_numpy()
@@ -187,10 +197,12 @@ def pipeline(
         X_train, X_test, fs_mask = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
-            model_name=model_kind,fs_methods=fs_method, prefilter_k=prefilter_k, corr_threshold=corr_threshold
-        )
+            model_name=model_kind,fs_methods=fs_method, prefilter_k=prefilter_k, corr_threshold=corr_threshold)
+        feature_names = [name for name, keep in zip(feature_names, fs_mask) if keep]
+
         if fs_mask is not None and X_val.shape[0] > 0:
             X_val = X_val[:, fs_mask]
+        
 
     # MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
     if model_kind in ("Logistic Regression", "SVM"):
@@ -226,10 +238,6 @@ def pipeline(
         dt_defaults.update(model_only_params)
         model = DecisionTreeClassifier(**dt_defaults)
 
-        if XAI:
-            XAI_model = "SHAP"
-            XAI_model_specific = "TreeExplainer"
-
     elif model_kind == "Logistic Regression":
 
         max_iter = model_only_params.get("max_iter", 100)
@@ -240,10 +248,6 @@ def pipeline(
         model = LogisticRegression(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
         )
-
-        if XAI:
-            XAI_model = "LIME"
-            XAI_model_specific = "KernelExplainer"
 
     elif model_kind == "SVM":
             # SVM z sklearn – różne podejścia w zależności od kernela
@@ -291,11 +295,8 @@ def pipeline(
                 class_weight=svm_defaults["class_weight"],
                 probability=True,          # konieczne dla ROC/PR i tuningu progu
             )
-
-        if XAI:
-            # Dla SVM zwykle LIME/Kernel SHAP (czarna skrzynka)
-            XAI_model = "LIME"
-            XAI_model_specific = "KernelExplainer"
+        if kernel == "linear":
+            model_kind="SVM linear"
 
     else:
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC")
@@ -305,6 +306,13 @@ def pipeline(
     
     model.fit(X_train, y_train)
 
+#endregion
+
+#region XAI
+    
+    if xai_flag:
+        #xai_method, XAI_model_specific = run_xai(model_kind, model, X_train, X_test)
+        print(f"\n SHAPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP\n",run_xai(model_kind, model, feature_names, X_train, X_test))
 #endregion
 
 #region Post-processing = Threshold tuning
@@ -405,19 +413,7 @@ def pipeline(
 
         plt.tight_layout()
         plt.show()
-#endregion
 
-#region XAI
-    
-    if XAI:
-        if XAI_model == "LIME":
-            # TODO: LIME (train/test)
-            pass
-        elif XAI_model == "SHAP":
-            # TODO: SHAP (train/test)
-            pass
-        else:
-            print("[XAI] Nieznana metoda XAI (użyj: LIME lub SHAP).", file=sys.stderr)
 
     # Add threshold tuning info to results if performed
     if tuning_info is not None and tuning_info['tuning_performed']:
@@ -432,8 +428,8 @@ def pipeline(
         "model": model.__class__.__name__,
         "metrics_requested": EVAL,
         "metrics": results,
-        # "xai_method": XAI_model,
-        # "xai_specific": XAI_model_specific,
+        #"xai_method": XAI_model,
+        #"xai_specific": XAI_model_specific,
     }
 #endregion
 

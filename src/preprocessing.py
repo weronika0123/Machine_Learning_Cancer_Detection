@@ -131,10 +131,10 @@ def rfecv(steps:int, X_train, y_train, X_test, model_name, full_mask):
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
 
-    # [*rfecv1] scorer based on recall for the positive class (label=1)
+    # scorer based on recall for the positive class (label=1)
     recall_scorer = make_scorer(recall_score, pos_label=1)
 
-    # [*rfecv2] base estimator for RFECV with predetermined estimator
+    # base estimator for RFECV with predetermined estimator
     fs_estimator = estimator(model_name)
 
     rfecv_model = RFECV(
