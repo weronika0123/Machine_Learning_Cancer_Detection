@@ -147,9 +147,9 @@ python .\main.py `
     python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
-  --preprocess "['rfecv','corr','kbest']" `
+  --preprocess "['corr','kbest']" `
   --model DT `
   --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+  --eval "['accuracy','F1','recall','precision']" `
   --xai
 
