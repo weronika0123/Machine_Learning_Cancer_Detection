@@ -25,6 +25,62 @@ from sklearn.calibration import CalibratedClassifierCV
 
 RANDOM_STATE = 42  # dla powtarzalności wyników
 
+
+def validate_split_columns(df):
+    print("[VALIDATION] Checking data split columns...")
+    
+    #Check if required columns exist
+    required_columns = ['isTraining', 'isValidation', 'isTest']
+    missing = [col for col in required_columns if col not in df.columns]
+    if missing:
+        raise ValueError(
+            f"CSV missing required split columns: {missing}. "
+            f"Required columns are: {required_columns}"
+        )
+    #Check that values are only 0 or 1
+    for col in required_columns:
+        unique_vals = sorted(df[col].unique())
+        if not set(unique_vals).issubset({0, 1}):
+            raise ValueError(
+                f"Column '{col}' must contain only 0 or 1. "
+                f"Found values: {unique_vals}"
+            )
+    #Check that each row belongs to exactly one split
+    split_sum = df['isTraining'] + df['isValidation'] + df['isTest']
+    
+    #Find rows where sum != 1 (invalid rows)
+    invalid_rows = split_sum != 1
+    if invalid_rows.any():
+        n_invalid = invalid_rows.sum()        
+        error_msg = (
+            f"Found {n_invalid} rows with invalid split assignment\n"
+        )
+        raise ValueError(error_msg)
+    
+    #Check that each split has at least some data
+    train_count = (df['isTraining'] == 1).sum()
+    val_count = (df['isValidation'] == 1).sum()
+    test_count = (df['isTest'] == 1).sum()
+    total = len(df)
+    
+    if train_count == 0:
+        raise ValueError("Training set is empty")
+    if test_count == 0:
+        raise ValueError("Test set is empty")
+    
+    #Validation can be empty-warning only
+    if val_count == 0:
+        print("[VALIDATION][WARN] Validation set is empty (no rows with isValidation=1)")
+        print("[VALIDATION][WARN] This is acceptable if using --use_validation merge_train_test")
+    
+    #Statistics
+    print(f"[VALIDATION] Data distribution:")
+    print(f"- Training:{train_count:5d} rows ({100*train_count/total:5.1f}%)")
+    print(f"- Validation:{val_count:5d} rows ({100*val_count/total:5.1f}%)")
+    print(f"- Test:{test_count:5d} rows ({100*test_count/total:5.1f}%)")
+    print(f"- Total:{total:5d} rows")
+
+
 #Flexible data splitting with validation handling options
 def prepare_data_split(X, y, df, use_validation="separate"):
 
@@ -168,6 +224,8 @@ def pipeline(
         print("Missing values detected. Please enter data without any missing values.")
         sys.exit(1)
 
+    # Validate split columns (isTraining, isValidation, isTest)
+    validate_split_columns(df)
     
     # target: cancer
     y_df = df.cancer
