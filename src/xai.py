@@ -9,17 +9,21 @@ def explain_lr_with_coeffs(model, feature_names, top_k=15):
     df = pd.DataFrame({"feature": feature_names, "coef": coefs})
     df["abs_coef"] = df["coef"].abs()
     df = df.sort_values("abs_coef", ascending=False).head(top_k)
+    top5_features = df["feature"].head(5).tolist()
 
     # plot
     colors = df["coef"].apply(lambda x: "#ff9999" if x > 0 else "#99ccff")
-    fig, ax = plt.subplots(figsize=(12, 7))
-    ax.barh(df["feature"], df["coef"], color=colors)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars = ax.barh(df["feature"], df["coef"], color=colors)
     ax.set_xlabel("Coefficient (β)")
     ax.set_title(f"Top {top_k} most important features (Logistic Regression)")
     ax.invert_yaxis()
+    for bar in bars:
+        value = bar.get_width()
+        ax.text(value, bar.get_y() + bar.get_height()/2, f"{value:.2f}", va="center", ha="left", fontsize=9, color="black")
     fig.tight_layout()
     plt.show()
-    return df
+    return top5_features
 
 def explain_dt_global_importance(model, feature_names, top_k=15):
 
@@ -39,60 +43,6 @@ def explain_dt_global_importance(model, feature_names, top_k=15):
     plt.show()
     return df
 
-def explain_dt_local_rules(model, X_val, feature_names, show_tree_depth=3):
-
-    x_row_df = X_val.iloc[[0]]
-    class_names = ['0', '1']
-
-    x_vec = x_row_df.values.reshape(1, -1)
-    tree = model.tree_
-    feature = tree.feature
-    threshold = tree.threshold
-
-    # ścieżka i liść
-    node_indicator = model.decision_path(x_vec)
-    leaf_id = model.apply(x_vec)[0]
-
-    # budujemy reguły IF-THEN
-    rules = []
-    for node_id in node_indicator.indices:
-        if feature[node_id] != _tree.TREE_UNDEFINED:
-            fname = feature_names[feature[node_id]]
-            thr = threshold[node_id]
-            val = x_vec[0, feature[node_id]]
-            sign = "<=" if val <= thr else ">"
-            rules.append(f"{fname} {sign} {thr:.4f}")
-
-    # predykcja / proby
-    proba_txt = ""
-    if hasattr(model, "predict_proba"):
-        proba = model.predict_proba(x_vec)[0]
-        if class_names is None and hasattr(model, "classes_"):
-            class_names = [str(c) for c in model.classes_]
-        if class_names is not None:
-            top_idx = int(np.argmax(proba))
-            proba_txt = f"  →  class={class_names[top_idx]} (p={proba[top_idx]:.3f})"
-        else:
-            proba_txt = f"  →  proba={proba}"
-
-    # wypisz regułę
-    rule_text = "IF " + " AND ".join(rules) + " THEN decision at leaf" + proba_txt
-    print("[XAI][DT][LOCAL]\n" + rule_text)
-
-    # mały podgląd drzewa (pierwsze poziomy) – czytelny, nie ucina się
-    fig, ax = plt.subplots(figsize=(14, 8))
-    plot_tree(
-        model,
-        max_depth=show_tree_depth,
-        feature_names=feature_names,
-        class_names=(class_names if class_names is not None else None),
-        filled=True, rounded=True, impurity=True, proportion=True, fontsize=9, ax=ax
-    )
-    fig.tight_layout()
-    plt.show()
-
-    return {"rules": rules, "leaf_id": int(leaf_id)}
-
 def auto_left_margin(labels):
     if not labels:
         return 0.18
@@ -111,16 +61,6 @@ def SHAP(mode, model, X_train, X_test, X_val):
 
     shap_values = explainer(X_val)
 
-    # 1 sample explanation waterfall plot
-    ax = shap.plots.waterfall(shap_values[0], show=False) 
-    fig = plt.gcf()
-    labels = list(X_val.columns)
-    left = auto_left_margin(labels)
-    fig.set_size_inches(13, 7)                       
-    fig.subplots_adjust(left=left, right=0.98, top=0.95, bottom=0.08)
-    fig.tight_layout()                               
-    plt.show()
-
 
     # for global explenation beeswarm plot
     ax = shap.plots.beeswarm(shap_values, show=False)
@@ -136,6 +76,7 @@ def SHAP(mode, model, X_train, X_test, X_val):
 
 def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
     print(f"[XAI] Running explanations for model: {model_kind}")
+    top5_features = []
 
     if X_val is None:
         X_val = X_test
@@ -148,8 +89,8 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
     # Logistic Regression
     if model_kind== "Logistic Regression":
 
-        explain_lr_with_coeffs(model, feature_names, top_k=15)
-        return "Success"
+        top5_features = explain_lr_with_coeffs(model, feature_names, top_k=15)
+        return ("Coefficient-based analysis", top5_features)
 
     # Decision Tree
     elif model_kind == "Decision Tree":
@@ -157,7 +98,7 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
         explain_dt_global_importance(model, feature_names, top_k=15)
     
         explain_dt_local_rules(model,X_val, feature_names, show_tree_depth=3)
-        return "DT"
+        return ("DT", top5_features)
 
     # SVM (linear)
     elif (model_kind == "SVM linear" or model_kind == "SVM linear calibrated"):
@@ -168,26 +109,26 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
         else:
             SHAP("linear", model, X_train, X_test, X_val)
 
-        return "SHAP (linear) for SVM"
+        return ("SHAP (linear) for SVM", top5_features)
 
     # SVM (non-linear, e.g. RBF)
     elif model_kind == "SVM":
         SHAP("kernel", model, X_train, X_test, X_val)
 
-        return "Kernel SHAP / LIME for SVM-RBF"
+        return ("Kernel SHAP / LIME for SVM-RBF",top5_features)
 
     # Deep Neural Network
     elif model_kind == "DNN":
         SHAP("deep", model, X_train, X_test, X_val)
 
-        return "Deep SHAP for DNN"
+        return ("Deep SHAP for DNN", top5_features)
 
     # Fallback
     else:
         print("[XAI] Model not recognized — using generic SHAP KernelExplainer")
         
 
-        return "(generic fallback)"
+        return (" generic fallback = SHAP KernelExplainer", top5_features)
 
 
 
