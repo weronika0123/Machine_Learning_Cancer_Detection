@@ -5,6 +5,7 @@ from sklearn.tree import _tree, plot_tree
 import numpy as np
 
 def explain_lr_with_coeffs(model, feature_names, top_k=15):
+
     coefs = model.coef_[0]  # binary classification
     df = pd.DataFrame({"feature": feature_names, "coef": coefs})
     df["abs_coef"] = df["coef"].abs()
@@ -61,18 +62,24 @@ def SHAP(mode, model, X_train, X_test, X_val):
 
     shap_values = explainer(X_val)
 
+    # Extract top 15 features directly from SHAP values
+    feature_importance = np.abs(shap_values.values).mean(axis=0)
+    top_15_indices = np.argsort(feature_importance)[-15:][::-1]
+    top_15_features = X_val.columns[top_15_indices]
 
-    # for global explenation beeswarm plot
-    ax = shap.plots.beeswarm(shap_values, show=False)
+    # Beeswarm plot for top 15 features
+    shap_values_top_15 = shap_values[:, top_15_indices]
+    ax = shap.plots.beeswarm(shap_values_top_15, show=False, max_display=15)  # Ensure 15 features are displayed
     fig = plt.gcf()
-    labels = list(X_val.columns)
-    left = auto_left_margin(labels)
     fig.set_size_inches(12, 6)
-    fig.subplots_adjust(left=left, right=0.98, top=0.95, bottom=0.08)
     fig.tight_layout()
     plt.show()
-    
-    return "Shap explainer output"
+
+    # Extract top 5 features
+    top_5_features = top_15_features[:5].tolist()
+
+
+    return top_5_features
 
 def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
     print(f"[XAI] Running explanations for model: {model_kind}")
@@ -97,7 +104,6 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
 
         explain_dt_global_importance(model, feature_names, top_k=15)
     
-        explain_dt_local_rules(model,X_val, feature_names, show_tree_depth=3)
         return ("DT", top5_features)
 
     # SVM (linear)
@@ -105,15 +111,15 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
 
         if model_kind == "SVM linear calibrated":
             base_model = model.calibrated_classifiers_[0].estimator
-            SHAP("linear", base_model, X_train, X_test, X_val)
+            top5_features=SHAP("linear", base_model, X_train, X_test, X_val)
         else:
-            SHAP("linear", model, X_train, X_test, X_val)
+            top5_features=SHAP("linear", model, X_train, X_test, X_val)
 
         return ("SHAP (linear) for SVM", top5_features)
 
     # SVM (non-linear, e.g. RBF)
     elif model_kind == "SVM":
-        SHAP("kernel", model, X_train, X_test, X_val)
+        top5_features=SHAP("kernel", model, X_train, X_test, X_val)
 
         return ("Kernel SHAP / LIME for SVM-RBF",top5_features)
 
