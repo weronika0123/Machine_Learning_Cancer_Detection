@@ -139,8 +139,7 @@ def pipeline(
     # Separate parameters by category
     preprocess_params = {k: v for k, v in (model_params or {}).items() if k in PREPROCESS_PARAMS}
     postprocess_params = {k: v for k, v in (model_params or {}).items() if k in POSTPROCESS_PARAMS}
-    model_only_params = {k: v for k, v in (model_params or {}).items() 
-                         if k not in PREPROCESS_PARAMS | POSTPROCESS_PARAMS}
+    model_only_params = {k: v for k, v in (model_params or {}).items() if k not in PREPROCESS_PARAMS | POSTPROCESS_PARAMS}
     
     # Flag innit
     feature_selection_flag = False
@@ -175,7 +174,6 @@ def pipeline(
         if (any(s in ("correlation removal", "correlation_removal", "corr", "corr remv", "cr") for s in steps)):
             fs_method.append("corr")
             correlation_removal_flag = True
-
 
         feature_selection_flag = True
 
