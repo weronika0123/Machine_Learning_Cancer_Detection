@@ -23,7 +23,7 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 
 
-RANDOM_STATE = 42  # dla powtarzalności wyników
+RANDOM_STATE = 42
 
 
 def validate_split_columns(df):
@@ -96,7 +96,7 @@ def prepare_data_split(X, y, df, use_validation="separate"):
     if use_validation == "separate":
         return X_train_base, X_val_base, X_test_base, y_train_base, y_val_base, y_test_base
     
-    #Option B: Split validation 80/20 into train/test
+    # Option B: Split validation 80/20 into train/test
     elif use_validation == "merge_train_test":
         if X_val_base.shape[0] > 0:
             X_val_train, X_val_test, y_val_train, y_val_test = train_test_split(
@@ -139,14 +139,13 @@ def pipeline(
     # Separate parameters by category
     preprocess_params = {k: v for k, v in (model_params or {}).items() if k in PREPROCESS_PARAMS}
     postprocess_params = {k: v for k, v in (model_params or {}).items() if k in POSTPROCESS_PARAMS}
-    model_only_params = {k: v for k, v in (model_params or {}).items() 
-                         if k not in PREPROCESS_PARAMS | POSTPROCESS_PARAMS}
+    model_only_params = {k: v for k, v in (model_params or {}).items() if k not in PREPROCESS_PARAMS | POSTPROCESS_PARAMS}
     
     # Flag innit
     feature_selection_flag = False
     correlation_removal_flag = False
 
-    # 1) Identify model kind (string)
+    # Identify model kind (string)
     model_name_norm = model_name.strip().lower()
     if model_name_norm in ("logisticregression", "lr"):
         model_kind = "Logistic Regression"
@@ -161,7 +160,7 @@ def pipeline(
         raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC")
 
 
-    # 2) Identify preprocessing steps (list of strings)
+    # Identify preprocessing steps (list of strings)
     if preprocesing:
         fs_method = []
         steps = [str(s).strip().lower() for s in (preprocesing or [])]
@@ -176,15 +175,14 @@ def pipeline(
             fs_method.append("corr")
             correlation_removal_flag = True
 
-
         feature_selection_flag = True
 
-    # 3) Postprocessing (threshold tuning)
+    # Postprocessing (threshold tuning)
     postprocess_flag = False
     if(postprocess):
         postprocess_flag = True
 
-    #Validate postprocess and merge_train_test combination
+    # Validate postprocess and merge_train_test combination
     if postprocess_flag and use_validation == "merge_train_test":
         raise ValueError(
             "Cannot use --postprocess (threshold tuning) with --use_validation merge_train_test. "
@@ -200,7 +198,7 @@ def pipeline(
     # Load data
     path = Path(dane)
 
-    # Validations
+    # File Validations
     if not path.exists():
         raise FileNotFoundError(f"We cannot find the file: {path} \nPlease provide the correct path.")
     if(not str(path).endswith(".csv")):
@@ -281,7 +279,7 @@ def pipeline(
 
 #region Model selection + training
     
-    XAI_model = None  # "LIME" albo "SHAP"
+    XAI_model = None 
     XAI_model_specific = None  # np. "TreeExplainer" / "KernelExplainer"
 
     if model_kind == "Decision Tree":    
@@ -362,10 +360,11 @@ def pipeline(
 #endregion
 
 #region XAI
-    
+    XAI_method = None
+    XAI_top_features = None
+
     if xai_flag:
-        #xai_method, XAI_model_specific = run_xai(model_kind, model, X_train, X_test)
-        print(f"\n SHAPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP\n",run_xai(model_kind, model, feature_names, X_train, X_test))
+        XAI_method, XAI_top_features = run_xai(model_kind, model, feature_names, X_train, X_test)
 #endregion
 
 #region Post-processing = Threshold tuning
@@ -481,8 +480,8 @@ def pipeline(
         "model": model.__class__.__name__,
         "metrics_requested": EVAL,
         "metrics": results,
-        #"xai_method": XAI_model,
-        #"xai_specific": XAI_model_specific,
+        "xai_method": XAI_method,
+        "XAI_top_features": XAI_top_features,
     }
 #endregion
 

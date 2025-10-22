@@ -139,7 +139,7 @@ python .\main.py `
   --use_validation "separate" `
   --preprocess "['corr','kbest']" `
   --model SVM `
-  --params "{'prefilter_k':100,'kernel': 'rbf', 'C': 1.0, 'cv_calibration': 5}" `
+  --params "{'prefilter_k':100,'kernel': 'linear', 'C': 1.0, 'cv_calibration': 5}" `
   --eval "['accuracy','F1','recall','precision']" `
   --xai
 
