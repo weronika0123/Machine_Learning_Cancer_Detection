@@ -12,7 +12,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.svm import LinearSVC
 import warnings
-# sklearn version = 1.7.1
 
 RANDOM_STATE = 42
 

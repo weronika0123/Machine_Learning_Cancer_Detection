@@ -1,2 +1,4 @@
 src/liquid_biopsy_data.csv filter=lfs diff=lfs merge=lfs -text
 src/data_sources/liquid_biopsy_data.csv filter=lfs diff=lfs merge=lfs -text
+src/data_sources/big_test.csv filter=lfs diff=lfs merge=lfs -text
+src/data_sources/*.csv filter=lfs diff=lfs merge=lfs -text
