@@ -364,7 +364,7 @@ def pipeline(
     XAI_top_features = None
 
     if xai_flag:
-        XAI_method, XAI_top_features = run_xai(model_kind, model, feature_names, X_train, X_test)
+        XAI_method, XAI_top_features = run_xai(model_kind, model, feature_names, X_train, X_test, X_val)
 #endregion
 
 #region Post-processing = Threshold tuning

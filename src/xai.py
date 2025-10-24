@@ -26,23 +26,56 @@ def explain_lr_with_coeffs(model, feature_names, top_k=15):
     plt.show()
     return top5_features
 
-def explain_dt_global_importance(model, feature_names, top_k=15):
-
-    imp = model.feature_importances_  # Gini importance
-
-    df = pd.DataFrame({"feature": feature_names, "importance": imp})
-    df = df[df["importance"] > 0]
-    df = df.sort_values("importance", ascending=False).head(min(top_k, len(df)))
-
-    # plot
-    fig, ax = plt.subplots(figsize=(12, 7))
-    ax.barh(df["feature"], df["importance"], color="#b3cde3")
-    ax.set_xlabel("Gini importance")
-    ax.set_title(f"Top {len(df)} features (Decision Tree)")
-    ax.invert_yaxis()
+def explain_dt_with_shap(model, X_val, top_k=15):
+    print("[XAI] Using SHAP TreeExplainer for Decision Tree")
+    
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer(X_val)
+    if len(shap_values.values.shape) == 3 and shap_values.values.shape[2] == 2:
+        print("[XAI] Binary classification detected - using positive class (cancer=1)")
+        shap_values_pos = shap_values[:, :, 1]
+        feature_importance = np.abs(shap_values_pos.values).mean(axis=0)
+    else:
+        shap_values_pos = shap_values
+        feature_importance = np.abs(shap_values.values).mean(axis=0)
+    top_indices = np.argsort(feature_importance)[-top_k:][::-1]
+    top_features = [X_val.columns[i] for i in top_indices]
+    
+    #WATERFALL PLOT
+    print(f"[XAI] Generating waterfall plot for sample prediction")
+    shap.plots.waterfall(shap_values_pos[0], max_display=top_k, show=False)
+    fig = plt.gcf()
+    labels = list(X_val.columns)
+    left = auto_left_margin(labels)
+    fig.set_size_inches(13, 7)
+    fig.subplots_adjust(left=left, right=0.98, top=0.95, bottom=0.08)
+    plt.title(f"Local Explanation - Decision Tree", fontsize=14, pad=10)
     fig.tight_layout()
     plt.show()
-    return df
+    
+    #BEESWARM PLOT
+    print(f"[XAI] Generating beeswarm plot (top {top_k} features)")
+    shap.plots.beeswarm(shap_values_pos, max_display=top_k, show=False)
+    fig = plt.gcf()
+    labels = list(X_val.columns) if isinstance(X_val, pd.DataFrame) else []
+    left = auto_left_margin(labels)
+    fig.set_size_inches(12, 8)
+    fig.subplots_adjust(left=left, right=0.98, top=0.95, bottom=0.08)
+    plt.title(f"Global Feature Importance (Top {top_k}) - Decision Tree", fontsize=14, pad=10)
+    fig.tight_layout()
+    plt.show()
+    
+    #BAR PLOT
+    print(f"[XAI] Generating bar plot (feature importance ranking)")
+    shap.plots.bar(shap_values_pos, max_display=top_k, show=False)
+    fig = plt.gcf()
+    fig.set_size_inches(10, 6)
+    plt.title(f"Feature Importance Ranking (Top {top_k}) - Decision Tree", fontsize=14, pad=10)
+    fig.tight_layout()
+    plt.show()
+    top_5_features = top_features[:5]
+    print(f"[XAI] Top 5 most important features: {top_5_features}")
+    return top_5_features
 
 def auto_left_margin(labels):
     if not labels:
@@ -101,10 +134,8 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
 
     # Decision Tree
     elif model_kind == "Decision Tree":
-
-        explain_dt_global_importance(model, feature_names, top_k=15)
-    
-        return ("DT", top5_features)
+        top5_features = explain_dt_with_shap(model, X_val, top_k=15)
+        return ("SHAP TreeExplainer for Decision Tree", top5_features)
 
     # SVM (linear)
     elif (model_kind == "SVM linear" or model_kind == "SVM linear calibrated"):
@@ -135,6 +166,3 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
         
 
         return (" generic fallback = SHAP KernelExplainer", top5_features)
-
-
-
