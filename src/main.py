@@ -125,6 +125,8 @@ def pipeline(
                 preprocesing: list,
                 model_name: str,
                 model_params: dict,
+                preprocess_params: dict,
+                postprocess_params: dict,
                 postprocess: bool,
                 EVAL: list,
                 XAI: bool,
@@ -132,15 +134,6 @@ def pipeline(
 
 #region Data Prep
 
-    # Define parameter categories to separate concerns
-    PREPROCESS_PARAMS = {'corr_threshold', 'prefilter_k'}
-    POSTPROCESS_PARAMS = {'tuning_method', 'cost_fn', 'cost_fp', 'show_tuning_plots'}
-    
-    # Separate parameters by category
-    preprocess_params = {k: v for k, v in (model_params or {}).items() if k in PREPROCESS_PARAMS}
-    postprocess_params = {k: v for k, v in (model_params or {}).items() if k in POSTPROCESS_PARAMS}
-    model_only_params = {k: v for k, v in (model_params or {}).items() if k not in PREPROCESS_PARAMS | POSTPROCESS_PARAMS}
-    
     # Flag innit
     feature_selection_flag = False
     correlation_removal_flag = False
@@ -247,8 +240,8 @@ def pipeline(
     # Feature selection
     fs_mask = None
     if feature_selection_flag:
-        corr_threshold = float(model_params.get("corr_threshold", 0.90))  # default threshold
-        prefilter_k = model_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
+        corr_threshold = float(preprocess_params.get("corr_threshold", 0.90))  # default threshold
+        prefilter_k = preprocess_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
 
         X_train, X_test, fs_mask = feature_selection(
             steps=step,
@@ -291,15 +284,15 @@ def pipeline(
             "class_weight": "balanced",      
             "random_state": RANDOM_STATE
         }
-        dt_defaults.update(model_only_params)
+        dt_defaults.update(model_params)
         model = DecisionTreeClassifier(**dt_defaults)
 
     elif model_kind == "Logistic Regression":
 
-        max_iter = model_only_params.get("max_iter", 100)
-        solver = model_only_params.get("solver", "lbfgs")
-        penalty = model_only_params.get("penalty", "l2")
-        C = model_only_params.get("C", 1.0)
+        max_iter = model_params.get("max_iter", 100)
+        solver = model_params.get("solver", "lbfgs")
+        penalty = model_params.get("penalty", "l2")
+        C = model_params.get("C", 1.0)
 
         model = LogisticRegression(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, class_weight="balanced", random_state=RANDOM_STATE
@@ -318,7 +311,7 @@ def pipeline(
         "cv_calibration": 5,
         "probability": True          # dla SVC (nieliniowe kernele) – żeby mieć predict_proba
     }
-        svm_defaults.update(model_only_params)
+        svm_defaults.update(model_params)
 
         kernel = svm_defaults["kernel"]
 
@@ -370,11 +363,11 @@ def pipeline(
 #region Post-processing = Threshold tuning
     tuning_info = None
     if postprocess_flag:
-        # Extract postprocessing parameters from model_params
-        tuning_method = model_params.get("tuning_method", "recall")  # default: recall (medical priority)
-        cost_fn = model_params.get("cost_fn", 10.0)  # False Negative cost
-        cost_fp = model_params.get("cost_fp", 1.0)   # False Positive cost
-        show_plots = model_params.get("show_tuning_plots", True)
+        # Extract postprocessing parameters from postprocess_params
+        tuning_method = postprocess_params.get("tuning_method", "recall")  # default: recall (medical priority)
+        cost_fn = postprocess_params.get("cost_fn", 10.0)  # False Negative cost
+        cost_fp = postprocess_params.get("cost_fp", 1.0)   # False Positive cost
+        show_plots = postprocess_params.get("show_tuning_plots", True)
         
         y_pred, tuning_info = threshold_tuning(
             model=model,
@@ -524,18 +517,14 @@ def main(argv=None):
         print(f"Błąd parsowania parametrów: {e}", file=sys.stderr)
         sys.exit(2)
 
-    #Scalanie wszystkich parametrów w jeden dict
-    all_params = {}
-    all_params.update(preprocess_params)
-    all_params.update(model_params)
-    all_params.update(postprocess_params)
-
     out = pipeline(
         dane=args.data,
         use_validation=args.use_validation,
         preprocesing=preprocess_list,
         model_name=args.model,
-        model_params=all_params,
+        model_params=model_params,
+        preprocess_params=preprocess_params,
+        postprocess_params=postprocess_params,
         postprocess=args.postprocess,
         EVAL=eval_list,
         XAI=args.xai)
