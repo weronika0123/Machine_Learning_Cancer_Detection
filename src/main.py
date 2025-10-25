@@ -1,4 +1,3 @@
-import argparse
 import json
 import sys
 from pathlib import Path
@@ -21,6 +20,7 @@ from postprocessing import threshold_tuning
 from xai import run_xai
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
+from cli import parse_args
 
 
 RANDOM_STATE = 42
@@ -476,21 +476,6 @@ def pipeline(
         "XAI_top_features": XAI_top_features,
     }
 #endregion
-
-
-def parse_args(argv=None):
-    p = argparse.ArgumentParser(description="Bazowy szkielet pipeline ML (TODO w środku).")
-    p.add_argument("--data", required=True, help="Ścieżka do pliku CSV.")
-    p.add_argument("--use_validation",default="separate",choices=["separate", "merge_train_test"],help="Strategy for validation set: 'separate' keeps it separate, 'merge_train_test' merges 80%% into train and 20%% into test")
-    p.add_argument("--preprocess",default="[]",help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr','kbest']\"")
-    p.add_argument("--preprocess_params", default="{}", help="Preprocessing parameters: corr_threshold (float, default=0.90), prefilter_k (int, default=1500)")
-    p.add_argument("--model",required=True,choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],help="Wybór modelu.")
-    p.add_argument("--model_params", default="{}", help="Model hyperparameters (varies by model)")
-    p.add_argument("--postprocess", action="store_true", help="Włącz postprocessing i.e threshold tuning.")
-    p.add_argument("--postprocess_params", default="{}", help="Postprocessing parameters: tuning_method, cost_fn, cost_fp, show_tuning_plots")
-    p.add_argument("--eval", default="['AUC ROC','accuracy','Confusion matrix']", help="Lista metryk jako lista Pythona.")
-    p.add_argument("--xai", action="store_true", help="Włącz XAI.")
-    return p.parse_args(argv)
 
 
 def main(argv=None):
