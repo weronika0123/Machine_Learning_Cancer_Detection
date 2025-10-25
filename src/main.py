@@ -133,7 +133,6 @@ def pipeline(
                 ):
 
 #region Data Prep
-
     # Flag innit
     feature_selection_flag = False
     correlation_removal_flag = False
@@ -240,8 +239,8 @@ def pipeline(
     # Feature selection
     fs_mask = None
     if feature_selection_flag:
-        corr_threshold = float(preprocess_params.get("corr_threshold", 0.90))  # default threshold
-        prefilter_k = preprocess_params.get("prefilter_k", 1500)  # default k for SelectKBest prefiltering
+        corr_threshold = float(preprocess_params.get("corr_threshold", 0.90))  #default threshold
+        prefilter_k = preprocess_params.get("prefilter_k", 1500)  #default k for SelectKBest prefiltering
 
         X_train, X_test, fs_mask = feature_selection(
             steps=step,
