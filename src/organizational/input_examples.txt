@@ -1,156 +1,157 @@
-Weronika:
-cd C:\Users\weron\Downloads\Machine_Learning_Cancer_Detection-main\Machine_Learning_Cancer_Detection\src
+#1.Logistic Regression
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --model LR `
+  --model_params "{'max_iter': 1000}" `
+  --eval "['accuracy','F1']"
 
-#Separate validation for threshold tuning
+#2.Decision Tree z preprocessing
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['corr']" `
-  --model LR `
-  --postprocess `
-  --params "{'max_iter': 1000}" `
+  --preprocess_params "{'corr_threshold': 0.85}" `
+  --model DT `
+  --model_params "{'max_depth': 6, 'min_samples_leaf': 5}" `
   --eval "['AUC ROC','accuracy','F1']" `
-
-
-  python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['feature_selection','corr']" `
-  --model DT `
-  --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
 
-  python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['corr']" `
-  --model DT `
-  --postprocess `
-  --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
-  --xai
-
-#Decision Tree with merge_train_test (more training data, no threshold tuning)
-python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "merge_train_test" `
-  --preprocess "['feature_selection','corr']" `
-  --model DT `
-  --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']"
-
-PARAMS DO SVM:
-
-1. SAFE_LINEAR (domyślny, baseline)
-{
-  "kernel": "linear",
-  "C": 1.0,
-  "class_weight": "balanced",
-  "use_calibrated": True,
-  "calibration_method": "sigmoid",
-  "cv_calibration": 5
-}
-
-2. SAFE_RBF (opcjonalny, nieliniowy test) - Po FS cech ≤ ~500
-  {
-  "kernel": "rbf",
-  "C": 2.0,
-  "gamma": "scale",
-  "class_weight": "balanced"
-}
-
-3.example
-
-  python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['corr']" `
-  --model SVM `
-  --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
-  --xai
-
-#SVM Linear with merge_train_test (maximum training data)
-python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "merge_train_test" `
-  --preprocess "['corr']" `
-  --model SVM `
-  --params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True,'cv_calibration': 5}" `
-  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']"
-
-#Logistic Regression with threshold tuning (default: recall optimization)
+#3.Logistic Regression z threshold tuning
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
   --model LR `
+  --model_params "{'max_iter': 1000, 'C': 1.0}" `
   --postprocess `
-  --params "{'max_iter': 1000, 'C': 1.0}" `
-  --eval "['AUC ROC','accuracy','F1','recall','precision','Confusion Matrix']"
-
-# ============================================================================
-# THRESHOLD TUNING EXAMPLES (NEW POSTPROCESSING MODULE)
-# ============================================================================
-
-
-#Example 4: Youden's J optimization (maximize TPR - FPR)
-python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['corr']" `
-  --model LR `
-  --postprocess `
-  --params "{'max_iter': 1000}" `
-  --eval "['AUC ROC','accuracy','recall','precision','Confusion Matrix']"
-
-#Example 7: Threshold tuning without plots (faster execution)
-python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['corr']" `
-  --model LR `
-  --postprocess `
-  --params "{'max_iter': 1000, 'show_tuning_plots': False}" `
+  --postprocess_params "{'tuning_method': 'recall'}" `
   --eval "['AUC ROC','accuracy','F1']"
 
-
-  --preprocess "['feature_selection','corr']" `
+#4.Decision Tree with merge_train_test (more training data, no threshold tuning)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "merge_train_test" `
+  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
   --model DT `
-  --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced'}" `
+  --model_params "{'max_depth': 6, 'min_samples_leaf': 5}" `
+  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']"
+
+#5.SVM Linear 
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model SVM `
+  --model_params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True, 'cv_calibration': 5}" `
   --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
 
-  _________________________________________________________________________________________________________
+#6.SVM RBF (nieliniowy, po feature selection)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 500}" `
+  --model SVM `
+  --model_params "{'kernel': 'rbf', 'C': 2.0, 'gamma': 'scale'}" `
+  --eval "['AUC ROC','accuracy','F1']"
 
-  python .\main.py `
+#7.SVM Linear with merge_train_test (maximum training data)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "merge_train_test" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model SVM `
+  --model_params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True}" `
+  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']"
+
+#8.Logistic Regression z recall optimization (default)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model LR `
+  --model_params "{'max_iter': 1000, 'C': 1.0}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'recall'}" `
+  --eval "['AUC ROC','accuracy','F1','recall','precision','Confusion Matrix']"
+
+#9.Threshold tuning z F1 optimization
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model LR `
+  --model_params "{'max_iter': 1000}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['AUC ROC','accuracy','F1','recall','precision']"
+
+#10.Threshold tuning z Youden's J optimization
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model LR `
+  --model_params "{'max_iter': 1000}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'youden'}" `
+  --eval "['AUC ROC','accuracy','recall','precision','Confusion Matrix']"
+
+#11.Threshold tuning bez plotów (szybsze wykonanie)
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model LR `
+  --model_params "{'max_iter': 1000}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1', 'show_tuning_plots': False}" `
+  --eval "['AUC ROC','accuracy','F1']"
+
+#12.Pełny pipeline: RFECV + kbest + corr + LR + threshold tuning + XAI
+python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['rfecv','corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 500}" `
   --model LR `
+  --model_params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0}" `
   --postprocess `
-  --params "{'prefilter_k':500,'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0, 'class_weight': 'balanced', 'tuning_method': 'f1'}" `
-  --eval "['accuracy','Confusion Matrix','F1','r','p']"`
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['accuracy','Confusion Matrix','F1','recall','precision']" `
   --xai
 
-    python .\main.py `
+#13.Decision Tree z kompletnym preprocessingiem
+python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['corr','kbest']" `
-  --model SVM `
-  --params "{'prefilter_k':100,'kernel': 'linear', 'C': 1.0, 'cv_calibration': 5, 'tuning_method': 'f1'}" `
-  --eval "['accuracy','F1','recall','precision']" `
-  --xai
-
-  'use_calibrated': True,
-
-    python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.85, 'prefilter_k': 1000}" `
   --model DT `
-  --params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini', 'class_weight': 'balanced', 'tuning_method': 'f1'}" `
-  --eval "['accuracy','F1','recall','precision']" `
+  --model_params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini'}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['accuracy','F1','recall','precision','Confusion Matrix']" `
   --xai
 
+#14.SVM z wszystkimi opcjami
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 100}" `
+  --model SVM `
+  --model_params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True, 'cv_calibration': 5}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['accuracy','F1','recall','precision','AUC ROC']" `
+  --xai

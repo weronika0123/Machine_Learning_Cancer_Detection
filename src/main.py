@@ -491,9 +491,11 @@ def parse_args(argv=None):
     p.add_argument("--data", required=True, help="Ścieżka do pliku CSV.")
     p.add_argument("--use_validation",default="separate",choices=["separate", "merge_train_test"],help="Strategy for validation set: 'separate' keeps it separate, 'merge_train_test' merges 80%% into train and 20%% into test")
     p.add_argument("--preprocess",default="[]",help="Lista kroków preprocessingu jako lista Pythona, np. \"['rfecv','corr','kbest']\"")
+    p.add_argument("--preprocess_params", default="{}", help="Preprocessing parameters: corr_threshold (float, default=0.90), prefilter_k (int, default=1500)")
     p.add_argument("--model",required=True,choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],help="Wybór modelu.")
-    p.add_argument("--params", default="{}", help="Parametry modelu jako słownik Pythona, np. {'max_depth': 4}")
+    p.add_argument("--model_params", default="{}", help="Model hyperparameters (varies by model)")
     p.add_argument("--postprocess", action="store_true", help="Włącz postprocessing i.e threshold tuning.")
+    p.add_argument("--postprocess_params", default="{}", help="Postprocessing parameters: tuning_method, cost_fn, cost_fp, show_tuning_plots")
     p.add_argument("--eval", default="['AUC ROC','accuracy','Confusion matrix']", help="Lista metryk jako lista Pythona.")
     p.add_argument("--xai", action="store_true", help="Włącz XAI.")
     return p.parse_args(argv)
@@ -501,29 +503,39 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
-
-    # Parsowanie
     try:
-        params = ast.literal_eval(args.params)
-        eval_list = ast.literal_eval(args.eval)
+        preprocess_params = ast.literal_eval(args.preprocess_params)
+        if not isinstance(preprocess_params, dict):
+            raise ValueError("--preprocess_params must be a Python dict")
+        model_params = ast.literal_eval(args.model_params)
+        if not isinstance(model_params, dict):
+            raise ValueError("--model_params must be a Python dict")
+        postprocess_params = ast.literal_eval(args.postprocess_params)
+        if not isinstance(postprocess_params, dict):
+            raise ValueError("--postprocess_params must be a Python dict")
         preprocess_list = ast.literal_eval(args.preprocess)
         if not isinstance(preprocess_list, list):
             raise ValueError("--preprocess musi być listą Pythona (np. ['feature selection','corr','selectKBest'])")
-        if not isinstance(params, dict):
-            raise ValueError("--params musi być słownikiem Pythona (np. {'max_iter': 1000})")
+        eval_list = ast.literal_eval(args.eval)
         if not isinstance(eval_list, list):
             raise ValueError("--eval musi być listą Pythona (np. ['AUC ROC','accuracy'])")
+            
     except Exception as e:
-        print(f"Błąd parsowania --params/--eval: {e}", file=sys.stderr)
+        print(f"Błąd parsowania parametrów: {e}", file=sys.stderr)
         sys.exit(2)
 
+    #Scalanie wszystkich parametrów w jeden dict
+    all_params = {}
+    all_params.update(preprocess_params)
+    all_params.update(model_params)
+    all_params.update(postprocess_params)
 
     out = pipeline(
         dane=args.data,
         use_validation=args.use_validation,
         preprocesing=preprocess_list,
         model_name=args.model,
-        model_params=params,
+        model_params=all_params,
         postprocess=args.postprocess,
         EVAL=eval_list,
         XAI=args.xai)
