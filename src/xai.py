@@ -26,56 +26,6 @@ def explain_lr_with_coeffs(model, feature_names, top_k=15):
     plt.show()
     return top5_features
 
-def explain_dt_with_shap(model, X_val, top_k=15):
-    print("[XAI] Using SHAP TreeExplainer for Decision Tree")
-    
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer(X_val)
-    if len(shap_values.values.shape) == 3 and shap_values.values.shape[2] == 2:
-        print("[XAI] Binary classification detected - using positive class (cancer=1)")
-        shap_values_pos = shap_values[:, :, 1]
-        feature_importance = np.abs(shap_values_pos.values).mean(axis=0)
-    else:
-        shap_values_pos = shap_values
-        feature_importance = np.abs(shap_values.values).mean(axis=0)
-    top_indices = np.argsort(feature_importance)[-top_k:][::-1]
-    top_features = [X_val.columns[i] for i in top_indices]
-    
-    #WATERFALL PLOT
-    print(f"[XAI] Generating waterfall plot for sample prediction")
-    shap.plots.waterfall(shap_values_pos[0], max_display=top_k, show=False)
-    fig = plt.gcf()
-    labels = list(X_val.columns)
-    left = auto_left_margin(labels)
-    fig.set_size_inches(13, 7)
-    fig.subplots_adjust(left=left, right=0.98, top=0.95, bottom=0.08)
-    plt.title(f"Local Explanation - Decision Tree", fontsize=14, pad=10)
-    fig.tight_layout()
-    plt.show()
-    
-    #BEESWARM PLOT
-    print(f"[XAI] Generating beeswarm plot (top {top_k} features)")
-    shap.plots.beeswarm(shap_values_pos, max_display=top_k, show=False)
-    fig = plt.gcf()
-    labels = list(X_val.columns) if isinstance(X_val, pd.DataFrame) else []
-    left = auto_left_margin(labels)
-    fig.set_size_inches(12, 8)
-    fig.subplots_adjust(left=left, right=0.98, top=0.95, bottom=0.08)
-    plt.title(f"Global Feature Importance (Top {top_k}) - Decision Tree", fontsize=14, pad=10)
-    fig.tight_layout()
-    plt.show()
-    
-    #BAR PLOT
-    print(f"[XAI] Generating bar plot (feature importance ranking)")
-    shap.plots.bar(shap_values_pos, max_display=top_k, show=False)
-    fig = plt.gcf()
-    fig.set_size_inches(10, 6)
-    plt.title(f"Feature Importance Ranking (Top {top_k}) - Decision Tree", fontsize=14, pad=10)
-    fig.tight_layout()
-    plt.show()
-    top_5_features = top_features[:5]
-    print(f"[XAI] Top 5 most important features: {top_5_features}")
-    return top_5_features
 
 def auto_left_margin(labels):
     if not labels:
@@ -90,6 +40,36 @@ def SHAP(mode, model, X_train, X_test, X_val):
         explainer = shap.LinearExplainer(model, X_train)
     elif mode == "deep":
         explainer = shap.DeepExplainer(model, X_train)
+    elif mode == "tree":
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer(X_val)
+
+        # wybór klasy dodatniej przy binarce oraz absolute mean importances
+        if len(shap_values.values.shape) == 3 and shap_values.values.shape[2] == 2:
+            print("[XAI] Binary classification detected - using positive class (cancer=1)")
+            shap_values_pos = shap_values[:, :, 1]
+            feature_importance = np.abs(shap_values_pos.values).mean(axis=0)
+        else:
+            shap_values_pos = shap_values
+            feature_importance = np.abs(shap_values.values).mean(axis=0)
+
+        top_k = 15
+        top_15_indices = np.argsort(feature_importance)[-top_k:][::-1]
+        top_15_features = X_val.columns[top_15_indices]
+
+        # Beeswarm plot for top 15 features
+        shap_values_top_15 = shap_values_pos[:, top_15_indices]
+        print(f"[XAI] Generating beeswarm plot (top {top_k} features)")
+        shap.plots.beeswarm(shap_values_top_15, show=False, max_display=top_k)
+        fig = plt.gcf()
+        fig.set_size_inches(12, 6)
+        plt.title(f"Global Feature Importance (Top {top_k}) - Decision Tree", fontsize=14, pad=10)
+        fig.tight_layout()
+        plt.show()
+
+        top_5_features = top_15_features[:5].tolist()
+        print(f"[XAI] Top 5 most important features: {top_5_features}")
+        return top_5_features
     else:
         explainer = shap.KernelExplainer(model.predict, X_train)
 
@@ -134,7 +114,7 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
 
     # Decision Tree
     elif model_kind == "Decision Tree":
-        top5_features = explain_dt_with_shap(model, X_val, top_k=15)
+        top5_features = SHAP("tree", model, X_train, X_test, X_val)
         return ("SHAP TreeExplainer for Decision Tree", top5_features)
 
     # SVM (linear)
