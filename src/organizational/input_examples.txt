@@ -168,6 +168,11 @@ python .\main.py `
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
+  --preprocess "['rfecv','corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 100}" `
   --model DNN `
   --model_params "{'hidden_layers': [256, 128, 64], 'activation': 'relu', 'dropout_rate': 0.3, 'learning_rate': 0.0005, 'epochs': 20, 'batch_size': 64}" `
-  --eval "['accuracy','F1','AUC ROC','Confusion Matrix']"
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['accuracy','F1','AUC ROC','Confusion Matrix']" `
+  --xai

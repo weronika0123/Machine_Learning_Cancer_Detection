@@ -33,14 +33,17 @@ def auto_left_margin(labels):
     L = max(len(str(s)) for s in labels)
     return min(0.55, 0.18 + 0.012 * L)
 
-def SHAP(mode, model, X_train, X_test, X_val):
+def SHAP(explainer_type, model, X_train, X_test, X_val):
 
     explainer = None
-    if mode == "linear":
+    if explainer_type == "linear":
         explainer = shap.LinearExplainer(model, X_train)
-    elif mode == "deep":
+    elif explainer_type == "deep":
+        if hasattr(model, "get_keras_model"):
+            model = model.get_keras_model()  # Use the underlying Keras model
         explainer = shap.DeepExplainer(model, X_train)
-    elif mode == "tree":
+        shap_values = explainer.shap_values(X_test)
+    elif explainer_type == "tree":
         explainer = shap.TreeExplainer(model)
         shap_values = explainer(X_val)
 
@@ -136,8 +139,8 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
 
     # Deep Neural Network
     elif model_kind == "DNN":
-        SHAP("deep", model, X_train, X_test, X_val)
-
+        top5_features = SHAP("deep", model, X_train, X_test, X_val)
+        
         return ("Deep SHAP for DNN", top5_features)
 
     # Fallback

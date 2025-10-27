@@ -100,7 +100,7 @@ def prefilter_select_kbest(X_train, y_train, X_test, full_mask,k=1500):
 
 def estimator(model_name:str):
 
-    if model_name == "Logistic Regression":
+    if model_name == "Logistic Regression" or model_name == "DNN":
         fs_estimator = LogisticRegression(
             max_iter=1000, 
             class_weight="balanced", 
@@ -117,6 +117,7 @@ def estimator(model_name:str):
             class_weight="balanced", 
             random_state=RANDOM_STATE
         )
+
     else:
         print("[RFECV][WARN] Model_name unknown - fallback: LogisticRegression.")
         fs_estimator = LogisticRegression(

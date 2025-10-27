@@ -230,9 +230,7 @@ def pipeline(
     X_train, X_val, X_test, y_train, y_val, y_test = prepare_data_split(
         X, y, df, use_validation=use_validation
     )
-    print(f"[DATA] y_train category counts:\n{pd.Series(y_train).value_counts().sort_index()}")
-    print(f"[DATA] y_val category counts:\n{pd.Series(y_val).value_counts().sort_index()}")
-    print(f"[DATA] y_test category counts:\n{pd.Series(y_test).value_counts().sort_index()}")
+
     # Log the split sizes
     print(f"Data split: X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"Data split: X_val: {X_val.shape}, y_val: {y_val.shape}")
