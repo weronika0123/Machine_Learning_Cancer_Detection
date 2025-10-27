@@ -155,3 +155,19 @@ python .\main.py `
   --postprocess_params "{'tuning_method': 'f1'}" `
   --eval "['accuracy','F1','recall','precision','AUC ROC']" `
   --xai
+
+#15.Deep Neural Network (DNN) with default parameters
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --model DNN `
+  --model_params "{'hidden_layers': [128, 64], 'activation': 'relu', 'epochs': 50, 'batch_size': 32}" `
+  --eval "['accuracy','F1','AUC ROC','Confusion Matrix']"
+
+#16.Deep Neural Network (DNN) with custom parameters
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --model DNN `
+  --model_params "{'hidden_layers': [256, 128, 64], 'activation': 'relu', 'dropout_rate': 0.3, 'learning_rate': 0.0005, 'epochs': 20, 'batch_size': 64}" `
+  --eval "['accuracy','F1','AUC ROC','Confusion Matrix']"

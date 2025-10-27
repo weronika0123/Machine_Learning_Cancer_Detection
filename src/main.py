@@ -145,8 +145,11 @@ def pipeline(
     elif model_name_norm in ("svm", "svc"):
         model_kind = "SVM"
         step = 30
+    elif model_name_norm in ("dnn", "deepneuralnetwork"):
+        model_kind = "DNN"
+        step = 50
     else:
-        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC")
+        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC lub DNN")
 
 
     # Identify preprocessing steps (list of strings)
@@ -227,7 +230,9 @@ def pipeline(
     X_train, X_val, X_test, y_train, y_val, y_test = prepare_data_split(
         X, y, df, use_validation=use_validation
     )
-
+    print(f"[DATA] y_train category counts:\n{pd.Series(y_train).value_counts().sort_index()}")
+    print(f"[DATA] y_val category counts:\n{pd.Series(y_val).value_counts().sort_index()}")
+    print(f"[DATA] y_test category counts:\n{pd.Series(y_test).value_counts().sort_index()}")
     # Log the split sizes
     print(f"Data split: X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"Data split: X_val: {X_val.shape}, y_val: {y_val.shape}")
@@ -250,8 +255,8 @@ def pipeline(
         
 
     # MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
-    if model_kind in ("Logistic Regression", "SVM"):
-        print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models: LR/SVM)")
+    if model_kind in ("Logistic Regression", "SVM", "DNN"):
+        print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models:{model_kind})")
         scaler = MinMaxScaler()
         X_train = scaler.fit_transform(X_train)  # Learn min/max from train, then scale
         
@@ -274,7 +279,9 @@ def pipeline(
         X_train=X_train,
         y_train=y_train,
         X_test=X_test,
-        y_test=y_test
+        y_test=y_test,
+        X_val=X_val,
+        y_val=y_val
     )
 
 #endregion

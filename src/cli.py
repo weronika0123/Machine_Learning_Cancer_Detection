@@ -40,13 +40,14 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "Example: \"{'corr_threshold': 0.85, 'prefilter_k': 1000}\""
     )
     model_group = p.add_argument_group('Model Configuration')
-    model_group.add_argument("--model",required=True,choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC"],
+    model_group.add_argument("--model", required=True, choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC", "DNN"],
         help="Machine learning model:\n"
              "   DT (Decision Tree)\n"
              "   LR (Logistic Regression)\n"
-             "   SVM (Support Vector Machine)"
+             "   SVM (Support Vector Machine)\n"
+             "   DNN (Deep Neural Network)"
     )
-    model_group.add_argument("--model_params",default="{}",
+    model_group.add_argument("--model_params", default="{}",
         help="Model-specific hyperparameters as Python dict:\n\n"
              "Decision Tree (DT):\n"
              "   max_depth (int): Maximum tree depth (None for unlimited)\n"
@@ -64,7 +65,15 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "   C (float, default=1.0): Regularization parameter\n"
              "   gamma ('scale'|'auto'|float, default='scale'): Kernel coefficient (rbf/poly)\n"
              "   use_calibrated (bool, default=True): Use CalibratedClassifierCV (linear only)\n"
-             "  Example: \"{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True}\""
+             "  Example: \"{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True}\"\n\n"
+             "Deep Neural Network (DNN):\n"
+             "   hidden_layers (list[int]): Units in hidden layers (e.g., [128, 64])\n"
+             "   activation (str, default='relu'): Activation function for hidden layers\n"
+             "   dropout_rate (float, default=0.2): Dropout rate\n"
+             "   learning_rate (float, default=0.001): Learning rate for Adam optimizer\n"
+             "   epochs (int, default=50): Number of training epochs\n"
+             "   batch_size (int, default=32): Batch size\n"
+             "  Example: \"{'hidden_layers': [128, 64], 'activation': 'relu', 'epochs': 100}\""
     )
     postprocess_group = p.add_argument_group('Postprocessing (Threshold Tuning)')
     postprocess_group.add_argument("--postprocess",action="store_true",

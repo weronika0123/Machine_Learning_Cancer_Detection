@@ -2,12 +2,37 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
+from sklearn.preprocessing import LabelEncoder
+import numpy as np
+import tensorflow as tf
 
 
 
 RANDOM_STATE = 42
+tf.random.set_seed(RANDOM_STATE)
 
-def train_model(model_kind, model_params, X_train, y_train, X_test, y_test):
+class KerasSoftmaxBinaryWrapper:
+    def __init__(self, keras_model):
+        self.model = keras_model
+        self.classes_ = np.array([0, 1])
+
+    def predict_proba(self, X):
+        proba = self.model.predict(X, verbose=0)
+        # Ujednolicenie kształtu: (n_samples, 2)
+        if proba.ndim == 1 or proba.shape[1] == 1:
+            p1 = proba.ravel()
+            proba = np.column_stack([1.0 - p1, p1])
+        return proba
+
+    def predict(self, X):
+        p1 = self.predict_proba(X)[:, 1]
+        return (p1 >= 0.5).astype(int)
+
+def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_val=None, y_val=None):
 
     if model_kind == "Decision Tree":    
         dt_defaults = {
@@ -76,12 +101,79 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test):
         if (kernel == "linear" and model_kind!="SVM linear calibrated"):
             model_kind="SVM linear"
 
+    elif model_kind == "DNN":
+        dnn_defaults = {
+            "hidden_layers": [128, 64],
+            "activation": "relu",
+            "dropout_rate": 0.2,
+            "learning_rate": 0.001,
+            "epochs": 50,
+            "batch_size": 32
+        }
+        dnn_defaults.update(model_params)
+
+        # Label encoding + one-hot (działa też dla 0/1)
+        le = LabelEncoder()
+        y_train_enc = le.fit_transform(y_train)
+        y_test_enc = le.transform(y_test)
+        y_train_cat = to_categorical(y_train_enc)
+        y_test_cat = to_categorical(y_test_enc)
+
+        # Jeśli masz walidację – użyj jej do early stopping/monitoringu
+        use_val = (X_val is not None and getattr(X_val, "shape", (0,))[0] > 0)
+        if use_val:
+            y_val_enc = le.transform(y_val)
+            y_val_cat = to_categorical(y_val_enc)
+
+        # Budowa sieci
+        model_keras = Sequential()
+        model_keras.add(Dense(dnn_defaults["hidden_layers"][0],
+                              activation=dnn_defaults["activation"],
+                              input_shape=(X_train.shape[1],)))
+        model_keras.add(Dropout(dnn_defaults["dropout_rate"]))
+        for units in dnn_defaults["hidden_layers"][1:]:
+            model_keras.add(Dense(units, activation=dnn_defaults["activation"]))
+            model_keras.add(Dropout(dnn_defaults["dropout_rate"]))
+        model_keras.add(Dense(y_train_cat.shape[1], activation="softmax"))
+
+        optimizer = Adam(learning_rate=dnn_defaults["learning_rate"])
+        model_keras.compile(optimizer=optimizer,
+                            loss="categorical_crossentropy",
+                            metrics=["accuracy"])
+
+        # (opcjonalnie) prosty EarlyStopping – możesz dodać jeśli chcesz
+        callbacks = []
+
+        # Trening
+        if use_val:
+            model_keras.fit(
+                X_train, y_train_cat,
+                epochs=dnn_defaults["epochs"],
+                batch_size=dnn_defaults["batch_size"],
+                validation_data=(X_val, y_val_cat),
+                verbose=1,
+                callbacks=callbacks
+            )
+        else:
+            model_keras.fit(
+                X_train, y_train_cat,
+                epochs=dnn_defaults["epochs"],
+                batch_size=dnn_defaults["batch_size"],
+                validation_data=(X_test, y_test_cat),
+                verbose=1,
+                callbacks=callbacks
+            )
+
+        # Owijamy w adapter z API sklearn (predict + predict_proba)
+        model = KerasSoftmaxBinaryWrapper(model_keras)
+        model_kind = "Deep Neural Network"
+
     else:
-        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC")
+        raise ValueError("Nieznany model. Użyj: DecisionTree/DT, LogisticRegression/LR, SVM/SVC, lub Deep Neural Network/DNN")
 
     print("Used X_train shape:", X_train.shape)
     print("Used X_test shape:", X_test.shape)
-    
-    model.fit(X_train, y_train)
+
+    if model_kind != "Deep Neural Network":
+        model.fit(X_train, y_train)
     return (model, model_kind)
-    
