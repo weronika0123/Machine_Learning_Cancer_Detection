@@ -18,6 +18,25 @@ from postprocessing import threshold_tuning
 from xai import run_xai
 from cli import parse_args
 from models import train_model
+import os
+# musi być PRZED importem tensorflow:
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # ucisza logi C++ TF: 0=ALL, 1=INFO, 2=WARNING, 3=ERROR
+
+import warnings
+import logging
+
+# warnings – filtrujemy to, co Cię denerwuje
+warnings.filterwarnings("ignore", message=r"The structure of `inputs`.*", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning, module=r"shap")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"shap")
+
+# logging – globalna konfiguracja tylko raz w entry point
+logging.basicConfig(level=logging.WARNING)  # domyślnie pokazuj WARNING+
+log = logging.getLogger("xai")              # będziesz z niego korzystać w xai.py
+
+# dopiero teraz import TF (żeby TF_CPP_MIN_LOG_LEVEL zadziałał na logi C++)
+import tensorflow as tf
+tf.get_logger().setLevel("ERROR")           # Pythonowy logger TF na ERROR
 
 
 RANDOM_STATE = 42

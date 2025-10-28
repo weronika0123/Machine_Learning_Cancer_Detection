@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.tree import _tree, plot_tree
 import numpy as np
 
+
 def explain_lr_with_coeffs(model, feature_names, top_k=15):
 
     coefs = model.coef_[0]  # binary classification
@@ -33,16 +34,76 @@ def auto_left_margin(labels):
     L = max(len(str(s)) for s in labels)
     return min(0.55, 0.18 + 0.012 * L)
 
-def SHAP(explainer_type, model, X_train, X_test, X_val):
+def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
 
     explainer = None
     if explainer_type == "linear":
         explainer = shap.LinearExplainer(model, X_train)
+        shap_values = explainer(X_val)
     elif explainer_type == "deep":
-        if hasattr(model, "get_keras_model"):
-            model = model.get_keras_model()  # Use the underlying Keras model
-        explainer = shap.DeepExplainer(model, X_train)
-        shap_values = explainer.shap_values(X_test)
+
+        # unwrap the Keras model 
+        keras_model = model.get_keras_model()
+
+        # Convert background and validation data to NumPy arrays (2D tabular format)
+        X_bg = X_train.values if isinstance(X_train, pd.DataFrame) else np.asarray(X_train)
+        X_val_np = X_val.values if isinstance(X_val, pd.DataFrame) else np.asarray(X_val)
+
+        # Subsample background (≤200) for computational efficiency
+        if X_bg.shape[0] > 200:
+            rng = np.random.default_rng(42)
+            X_bg = X_bg[rng.choice(X_bg.shape[0], size=200, replace=False)]
+
+        # SHAP values
+        explainer = shap.DeepExplainer(keras_model, X_bg)
+        shap_values_raw = explainer.shap_values(X_val_np)
+        expected_value = explainer.expected_value
+
+        # Normalize output to 2D (n_samples, n_features)
+        shap_values_arr = shap_values_raw[0] if isinstance(shap_values_raw, list) else shap_values_raw
+        shap_values_arr = np.asarray(shap_values_arr)
+        if shap_values_arr.ndim == 3 and shap_values_arr.shape[-1] == 1:
+            shap_values_arr = shap_values_arr[..., 0]
+
+        # Validate dimensional consistency
+        assert shap_values_arr.ndim == 2
+        assert X_val_np.ndim == 2
+        assert shap_values_arr.shape[1] == X_val_np.shape[1]
+
+        # base values 
+        ev = np.array(expected_value).ravel()
+        base_vals = ev if ev.shape[0] == X_val_np.shape[0] else np.full(X_val_np.shape[0], ev.mean(), dtype=float)
+
+        feat_names_vec = list(feature_names)
+        expl = shap.Explanation(
+            values=shap_values_arr,
+            base_values=base_vals,
+            data=X_val_np,
+            feature_names=feat_names_vec
+        )
+
+        # global feature importance
+        feature_importance = np.abs(expl.values).mean(axis=0)
+
+        top_k = 15
+        top_15_indices = np.argsort(feature_importance)[-top_k:][::-1]
+        top_15_indices = np.asarray(top_15_indices, dtype=int).ravel().tolist()
+        top_15_features = np.array(expl.feature_names)[top_15_indices]
+
+        # Beeswarm plot 
+        shap_values_top_15 = expl[:, top_15_indices]
+        print(f"[XAI] Generating beeswarm plot (top {top_k} features) for DNN (sigmoid)..")
+        shap.plots.beeswarm(shap_values_top_15, show=False, max_display=top_k)
+        fig = plt.gcf()
+        fig.set_size_inches(12, 6)
+        plt.title(f"Global Feature Importance (Top {top_k}) - DNN (sigmoid)", fontsize=14, pad=10)
+        fig.tight_layout()
+        plt.show()
+
+        top_5_features = list(top_15_features[:5])
+        print(f"[XAI] Top 5 most important features (absolute mean SHAP): {top_5_features}")
+        return top_5_features
+    
     elif explainer_type == "tree":
         explainer = shap.TreeExplainer(model)
         shap_values = explainer(X_val)
@@ -75,8 +136,9 @@ def SHAP(explainer_type, model, X_train, X_test, X_val):
         return top_5_features
     else:
         explainer = shap.KernelExplainer(model.predict, X_train)
+        shap_values = explainer(X_val)
 
-    shap_values = explainer(X_val)
+    
 
     # Extract top 15 features directly from SHAP values
     feature_importance = np.abs(shap_values.values).mean(axis=0)
@@ -94,7 +156,6 @@ def SHAP(explainer_type, model, X_train, X_test, X_val):
     # Extract top 5 features
     top_5_features = top_15_features[:5].tolist()
 
-
     return top_5_features
 
 def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
@@ -104,9 +165,10 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
     if X_val is None:
         X_val = X_test
 
-    X_train = pd.DataFrame(X_train, columns=feature_names)    
-    X_val = pd.DataFrame(X_val, columns=feature_names)
-    X_test = pd.DataFrame(X_test, columns=feature_names)
+    if model_kind != "DNN":
+        X_train = pd.DataFrame(X_train, columns=feature_names)    
+        X_val = pd.DataFrame(X_val, columns=feature_names)
+        X_test = pd.DataFrame(X_test, columns=feature_names)
 
 
     # Logistic Regression
@@ -139,7 +201,7 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None):
 
     # Deep Neural Network
     elif model_kind == "DNN":
-        top5_features = SHAP("deep", model, X_train, X_test, X_val)
+        top5_features = SHAP("deep", model, X_train, X_test, X_val, feature_names)
         
         return ("Deep SHAP for DNN", top5_features)
 
