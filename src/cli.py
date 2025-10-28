@@ -110,7 +110,8 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "Provides feature importance rankings and model interpretation.\n"
              "   Decision Tree: SHAP TreeExplainer with waterfall/beeswarm plots\n"
              "   Logistic Regression: Coefficient-based analysis\n"
-             "   SVM: SHAP LinearExplainer or KernelExplainer"
+             "   SVM: SHAP LinearExplainer or KernelExplainer\n"
+             "   DNN: SHAP DeepExplainer with beeswarm plots"
     )
     return p.parse_args(argv)
 
