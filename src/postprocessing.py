@@ -18,7 +18,8 @@ def threshold_tuning(
     cost_fn=10.0,
     cost_fp=1.0,
     thresholds=500,
-    show_plots=True
+    show_plots=True,
+    output_dir=None
 ):
     
     print("[POSTPROCESS] Starting threshold tuning...")
@@ -120,10 +121,10 @@ def threshold_tuning(
     _print_improvement(info['metrics_before'], info['metrics_after'])
     
     #Visualizations
-    if show_plots:
+    if show_plots and output_dir is not None:
         _create_visualizations(
             y_val, y_val_proba, y_test, y_test_proba,
-            best_threshold, threshold_range, method
+            best_threshold, threshold_range, method, output_dir
         )
     
     return y_pred, info
@@ -172,22 +173,25 @@ def _optimize_cost_sensitive(y_true, y_proba, threshold_range, cost_fn, cost_fp)
 
 #region Visualization
 def _create_visualizations(y_val, y_val_proba, y_test, y_test_proba, 
-                          best_threshold, threshold_range, method):
+                          best_threshold, threshold_range, method, output_dir):
     """Create comprehensive visualization plots."""
     fig = plt.figure(figsize=(16, 5))
     
-    #Subplot 1: Threshold vs Metric Curve
+    # Subplot 1: Threshold vs Metric Curve
     ax1 = plt.subplot(1, 3, 1)
     _plot_threshold_curve(ax1, y_val, y_val_proba, threshold_range, best_threshold, method)
-    #Subplot 2: ROC Curve with Optimal Point
+    # Subplot 2: ROC Curve with Optimal Point
     ax2 = plt.subplot(1, 3, 2)
     _plot_roc_with_optimal(ax2, y_test, y_test_proba, best_threshold)
-    #Subplot 3: Precision-Recall Curve with Optimal Point
+    # Subplot 3: Precision-Recall Curve with Optimal Point
     ax3 = plt.subplot(1, 3, 3)
     _plot_pr_with_optimal(ax3, y_test, y_test_proba, best_threshold)
     
     plt.tight_layout()
-    plt.show()
+    plot_path = output_dir / "threshold_tuning_plots.png"
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"[POSTPROCESS] Threshold tuning plots saved to {plot_path}")
 
 def _plot_threshold_curve(ax, y_true, y_proba, threshold_range, best_threshold, method):
     #Calculate scores for all thresholds

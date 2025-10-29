@@ -127,7 +127,7 @@ def estimator(model_name: str):
         )
     return fs_estimator
 
-def rfecv(steps: int, X_train, y_train, X_test, model_name, full_mask):
+def rfecv(steps: int, X_train, y_train, X_test, model_name, full_mask, output_dir):
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
 
@@ -173,7 +173,10 @@ def rfecv(steps: int, X_train, y_train, X_test, model_name, full_mask):
     plt.grid(True, ls=":", alpha=0.6)
     plt.legend(fontsize=10)
     plt.tight_layout()
-    plt.show()
+    plot_path = output_dir / "rfecv_plot.png"
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"[FEATURE_SEL] RFECV plot saved to {plot_path}")
 
     # Map selection back to the original feature space
     idx_alive = np.where(full_mask)[0]
@@ -185,7 +188,7 @@ def rfecv(steps: int, X_train, y_train, X_test, model_name, full_mask):
     return X_train_sel, X_test_sel, full_mask, rfecv_model
 
 def feature_selection(steps: int, X_train, y_train, X_test, 
-                      model_name: str, fs_methods: list, prefilter_k: int=1500, corr_threshold: float=0.95):
+                      model_name: str, fs_methods: list, prefilter_k: int=1500, corr_threshold: float=0.95, output_dir=None):
 
     print("[FEATURE_SEL] Starting feature selection...")
 
@@ -199,6 +202,6 @@ def feature_selection(steps: int, X_train, y_train, X_test,
         X_train, X_test, mask_best = prefilter_select_kbest(X_train, y_train, X_test, mask_best, k=prefilter_k)
 
     if "rfecv" in fs_methods:
-        X_train, X_test, mask_best, rfecv_model = rfecv(steps, X_train, y_train, X_test, model_name, mask_best)
+        X_train, X_test, mask_best, rfecv_model = rfecv(steps, X_train, y_train, X_test, model_name, mask_best, output_dir)
     
     return X_train, X_test, mask_best

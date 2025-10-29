@@ -252,6 +252,14 @@ def pipeline(
     print(f"[DATA] Data split - X_test: {X_test.shape}, y_test: {y_test.shape}")
     print(f"[DATA] Total:{total:5d} rows")
 
+    # Generate output folder name
+    dataset_name = "liquid_biopsy_dataset" if str(path) == r"data_sources\liquid_biopsy_data.csv" else "custom_dataset"
+    preprocessing_abbr = "_".join([s[:4] for s in preprocesing]) if preprocesing else "no_pre"
+    threshold_abbr = "th" if postprocess else "no_th"
+    folder_name = f"{dataset_name}_{model_name}_{preprocessing_abbr}_{threshold_abbr}"
+    output_dir = Path("output") / folder_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     # Feature selection
     fs_mask = None
     if feature_selection_flag:
@@ -261,7 +269,9 @@ def pipeline(
         X_train, X_test, fs_mask = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
-            model_name=model_kind,fs_methods=fs_method, prefilter_k=prefilter_k, corr_threshold=corr_threshold)
+            model_name=model_kind, fs_methods=fs_method, prefilter_k=prefilter_k,
+            corr_threshold=corr_threshold, output_dir=output_dir
+        )
         feature_names = [name for name, keep in zip(feature_names, fs_mask) if keep]
 
         if fs_mask is not None and X_val.shape[0] > 0:
@@ -305,7 +315,9 @@ def pipeline(
     XAI_top_features = None
 
     if xai_flag:
-        XAI_method, XAI_top_features = run_xai(model_kind, model, feature_names, X_train, X_test, X_val)
+        XAI_method, XAI_top_features = run_xai(
+            model_kind, model, feature_names, X_train, X_test, X_val, output_dir
+        )
 #endregion
 
 #region Post-processing = Threshold tuning
@@ -327,7 +339,8 @@ def pipeline(
             cost_fn=cost_fn,
             cost_fp=cost_fp,
             thresholds=500,
-            show_plots=show_plots
+            show_plots=show_plots,
+            output_dir=output_dir
         )
     else:
         y_pred = model.predict(X_test)
@@ -420,6 +433,36 @@ def pipeline(
         }
     
     # 8) Zwrócenie wyniku
+    # Generate output folder name
+    dataset_name = "liquid_biopsy_dataset" if str(path) == r"data_sources\liquid_biopsy_data.csv" else "custom_dataset"
+    preprocessing_abbr = "_".join([s[:4] for s in preprocesing]) if preprocesing else "no_pre"
+    threshold_abbr = "th" if postprocess else "no_th"
+    folder_name = f"{dataset_name}_{model_name}_{preprocessing_abbr}_{threshold_abbr}"
+    output_dir = Path("output") / folder_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save metrics to a text file
+    metrics_file = output_dir / "metrics.txt"
+    with open(metrics_file, "w") as f:
+        f.write("Evaluation Metrics:\n")
+        for metric, value in results.items():
+            if metric != "Confusion matrix":  # Exclude confusion matrix from text output
+                f.write(f"{metric}: {value}\n")
+
+    # Save confusion matrix visualization
+    if want_cm:
+        cm_file = output_dir / "confusion_matrix.png"
+        fig.savefig(cm_file)
+        plt.close(fig)
+
+    # Save ROC and PR visualizations
+    if (want_roc or want_pr) and hasattr(model, "predict_proba"):
+        roc_pr_file = output_dir / "roc_pr_curves.png"
+        fig.savefig(roc_pr_file)
+        plt.close(fig)
+
+    print(f"[OUTPUT] Results saved to folder: {output_dir}")
+
     return {
         "model": model.__class__.__name__,
         "metrics_requested": EVAL,
