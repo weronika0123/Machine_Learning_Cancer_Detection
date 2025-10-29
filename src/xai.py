@@ -7,22 +7,23 @@ import numpy as np
 
 def explain_lr_with_coeffs(model, feature_names, top_k=15):
 
-    coefs = model.coef_[0]  # binary classification
+    coefs = model.coef_[0]  # Binary classification
     df = pd.DataFrame({"feature": feature_names, "coef": coefs})
     df["abs_coef"] = df["coef"].abs()
     df = df.sort_values("abs_coef", ascending=False).head(top_k)
     top5_features = df["feature"].head(5).tolist()
 
-    # plot
-    colors = df["coef"].apply(lambda x: "#ff9999" if x > 0 else "#99ccff")
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Plot
+    colors = df["coef"].apply(lambda x: "#06A77D" if x > 0 else "#D8504D")
+    fig, ax = plt.subplots(figsize=(12, 6))
     bars = ax.barh(df["feature"], df["coef"], color=colors)
-    ax.set_xlabel("Coefficient (β)")
-    ax.set_title(f"Top {top_k} most important features (Logistic Regression)")
+    ax.set_xlabel("Coefficient (β)", fontsize=11)
+    ax.set_title(f"Top {top_k} Most Important Features (Logistic Regression)", fontsize=14)
     ax.invert_yaxis()
     for bar in bars:
         value = bar.get_width()
-        ax.text(value, bar.get_y() + bar.get_height()/2, f"{value:.2f}", va="center", ha="left", fontsize=9, color="black")
+        ax.text(value, bar.get_y() + bar.get_height()/2, f"{value:.2f}", va="center", ha="left", fontsize=10, color="black")
+    ax.grid(True, ls=':', alpha=0.6, axis='x')
     fig.tight_layout()
     plt.show()
     return top5_features
@@ -34,7 +35,7 @@ def auto_left_margin(labels):
     L = max(len(str(s)) for s in labels)
     return min(0.55, 0.18 + 0.012 * L)
 
-def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
+def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names=None):
 
     explainer = None
     if explainer_type == "linear":
@@ -42,7 +43,7 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
         shap_values = explainer(X_val)
     elif explainer_type == "deep":
 
-        # unwrap the Keras model 
+        # Unwrap the Keras model 
         keras_model = model.get_keras_model()
 
         # Convert background and validation data to NumPy arrays (2D tabular format)
@@ -54,7 +55,7 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
             rng = np.random.default_rng(42)
             X_bg = X_bg[rng.choice(X_bg.shape[0], size=200, replace=False)]
 
-        # SHAP values
+        # Calculate SHAP values
         explainer = shap.DeepExplainer(keras_model, X_bg)
         shap_values_raw = explainer.shap_values(X_val_np)
         expected_value = explainer.expected_value
@@ -70,7 +71,7 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
         assert X_val_np.ndim == 2
         assert shap_values_arr.shape[1] == X_val_np.shape[1]
 
-        # base values 
+        # Base values 
         ev = np.array(expected_value).ravel()
         base_vals = ev if ev.shape[0] == X_val_np.shape[0] else np.full(X_val_np.shape[0], ev.mean(), dtype=float)
 
@@ -82,7 +83,7 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
             feature_names=feat_names_vec
         )
 
-        # global feature importance
+        # Global feature importance
         feature_importance = np.abs(expl.values).mean(axis=0)
 
         top_k = 15
@@ -92,11 +93,11 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
 
         # Beeswarm plot 
         shap_values_top_15 = expl[:, top_15_indices]
-        print(f"[XAI] Generating beeswarm plot (top {top_k} features) for DNN (sigmoid)..")
+        print(f"[XAI] Generating beeswarm plot (top {top_k} features) for DNN")
         shap.plots.beeswarm(shap_values_top_15, show=False, max_display=top_k)
         fig = plt.gcf()
         fig.set_size_inches(12, 6)
-        plt.title(f"Global Feature Importance (Top {top_k}) - DNN (sigmoid)", fontsize=14, pad=10)
+        plt.title(f"Global Feature Importance (Top {top_k}) - Deep Neural Network", fontsize=14, pad=10)
         fig.tight_layout()
         plt.show()
 
@@ -108,7 +109,7 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names):
         explainer = shap.TreeExplainer(model)
         shap_values = explainer(X_val)
 
-        # wybór klasy dodatniej przy binarce oraz absolute mean importances
+        # Select positive class for binary classification and calculate absolute mean importances
         if len(shap_values.values.shape) == 3 and shap_values.values.shape[2] == 2:
             print("[XAI] Binary classification detected - using positive class (cancer=1)")
             shap_values_pos = shap_values[:, :, 1]

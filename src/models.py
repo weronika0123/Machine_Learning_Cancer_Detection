@@ -164,10 +164,12 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
             "Unknown model. Use one of: DecisionTree/DT, LogisticRegression/LR, SVM/SVC, or Deep Neural Network/DNN."
         )
 
-    print("Used X_train shape:", X_train.shape)
-    print("Used X_test shape:", X_test.shape)
+    print(f"[MODEL] Training {model_kind}...")
+    print(f"[MODEL] X_train shape: {X_train.shape}")
+    print(f"[MODEL] X_test shape: {X_test.shape}")
 
     if model_kind != "DNN":
         model.fit(X_train, y_train)
+        print(f"[MODEL] Training completed for {model_kind}")
 
     return (model, model_kind)

@@ -214,14 +214,14 @@ def _plot_threshold_curve(ax, y_true, y_proba, threshold_range, best_threshold, 
     #Mark optimal point
     if method != 'youden':
         best_idx = np.argmin(np.abs(threshold_range - best_threshold))
-        ax.scatter([best_threshold], [scores[best_idx]], s=60, c='red', 
+        ax.scatter([best_threshold], [scores[best_idx]], s=60, c='#D8504D', 
                   marker='o', zorder=3,
                   label=f'Optimal: {best_threshold:.3f}')
     
-    ax.axvline(best_threshold, ls='--', color='red', linewidth=2, alpha=0.7)
+    ax.axvline(best_threshold, ls='--', color='#D8504D', linewidth=2, alpha=0.7)
     ax.set_xlabel('Threshold', fontsize=11)
     ax.set_ylabel('Score (Validation)', fontsize=11)
-    ax.set_title(f'{method.capitalize()} Optimization Curve', fontsize=12)
+    ax.set_title(f'{method.capitalize()} Optimization Curve', fontsize=14)
     ax.legend(loc='best', fontsize=10)
     ax.grid(True, ls=':', alpha=0.6)
 
@@ -232,13 +232,13 @@ def _plot_roc_with_optimal(ax, y_true, y_proba, best_threshold):
     
     ax.plot(fpr, tpr, linewidth=2.5, color='#2E86AB', label=f'ROC (AUC={roc_auc:.3f})')
     ax.plot([0, 1], [0, 1], 'k--', linewidth=1.5, alpha=0.5, label='Random Classifier')
-    ax.scatter([fpr[best_idx]], [tpr[best_idx]], s=60, c='red', marker='o', 
+    ax.scatter([fpr[best_idx]], [tpr[best_idx]], s=60, c='#D8504D', marker='o', 
               zorder=3,
               label=f'Optimal (thr={best_threshold:.3f})')
     
     ax.set_xlabel('False Positive Rate', fontsize=11)
     ax.set_ylabel('True Positive Rate', fontsize=11)
-    ax.set_title('ROC Curve with Optimal Point', fontsize=12)
+    ax.set_title('ROC Curve with Optimal Point', fontsize=14)
     ax.legend(loc='lower right', fontsize=10)
     ax.grid(True, ls=':', alpha=0.6)
 
@@ -248,13 +248,13 @@ def _plot_pr_with_optimal(ax, y_true, y_proba, best_threshold):
     best_idx = np.argmin(np.abs(thresholds - best_threshold))
     
     ax.plot(recall, precision, linewidth=2.5, color='#2E86AB', label=f'PR (AUC={pr_auc:.3f})')
-    ax.scatter([recall[best_idx]], [precision[best_idx]], s=60, c='red', marker='o', 
+    ax.scatter([recall[best_idx]], [precision[best_idx]], s=60, c='#D8504D', marker='o', 
               zorder=3,
               label=f'Optimal (thr={best_threshold:.3f})')
     
     ax.set_xlabel('Recall (Sensitivity)', fontsize=11)
     ax.set_ylabel('Precision', fontsize=11)
-    ax.set_title('Precision-Recall Curve with Optimal Point', fontsize=12)
+    ax.set_title('Precision-Recall Curve with Optimal Point', fontsize=14)
     ax.legend(loc='best', fontsize=10)
     ax.grid(True, ls=':', alpha=0.6)
 

@@ -19,24 +19,24 @@ from xai import run_xai
 from cli import parse_args
 from models import train_model
 import os
-# musi być PRZED importem tensorflow:
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # ucisza logi C++ TF: 0=ALL, 1=INFO, 2=WARNING, 3=ERROR
+# Must be set BEFORE importing tensorflow:
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TF C++ logs: 0=ALL, 1=INFO, 2=WARNING, 3=ERROR
 
 import warnings
 import logging
 
-# warnings – filtrujemy to, co Cię denerwuje
+# Filter unwanted warnings
 warnings.filterwarnings("ignore", message=r"The structure of `inputs`.*", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"shap")
 warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"shap")
 
-# logging – globalna konfiguracja tylko raz w entry point
-logging.basicConfig(level=logging.WARNING)  # domyślnie pokazuj WARNING+
-log = logging.getLogger("xai")              # będziesz z niego korzystać w xai.py
+# Global logging configuration (set once at entry point)
+logging.basicConfig(level=logging.WARNING)  # Show WARNING+ by default
+log = logging.getLogger("xai")              # Used in xai.py
 
-# dopiero teraz import TF (żeby TF_CPP_MIN_LOG_LEVEL zadziałał na logi C++)
+# Now import TF (so TF_CPP_MIN_LOG_LEVEL takes effect on C++ logs)
 import tensorflow as tf
-tf.get_logger().setLevel("ERROR")           # Pythonowy logger TF na ERROR
+tf.get_logger().setLevel("ERROR")           # Python TF logger to ERROR level
 
 
 RANDOM_STATE = 42
@@ -157,10 +157,10 @@ def pipeline(
     model_name_norm = model_name.strip().lower()
     if model_name_norm in ("logisticregression", "lr"):
         model_kind = "Logistic Regression"
-        step = 50  # dla FS = dla regresji ma sens większy krok
+        step = 50  # For FS: larger step for regression makes sense
     elif model_name_norm in ("decisiontree", "dt"):
         model_kind = "Decision Tree"
-        step = 30  # dla FS = drzew ma sens mały krok
+        step = 30  # For FS: smaller step for trees makes sense
     elif model_name_norm in ("svm", "svc"):
         model_kind = "SVM"
         step = 30
@@ -168,7 +168,7 @@ def pipeline(
         model_kind = "DNN"
         step = 50
     else:
-        raise ValueError("Nieznany model. Użyj: DecisionTree/DT lub LogisticRegression/LR lub SVM/SVC lub DNN")
+        raise ValueError("Unknown model. Use: DecisionTree/DT or LogisticRegression/LR or SVM/SVC or DNN")
 
 
     # Identify preprocessing steps (list of strings)
@@ -211,7 +211,7 @@ def pipeline(
 
     # File Validations
     if not path.exists():
-        raise FileNotFoundError(f"We cannot find the file: {path} \nPlease provide the correct path.")
+        raise FileNotFoundError(f"Cannot find file: {path}\nPlease provide the correct path.")
     if(not str(path).endswith(".csv")):
         raise ValueError("Only .csv files are supported. Please provide a valid CSV file.")
     if path.stat().st_size == 0:
@@ -221,16 +221,16 @@ def pipeline(
 
 
     if str(path)==r"data_sources\liquid_biopsy_data.csv":
-        print("Using liquid_biopsy_data.csv dataset")
+        print("[DATA] Using liquid_biopsy_data.csv dataset")
         X_df = df.iloc[:,1:-16]
 
     else:
-        print("Using your dataset, assuming last column is target")
+        print("[DATA] Using your dataset, assuming last column is target")
         X_df = df.iloc[:,:-1]
 
-    # missing values check - close the pipeline if found
+    # Missing values check - close the pipeline if found
     if X_df.isnull().values.any():
-        print("Missing values detected. Please enter data without any missing values.")
+        print("[DATA][ERROR] Missing values detected. Please provide data without any missing values.")
         sys.exit(1)
 
     # Validate split columns (isTraining, isValidation, isTest)
@@ -251,9 +251,9 @@ def pipeline(
     )
 
     # Log the split sizes
-    print(f"Data split: X_train: {X_train.shape}, y_train: {y_train.shape}")
-    print(f"Data split: X_val: {X_val.shape}, y_val: {y_val.shape}")
-    print(f"Data split: X_test: {X_test.shape}, y_test: {y_test.shape}")
+    print(f"[DATA] Data split - X_train: {X_train.shape}, y_train: {y_train.shape}")
+    print(f"[DATA] Data split - X_val: {X_val.shape}, y_val: {y_val.shape}")
+    print(f"[DATA] Data split - X_test: {X_test.shape}, y_test: {y_test.shape}")
 
     # Feature selection
     fs_mask = None
@@ -365,9 +365,10 @@ def pipeline(
     if want_cm:
         cm = confusion_matrix(y_test, y_pred)
         TN, FP, FN, TP = cm.ravel()
-        print(" Confusion matrix: TN", TN, "FP", FP, "FN", FN, "TP", TP)
-        ConfusionMatrixDisplay(confusion_matrix=cm).plot()
-        plt.title("Confusion Matrix — Test")
+        print(f"[EVAL] Confusion Matrix: TN={TN}, FP={FP}, FN={FN}, TP={TP}")
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ConfusionMatrixDisplay(confusion_matrix=cm).plot(ax=ax)
+        ax.set_title("Confusion Matrix -Test Set", fontsize=14)
         plt.tight_layout()
         plt.show()
         results["Confusion matrix"] = cm.tolist()
@@ -376,34 +377,36 @@ def pipeline(
     if (want_roc or want_pr) and hasattr(model, "predict_proba"):
         y_score = model.predict_proba(X_test)[:, 1]
 
-        # prepare figure
-        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+        # Prepare figure
+        fig, ax = plt.subplots(1, 2, figsize=(14, 6))
 
         # ROC
         if want_roc:
             fpr, tpr, _ = roc_curve(y_test, y_score)
             roc_auc = auc(fpr, tpr)
-            ax[0].plot(fpr, tpr, label=f"AUC = {roc_auc:.4f}")
-            ax[0].plot([0, 1], [0, 1], "--", lw=1)
-            ax[0].set_xlabel("False Positive Rate")
-            ax[0].set_ylabel("True Positive Rate")
-            ax[0].set_title("ROC Curve — Test")
-            ax[0].legend(loc="lower right")
+            ax[0].plot(fpr, tpr, color='#2E86AB', linewidth=2, label=f"AUC = {roc_auc:.4f}")
+            ax[0].plot([0, 1], [0, 1], "k--", lw=1.5, alpha=0.5)
+            ax[0].set_xlabel("False Positive Rate", fontsize=11)
+            ax[0].set_ylabel("True Positive Rate", fontsize=11)
+            ax[0].set_title("ROC Curve — Test Set", fontsize=14)
+            ax[0].legend(loc="lower right", fontsize=10)
+            ax[0].grid(True, ls=':', alpha=0.6)
             results["AUC ROC"] = float(roc_auc)
         else:
-            ax[0].axis("off")  # keep layout clean if only PR requested
+            ax[0].axis("off")  # Keep layout clean if only PR requested
 
         # PR
         if want_pr:
             precision, recall, _ = precision_recall_curve(y_test, y_score)
             pr_auc = auc(recall, precision)
             ap = average_precision_score(y_test, y_score)
-            ax[1].plot(recall, precision, label=f"AUC = {pr_auc:.4f} (AP={ap:.4f})")
-            ax[1].set_xlabel("Recall")
-            ax[1].set_ylabel("Precision")
-            ax[1].set_title("Precision-Recall — Test")
-            ax[1].legend(loc="lower left")
-            results["AUC PR"] = float(ap)  # store AP as in previous style
+            ax[1].plot(recall, precision, color='#2E86AB', linewidth=2, label=f"AUC = {pr_auc:.4f} (AP={ap:.4f})")
+            ax[1].set_xlabel("Recall", fontsize=11)
+            ax[1].set_ylabel("Precision", fontsize=11)
+            ax[1].set_title("Precision-Recall Curve — Test Set", fontsize=14)
+            ax[1].legend(loc="lower left", fontsize=10)
+            ax[1].grid(True, ls=':', alpha=0.6)
+            results["AUC PR"] = float(ap)  # Store AP as in previous style
         else:
             ax[1].axis("off")
 
@@ -444,13 +447,13 @@ def main(argv=None):
             raise ValueError("--postprocess_params must be a Python dict")
         preprocess_list = ast.literal_eval(args.preprocess)
         if not isinstance(preprocess_list, list):
-            raise ValueError("--preprocess musi być listą Pythona (np. ['feature selection','corr','selectKBest'])")
+            raise ValueError("--preprocess must be a Python list (e.g., ['feature selection','corr','selectKBest'])")
         eval_list = ast.literal_eval(args.eval)
         if not isinstance(eval_list, list):
-            raise ValueError("--eval musi być listą Pythona (np. ['AUC ROC','accuracy'])")
+            raise ValueError("--eval must be a Python list (e.g., ['AUC ROC','accuracy'])")
             
     except Exception as e:
-        print(f"Błąd parsowania parametrów: {e}", file=sys.stderr)
+        print(f"Parameter parsing error: {e}", file=sys.stderr)
         sys.exit(2)
 
     out = pipeline(
