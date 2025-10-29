@@ -77,7 +77,6 @@ def validate_split_columns(df):
     train_count = (df['isTraining'] == 1).sum()
     val_count = (df['isValidation'] == 1).sum()
     test_count = (df['isTest'] == 1).sum()
-    total = len(df)
     
     if train_count == 0:
         raise ValueError("Training set is empty")
@@ -89,12 +88,8 @@ def validate_split_columns(df):
         print("[VALIDATION][WARN] Validation set is empty (no rows with isValidation=1)")
         print("[VALIDATION][WARN] This is acceptable if using --use_validation merge_train_test")
     
-    #Statistics
-    print(f"[VALIDATION] Data distribution:")
-    print(f"- Training:{train_count:5d} rows ({100*train_count/total:5.1f}%)")
-    print(f"- Validation:{val_count:5d} rows ({100*val_count/total:5.1f}%)")
-    print(f"- Test:{test_count:5d} rows ({100*test_count/total:5.1f}%)")
-    print(f"- Total:{total:5d} rows")
+
+    
 
 
 #Flexible data splitting with validation handling options
@@ -250,10 +245,12 @@ def pipeline(
         X, y, df, use_validation=use_validation
     )
 
-    # Log the split sizes
+    #Statistics
+    total = len(df)
     print(f"[DATA] Data split - X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"[DATA] Data split - X_val: {X_val.shape}, y_val: {y_val.shape}")
     print(f"[DATA] Data split - X_test: {X_test.shape}, y_test: {y_test.shape}")
+    print(f"[DATA] Total:{total:5d} rows")
 
     # Feature selection
     fs_mask = None
