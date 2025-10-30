@@ -133,8 +133,7 @@ def prepare_data_split(X, y, df, use_validation="separate"):
 def pipeline(
                 dane: str,
                 use_validation: str,
-                preprocessing: list,
-                feature_selection_method: str,
+                preprocesing: list,
                 model_name: str,
                 model_params: dict,
                 preprocess_params: dict,
@@ -267,7 +266,7 @@ def pipeline(
         corr_threshold = float(preprocess_params.get("corr_threshold", 0.90))  #default threshold
         prefilter_k = preprocess_params.get("prefilter_k", 1500)  #default k for SelectKBest prefiltering
 
-        X_train, X_test, fs_mask, _ = feature_selection(
+        X_train, X_test, fs_mask = feature_selection(
             steps=step,
             X_train=X_train, y_train=y_train, X_test=X_test,
             model_name=model_kind, fs_methods=fs_method, prefilter_k=prefilter_k,
@@ -381,7 +380,7 @@ def pipeline(
         ConfusionMatrixDisplay(confusion_matrix=cm).plot(ax=ax)
         ax.set_title("Confusion Matrix -Test Set", fontsize=14)
         plt.tight_layout()
-        plt.show()
+        #plt.show()
         results["Confusion matrix"] = cm.tolist()
 
     # ROC + PR on a single figure (1x2)
@@ -422,7 +421,7 @@ def pipeline(
             ax[1].axis("off")
 
         plt.tight_layout()
-        plt.show()
+        #plt.show()
 
 
     # Add threshold tuning info to results if performed
@@ -500,16 +499,14 @@ def main(argv=None):
     out = pipeline(
         dane=args.data,
         use_validation=args.use_validation,
-        preprocessing=preprocess_list,
-        feature_selection_method=args.feature_selection_method,
+        preprocesing=preprocess_list,
         model_name=args.model,
         model_params=model_params,
         preprocess_params=preprocess_params,
         postprocess_params=postprocess_params,
         postprocess=args.postprocess,
         EVAL=eval_list,
-        XAI=args.xai,
-    )
+        XAI=args.xai)
 
     print(json.dumps(out, indent=2, ensure_ascii=False))
 

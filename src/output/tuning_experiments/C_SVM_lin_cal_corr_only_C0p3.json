@@ -1,0 +1,73 @@
+{
+  "name": "C_SVM_lin_cal_corr_only_C0p3",
+  "cfg": {
+    "data": "data_sources\\liquid_biopsy_data.csv",
+    "use_validation": "merge_train_test",
+    "preprocess": [
+      "corr"
+    ],
+    "preprocess_params": {
+      "corr_threshold": 0.92
+    },
+    "model": "SVM",
+    "model_params": {
+      "kernel": "linear",
+      "C": 0.3,
+      "class_weight": "balanced",
+      "use_calibrated": true,
+      "calibration_method": "sigmoid",
+      "cv_calibration": 3
+    },
+    "postprocess": false,
+    "postprocess_params": {},
+    "eval": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision",
+      "AUC PR",
+      "Confusion Matrix"
+    ],
+    "xai": true
+  },
+  "result": {
+    "model": "CalibratedClassifierCV",
+    "metrics_requested": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision",
+      "AUC PR",
+      "Confusion Matrix"
+    ],
+    "metrics": {
+      "accuracy": 0.8076923076923077,
+      "precision": 0.827683615819209,
+      "recall": 0.9099378881987578,
+      "f1": 0.8668639053254438,
+      "Confusion matrix": [
+        [
+          85,
+          61
+        ],
+        [
+          29,
+          293
+        ]
+      ],
+      "AUC ROC": 0.865864034714541,
+      "AUC PR": 0.9349608768460154
+    },
+    "xai_method": "SHAP (linear) for SVM",
+    "XAI_top_features": [
+      "ENSG00000131711",
+      "ENSG00000136854",
+      "ENSG00000149131",
+      "ENSG00000065833",
+      "ENSG00000095002"
+    ]
+  },
+  "runtime_sec": 43.21
+}

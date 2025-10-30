@@ -1,0 +1,7 @@
+Evaluation Metrics:
+accuracy: 0.731457800511509
+precision: 0.7363896848137536
+recall: 0.9518518518518518
+f1: 0.8303715670436187
+AUC ROC: 0.8234159779614326
+threshold_tuning: {'best_threshold': 0.1455110220440882, 'best_score': 0.8396694214876033, 'tuning_performed': True}

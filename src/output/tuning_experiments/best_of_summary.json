@@ -1,0 +1,229 @@
+{
+  "A_F1": {
+    "name": "B1_LR_cost_corr_k1000_recall_mode",
+    "score": 0.8354037267080745,
+    "payload": {
+      "cfg": {
+        "data": "data_sources\\liquid_biopsy_data.csv",
+        "use_validation": "separate",
+        "preprocess": [
+          "corr",
+          "kbest"
+        ],
+        "preprocess_params": {
+          "corr_threshold": 0.9,
+          "prefilter_k": 1000
+        },
+        "model": "LR",
+        "model_params": {
+          "solver": "lbfgs",
+          "penalty": "l2",
+          "C": 1.0,
+          "max_iter": 2000
+        },
+        "postprocess": true,
+        "postprocess_params": {
+          "tuning_method": "cost",
+          "cost_fn": 5.0,
+          "cost_fp": 1.0,
+          "show_tuning_plots": false
+        },
+        "eval": [
+          "AUC ROC",
+          "accuracy",
+          "F1",
+          "recall",
+          "precision",
+          "Confusion Matrix"
+        ],
+        "xai": false
+      },
+      "res": {
+        "model": "LogisticRegression",
+        "metrics_requested": [
+          "AUC ROC",
+          "accuracy",
+          "F1",
+          "recall",
+          "precision",
+          "Confusion Matrix"
+        ],
+        "metrics": {
+          "accuracy": 0.7289002557544757,
+          "precision": 0.7192513368983957,
+          "recall": 0.9962962962962963,
+          "f1": 0.8354037267080745,
+          "Confusion matrix": [
+            [
+              16,
+              105
+            ],
+            [
+              1,
+              269
+            ]
+          ],
+          "AUC ROC": 0.8026936026936027,
+          "threshold_tuning": {
+            "best_threshold": 0.04338677354709419,
+            "best_score": -120.0,
+            "tuning_performed": true
+          }
+        },
+        "xai_method": null,
+        "XAI_top_features": null
+      }
+    }
+  },
+  "B_Recall": {
+    "name": "B1_LR_cost_corr_k1000_recall_mode",
+    "score": 0.9962962962962963,
+    "payload": {
+      "cfg": {
+        "data": "data_sources\\liquid_biopsy_data.csv",
+        "use_validation": "separate",
+        "preprocess": [
+          "corr",
+          "kbest"
+        ],
+        "preprocess_params": {
+          "corr_threshold": 0.9,
+          "prefilter_k": 1000
+        },
+        "model": "LR",
+        "model_params": {
+          "solver": "lbfgs",
+          "penalty": "l2",
+          "C": 1.0,
+          "max_iter": 2000
+        },
+        "postprocess": true,
+        "postprocess_params": {
+          "tuning_method": "cost",
+          "cost_fn": 5.0,
+          "cost_fp": 1.0,
+          "show_tuning_plots": false
+        },
+        "eval": [
+          "AUC ROC",
+          "accuracy",
+          "F1",
+          "recall",
+          "precision",
+          "Confusion Matrix"
+        ],
+        "xai": false
+      },
+      "res": {
+        "model": "LogisticRegression",
+        "metrics_requested": [
+          "AUC ROC",
+          "accuracy",
+          "F1",
+          "recall",
+          "precision",
+          "Confusion Matrix"
+        ],
+        "metrics": {
+          "accuracy": 0.7289002557544757,
+          "precision": 0.7192513368983957,
+          "recall": 0.9962962962962963,
+          "f1": 0.8354037267080745,
+          "Confusion matrix": [
+            [
+              16,
+              105
+            ],
+            [
+              1,
+              269
+            ]
+          ],
+          "AUC ROC": 0.8026936026936027,
+          "threshold_tuning": {
+            "best_threshold": 0.04338677354709419,
+            "best_score": -120.0,
+            "tuning_performed": true
+          }
+        },
+        "xai_method": null,
+        "XAI_top_features": null
+      }
+    }
+  },
+  "C_Accuracy": {
+    "name": "C_SVM_lin_cal_corr_only_C0p1",
+    "score": 0.811965811965812,
+    "payload": {
+      "cfg": {
+        "data": "data_sources\\liquid_biopsy_data.csv",
+        "use_validation": "merge_train_test",
+        "preprocess": [
+          "corr"
+        ],
+        "preprocess_params": {
+          "corr_threshold": 0.92
+        },
+        "model": "SVM",
+        "model_params": {
+          "kernel": "linear",
+          "C": 0.1,
+          "class_weight": "balanced",
+          "use_calibrated": true,
+          "calibration_method": "sigmoid",
+          "cv_calibration": 3
+        },
+        "postprocess": false,
+        "postprocess_params": {},
+        "eval": [
+          "AUC ROC",
+          "accuracy",
+          "F1",
+          "recall",
+          "precision",
+          "AUC PR",
+          "Confusion Matrix"
+        ],
+        "xai": true
+      },
+      "res": {
+        "model": "CalibratedClassifierCV",
+        "metrics_requested": [
+          "AUC ROC",
+          "accuracy",
+          "F1",
+          "recall",
+          "precision",
+          "AUC PR",
+          "Confusion Matrix"
+        ],
+        "metrics": {
+          "accuracy": 0.811965811965812,
+          "precision": 0.838150289017341,
+          "recall": 0.9006211180124224,
+          "f1": 0.8682634730538922,
+          "Confusion matrix": [
+            [
+              90,
+              56
+            ],
+            [
+              32,
+              290
+            ]
+          ],
+          "AUC ROC": 0.8682038628435294,
+          "AUC PR": 0.9362792259262436
+        },
+        "xai_method": "SHAP (linear) for SVM",
+        "XAI_top_features": [
+          "ENSG00000131711",
+          "ENSG00000136854",
+          "ENSG00000149131",
+          "ENSG00000065833",
+          "ENSG00000095002"
+        ]
+      }
+    }
+  }
+}

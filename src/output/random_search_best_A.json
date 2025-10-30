@@ -1,0 +1,48 @@
+{
+  "use_case": "A",
+  "objective": "f1",
+  "best_score": 0.8557046979865772,
+  "best_config": {
+    "data": "data_sources\\liquid_biopsy_data.csv",
+    "use_case": "A",
+    "use_validation": "separate",
+    "preprocess": [
+      "corr"
+    ],
+    "preprocess_params": {
+      "corr_threshold": 0.91
+    },
+    "model": "LR",
+    "model_params": {
+      "max_iter": 2000,
+      "solver": "liblinear",
+      "penalty": "l2",
+      "C": 0.137991
+    },
+    "postprocess": true,
+    "postprocess_params": {
+      "tuning_method": "f1",
+      "show_tuning_plots": false
+    },
+    "eval": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision"
+    ],
+    "xai": true
+  },
+  "best_metrics": {
+    "accuracy": 0.7800511508951407,
+    "precision": 0.7822085889570553,
+    "recall": 0.9444444444444444,
+    "f1": 0.8557046979865772,
+    "AUC ROC": 0.86284052647689,
+    "threshold_tuning": {
+      "best_threshold": 0.19657314629258518,
+      "best_score": 0.8537005163511188,
+      "tuning_performed": true
+    }
+  }
+}

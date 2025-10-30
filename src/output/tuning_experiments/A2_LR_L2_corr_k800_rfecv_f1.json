@@ -1,0 +1,67 @@
+{
+  "name": "A2_LR_L2_corr_k800_rfecv_f1",
+  "cfg": {
+    "data": "data_sources\\liquid_biopsy_data.csv",
+    "use_validation": "separate",
+    "preprocess": [
+      "corr",
+      "kbest",
+      "rfecv"
+    ],
+    "preprocess_params": {
+      "corr_threshold": 0.9,
+      "prefilter_k": 800
+    },
+    "model": "LR",
+    "model_params": {
+      "solver": "liblinear",
+      "penalty": "l2",
+      "C": 0.3,
+      "max_iter": 2000
+    },
+    "postprocess": true,
+    "postprocess_params": {
+      "tuning_method": "f1",
+      "show_tuning_plots": false
+    },
+    "eval": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision"
+    ],
+    "xai": true
+  },
+  "result": {
+    "model": "LogisticRegression",
+    "metrics_requested": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision"
+    ],
+    "metrics": {
+      "accuracy": 0.731457800511509,
+      "precision": 0.7363896848137536,
+      "recall": 0.9518518518518518,
+      "f1": 0.8303715670436187,
+      "AUC ROC": 0.8234159779614326,
+      "threshold_tuning": {
+        "best_threshold": 0.1455110220440882,
+        "best_score": 0.8396694214876033,
+        "tuning_performed": true
+      }
+    },
+    "xai_method": "Coefficient-based analysis",
+    "XAI_top_features": [
+      "ENSG00000185201",
+      "ENSG00000128245",
+      "ENSG00000103175",
+      "ENSG00000041353",
+      "ENSG00000142856"
+    ]
+  },
+  "runtime_sec": 93.49
+}

@@ -1,0 +1,74 @@
+{
+  "name": "B1_LR_cost_corr_k1000_recall_mode",
+  "cfg": {
+    "data": "data_sources\\liquid_biopsy_data.csv",
+    "use_validation": "separate",
+    "preprocess": [
+      "corr",
+      "kbest"
+    ],
+    "preprocess_params": {
+      "corr_threshold": 0.9,
+      "prefilter_k": 1000
+    },
+    "model": "LR",
+    "model_params": {
+      "solver": "lbfgs",
+      "penalty": "l2",
+      "C": 1.0,
+      "max_iter": 2000
+    },
+    "postprocess": true,
+    "postprocess_params": {
+      "tuning_method": "cost",
+      "cost_fn": 5.0,
+      "cost_fp": 1.0,
+      "show_tuning_plots": false
+    },
+    "eval": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision",
+      "Confusion Matrix"
+    ],
+    "xai": false
+  },
+  "result": {
+    "model": "LogisticRegression",
+    "metrics_requested": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision",
+      "Confusion Matrix"
+    ],
+    "metrics": {
+      "accuracy": 0.7289002557544757,
+      "precision": 0.7192513368983957,
+      "recall": 0.9962962962962963,
+      "f1": 0.8354037267080745,
+      "Confusion matrix": [
+        [
+          16,
+          105
+        ],
+        [
+          1,
+          269
+        ]
+      ],
+      "AUC ROC": 0.8026936026936027,
+      "threshold_tuning": {
+        "best_threshold": 0.04338677354709419,
+        "best_score": -120.0,
+        "tuning_performed": true
+      }
+    },
+    "xai_method": null,
+    "XAI_top_features": null
+  },
+  "runtime_sec": 8.35
+}

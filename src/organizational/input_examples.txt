@@ -177,39 +177,46 @@ python .\main.py `
   --eval "['accuracy','F1','AUC ROC','Confusion Matrix']" `
   --xai
 
-
------------------------------------
-# ============================================================================
-# THRESHOLD TUNING EXAMPLES (NEW POSTPROCESSING MODULE)
-# ============================================================================
-
-#Example 1: Recall optimization (default - medical priority)
-python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['fs','corr']" `
-  --feature_selection_method "kbest+rfecv" `
-  --model LR `
-  --postprocess `
-  --params "{'prefilter_k':1000,'max_iter': 1000, 'tuning_method': 'recall'}" `
-  --eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision']"
-
-#Example 4: Youden's J optimization (maximize TPR - FPR)
+USE case A:
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model LR `
+  --model_params "{'max_iter': 1000, 'C': 1.0}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['AUC ROC','accuracy','F1','recall','precision']" `
+  --xai
+
+  input: python random_search.py --data "data_sources\liquid_biopsy_data.csv" --use_case A --trials 30
+
+Use case B:
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
+  --model LR `
+  --model_params "{'max_iter': 1000, 'C': 1.0}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'recall'}" `
+  --eval "['AUC ROC','accuracy','F1','recall','precision','Confusion Matrix']" `
+  --xai
+
+  input: python random_search.py --data "data_sources\liquid_biopsy_data.csv" --use_case B --trials 30
+
+
+Use case C:
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "merge_train_test" `
+  --preprocess "['corr']" `
+  --preprocess_params "{'corr_threshold': 0.9}" `
   --model SVM `
-  --postprocess `
-  --params "{'max_iter': 1000, 'tuning_method': 'f1'}" `
-  --eval "['AUC ROC','accuracy','recall','precision','Confusion Matrix']"
+  --model_params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True, 'cv_calibration': 5}" `
+  --eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+  --xai
 
-#Example 7: Threshold tuning without plots (faster execution)
-python .\main.py `
-  --data "data_sources\liquid_biopsy_data.csv" `
-  --use_validation "separate" `
-  --preprocess "['corr']" `
-  --model LR `
-  --postprocess `
-  --params "{'max_iter': 1000, 'show_tuning_plots': False}" `
-  --eval "['AUC ROC','accuracy','F1']"
+input: python random_search.py --data "data_sources\liquid_biopsy_data.csv" --use_case C --trials 30

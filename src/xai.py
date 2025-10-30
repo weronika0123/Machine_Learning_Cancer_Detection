@@ -38,8 +38,8 @@ def explain_lr_with_coeffs(model, feature_names, top_k=15, output_dir=None):
     saved = _save_fig(output_dir, "logistic_regression_xai_plot.png")
     if saved is not None:
         print(f"[XAI] Coefficients plot saved to {saved}")
-    else:
-        plt.show()
+    #else:
+        #plt.show()
 
     return top5_features
 
@@ -74,8 +74,8 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names=None, outp
         saved = _save_fig(output_dir, "shap_beeswarm_linear.png")
         if saved is not None:
             print(f"[XAI] SHAP beeswarm plot saved to {saved}")
-        else:
-            plt.show()
+        #else:
+            #plt.show()
 
         top_5_features = top_15_features[:5].tolist()
         return top_5_features
@@ -144,8 +144,8 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names=None, outp
         saved = _save_fig(output_dir, "shap_beeswarm_dnn.png")
         if saved is not None:
             print(f"[XAI] SHAP beeswarm plot saved to {saved}")
-        else:
-            plt.show()
+        #else:
+            #plt.show()
 
         top_5_features = list(top_15_features[:5])
         print(f"[XAI] Top 5 most important features (absolute mean SHAP): {top_5_features}")
@@ -177,7 +177,7 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names=None, outp
         plt.title(f"Global Feature Importance (Top {top_k}) - Decision Tree", fontsize=14, pad=10)
         fig.tight_layout()
         saved = _save_fig(output_dir, "shap_beeswarm_tree.png")
-        plt.show()
+        #plt.show()
 
         top_5_features = top_15_features[:5].tolist()
         print(f"[XAI] Top 5 most important features: {top_5_features}")
@@ -206,8 +206,8 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names=None, outp
         saved = _save_fig(output_dir, "shap_beeswarm_kernel.png")
         if saved is not None:
             print(f"[XAI] SHAP beeswarm plot saved to {saved}")
-        else:
-            plt.show()
+        #else:
+            #plt.show()
 
         # Extract top 5 features
         top_5_features = top_15_features[:5].tolist()

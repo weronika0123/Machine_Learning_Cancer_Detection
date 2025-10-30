@@ -15,8 +15,8 @@ import warnings
 
 RANDOM_STATE = 42
 
-# region Correlation removal
-def correlation_removal(X_train, X_test, threshold):
+
+def correlation_removal(X_train, X_test, threshold, full_mask):
     
     print(f"[PREPROCESS] Starting correlation-based feature removal with threshold={threshold}...")
 
@@ -54,6 +54,8 @@ def correlation_removal(X_train, X_test, threshold):
 
     X_train_red = X_train[:, final_mask]
     X_test_red  = X_test[:,  final_mask]
+
+    full_mask &= final_mask
 
     info = {
         "initial_features": n_features,
@@ -100,28 +102,28 @@ def estimator(model_name: str):
 
     if model_name == "Logistic Regression" or model_name == "DNN":
         fs_estimator = LogisticRegression(
-            max_iter=3000, solver="lbfgs", penalty="l2",
-            C=0.5, class_weight="balanced", random_state=RANDOM_STATE
+            max_iter=1000, 
+            class_weight="balanced", 
+            random_state=RANDOM_STATE
         )
     elif model_name == "Decision Tree":
         fs_estimator = DecisionTreeClassifier(
-            criterion="gini",
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
             class_weight="balanced",
             random_state=RANDOM_STATE
         )
     elif model_name == "SVM":
         fs_estimator = LinearSVC(
-            C=0.5, class_weight="balanced", max_iter=100_000, tol=5e-3, dual=True
+            max_iter=100000,
+            class_weight="balanced", 
+            random_state=RANDOM_STATE
         )
 
     else:
         print("[FEATURE_SEL][WARN] Model name unknown - fallback: LogisticRegression")
         fs_estimator = LogisticRegression(
-            max_iter=3000, solver="lbfgs", penalty="l2",
-            C=0.5, class_weight="balanced", random_state=RANDOM_STATE
+            max_iter=1000, 
+            class_weight="balanced", 
+            random_state=RANDOM_STATE
         )
     return fs_estimator
 
@@ -173,6 +175,7 @@ def rfecv(steps: int, X_train, y_train, X_test, model_name, full_mask, output_di
     plt.tight_layout()
     plot_path = output_dir / "rfecv_plot.png"
     plt.savefig(plot_path)
+    #plt.show()
     plt.close()
     print(f"[FEATURE_SEL] RFECV plot saved to {plot_path}")
 

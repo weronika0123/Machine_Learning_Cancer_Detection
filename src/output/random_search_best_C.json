@@ -1,0 +1,53 @@
+{
+  "use_case": "C",
+  "objective": "accuracy",
+  "best_score": 0.8076923076923077,
+  "best_config": {
+    "data": "data_sources\\liquid_biopsy_data.csv",
+    "use_case": "C",
+    "use_validation": "merge_train_test",
+    "preprocess": [
+      "corr"
+    ],
+    "preprocess_params": {
+      "corr_threshold": 0.92
+    },
+    "model": "SVM",
+    "model_params": {
+      "kernel": "linear",
+      "C": 4.517925,
+      "class_weight": "balanced",
+      "use_calibrated": true,
+      "cv_calibration": 3,
+      "calibration_method": "sigmoid"
+    },
+    "postprocess": false,
+    "postprocess_params": {},
+    "eval": [
+      "AUC ROC",
+      "accuracy",
+      "F1",
+      "recall",
+      "precision",
+      "Confusion Matrix"
+    ],
+    "xai": true
+  },
+  "best_metrics": {
+    "accuracy": 0.8076923076923077,
+    "precision": 0.8222222222222222,
+    "recall": 0.9192546583850931,
+    "f1": 0.8680351906158358,
+    "Confusion matrix": [
+      [
+        82,
+        64
+      ],
+      [
+        26,
+        296
+      ]
+    ],
+    "AUC ROC": 0.864587764826002
+  }
+}
