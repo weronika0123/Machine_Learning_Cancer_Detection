@@ -274,7 +274,7 @@ def pipeline(
         )
         feature_names = [name for name, keep in zip(feature_names, fs_mask) if keep]
 
-        if fs_mask is not None and X_val.shape[0] > 0:
+        if fs_mask is not None:
             X_val = X_val[:, fs_mask]
         
 

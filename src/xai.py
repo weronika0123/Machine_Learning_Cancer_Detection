@@ -218,7 +218,7 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
     print(f"[XAI] Running explanations for model: {model_kind}")
     top5_features = []
 
-    if X_val is None:
+    if X_val is None or (hasattr(X_val, "shape") and X_val.shape[0] == 0):
         X_val = X_test
 
     if model_kind != "DNN":
