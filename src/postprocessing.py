@@ -190,6 +190,7 @@ def _create_visualizations(y_val, y_val_proba, y_test, y_test_proba,
     plt.tight_layout()
     plot_path = output_dir / "threshold_tuning_plots.png"
     plt.savefig(plot_path)
+    plt.show()
     plt.close()
     print(f"[POSTPROCESS] Threshold tuning plots saved to {plot_path}")
 

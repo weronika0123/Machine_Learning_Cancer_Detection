@@ -175,6 +175,7 @@ def rfecv(steps: int, X_train, y_train, X_test, model_name, full_mask, output_di
     plt.tight_layout()
     plot_path = output_dir / "rfecv_plot.png"
     plt.savefig(plot_path)
+    plt.show()
     plt.close()
     print(f"[FEATURE_SEL] RFECV plot saved to {plot_path}")
 

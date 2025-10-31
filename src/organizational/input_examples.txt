@@ -134,7 +134,7 @@ python .\main.py `
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
-  --preprocess "['corr','kbest']" `
+  --preprocess "['rfecv', 'corr','kbest']" `
   --preprocess_params "{'corr_threshold': 0.85, 'prefilter_k': 1000}" `
   --model DT `
   --model_params "{'max_depth': 6, 'min_samples_leaf': 5, 'criterion': 'gini'}" `
