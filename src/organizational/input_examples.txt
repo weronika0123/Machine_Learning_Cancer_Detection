@@ -220,3 +220,103 @@ python .\main.py `
   --xai
 
 input: python random_search.py --data "data_sources\liquid_biopsy_data.csv" --use_case C --trials 30
+-------------------------------------------------------------------------------------------------------------
+1. max accuracy:
+    python .\main.py `
+      --data "data_sources\liquid_biopsy_data.csv" `
+      --use_validation "merge_train_test" `
+      --preprocess "['corr']" `
+      --preprocess_params "{'corr_threshold': 0.92}" `
+      --model SVM `
+      --model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+      --eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+      --xai
+
+output:
+[DATA] Using liquid_biopsy_data.csv dataset
+[MODEL] Training SVM linear calibrated...
+[XAI] SHAP beeswarm plot saved to output/liquid_biopsy_dataset_SVM_corr_no_th/shap_beeswarm_linear.png
+[EVAL] Confusion Matrix: TN=82, FP=64, FN=26, TP=296
+
+Evaluation Metrics:
+accuracy: 0.8119
+precision: 0.8381
+recall: 0.9006
+f1: 0.8683
+AUC ROC: 0.8682
+AUC PR: 0.9363
+Confusion matrix: [[82,64],[26,296]]
+[XAI top features]: ENSG00000131711, ENSG00000136854, ENSG00000149131, ENSG00000065833, ENSG00000095002
+
+2. max recall:
+    python .\main.py `
+      --data "data_sources\liquid_biopsy_data.csv" `
+      --use_validation "separate" `
+      --preprocess "['corr','kbest']" `
+      --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
+      --model LR `
+      --model_params "{'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0, 'max_iter': 2000}" `
+      --postprocess `
+      --postprocess_params "{'tuning_method': 'cost', 'cost_fn': 5.0, 'cost_fp': 1.0, 'show_tuning_plots': False}" `
+      --eval "['AUC ROC','accuracy','F1','recall','precision','Confusion Matrix']"
+
+output:
+[PREPROCESS] corr+kbest (k=1000)
+[MODEL] Logistic Regression (lbfgs, C=1.0)
+[POSTPROCESS] Threshold tuning: cost-sensitive (cost_fn=5, cost_fp=1)
+[EVAL] Confusion Matrix: TN=16, FP=105, FN=1, TP=269
+
+Evaluation Metrics:
+accuracy: 0.7289
+precision: 0.7193
+recall: 0.9963
+f1: 0.8354
+AUC ROC: 0.8027
+threshold_tuning: best_threshold = 0.043
+
+3. max F1:
+    python .\main.py `
+      --data "data_sources\liquid_biopsy_data.csv" `
+      --use_validation "separate" `
+      --preprocess "['corr','kbest','rfecv']" `
+      --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 800}" `
+      --model LR `
+      --model_params "{'solver': 'liblinear', 'penalty': 'l2', 'C': 0.3, 'max_iter': 2000}" `
+      --postprocess `
+      --postprocess_params "{'tuning_method': 'f1', 'show_tuning_plots': False}" `
+      --eval "['AUC ROC','accuracy','F1','recall','precision']" `
+      --xai
+
+
+output:
+[PREPROCESS] corr + kbest + RFECV selected optimal k
+[MODEL] Logistic Regression (liblinear, C=0.3)
+[POSTPROCESS] Threshold tuning method: f1
+[EVAL] Confusion Matrix: TN=22, FP=99, FN=13, TP=257
+
+Evaluation Metrics:
+accuracy: 0.7315
+precision: 0.7364
+recall: 0.9519
+f1: 0.8304
+AUC ROC: 0.8234
+threshold_tuning: best_threshold = 0.145
+[XAI] Coefficient plot saved to output/liquid_biopsy_dataset_LR_corr_k800_rfecv_th/logistic_regression_xai_plot.png
+
+
+--------------------------------------------------------------------------------------------------
+runs: ~78 runs total (distinct (preprocess + model + hyperparams + threshold-tuning) combos).
+
+Random search sweeps:
+
+random_search_log_A.csv → 22 trials
+random_search_log_B.csv → 22 trials
+random_search_log_C.csv → 22 trials
+→ 66 trials in random search (A+B+C).
+
+Targeted ablations / grid from tuning_experiments.py:
+summary.csv lists 9 experiments (A1, A2, B1, and 6× C grid over C=0.1…6.0).
+
+Baseline use-case runs you shared earlier (A, B, C): 3 runs.
+
+66 + 9 + 3 = 78.
