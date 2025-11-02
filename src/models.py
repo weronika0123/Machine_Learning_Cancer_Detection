@@ -161,7 +161,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
 
     else:
         raise ValueError(
-            "Unknown model. Use one of: DecisionTree/DT, LogisticRegression/LR, SVM/SVC, or Deep Neural Network/DNN."
+            "Unknown model. Use one of: DecisionTree, LogisticRegression, SVM/SVC, or Deep Neural Network/DNN."
         )
 
     print("Used X_train shape:", X_train.shape)

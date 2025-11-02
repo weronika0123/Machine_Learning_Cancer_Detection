@@ -24,7 +24,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  #Suppress TF C++ logs: 0=ALL,1=INFO,2=
 
 import warnings
 import logging
-
 #Filter unwanted warnings
 warnings.filterwarnings("ignore", message=r"The structure of `inputs`.*", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"shap")
@@ -44,7 +43,7 @@ RANDOM_STATE = 42
 
 def validate_split_columns(df):
     print("[VALIDATION] Checking data split columns...")
-    
+
     #Check if required columns exist
     required_columns = ['isTraining', 'isValidation', 'isTest']
     missing = [col for col in required_columns if col not in df.columns]
@@ -63,7 +62,7 @@ def validate_split_columns(df):
             )
     #Check that each row belongs to exactly one split
     split_sum = df['isTraining'] + df['isValidation'] + df['isTest']
-    
+
     #Find rows where sum != 1 (invalid rows)
     invalid_rows = split_sum != 1
     if invalid_rows.any():
@@ -72,23 +71,23 @@ def validate_split_columns(df):
             f"Found {n_invalid} rows with invalid split assignment\n"
         )
         raise ValueError(error_msg)
-    
+
     #Check that each split has at least some data
     train_count = (df['isTraining'] == 1).sum()
     val_count = (df['isValidation'] == 1).sum()
     test_count = (df['isTest'] == 1).sum()
     total = len(df)
-    
+
     if train_count == 0:
         raise ValueError("Training set is empty")
     if test_count == 0:
         raise ValueError("Test set is empty")
-    
+
     #Validation can be empty-warning only
     if val_count == 0:
         print("[VALIDATION][WARN] Validation set is empty (no rows with isValidation=1)")
         print("[VALIDATION][WARN] This is acceptable if using --use_validation merge_train_test")
-    
+
     #Statistics
     print(f"[VALIDATION] Data distribution:")
     print(f"- Training:{train_count:5d} rows ({100*train_count/total:5.1f}%)")
@@ -107,11 +106,11 @@ def prepare_data_split(X, y, df, use_validation="separate"):
     y_val_base = y[df["isValidation"] == 1]
     X_test_base = X[df["isTest"] == 1]
     y_test_base = y[df["isTest"] == 1]
-    
+
     #Option A: separate train/validation/test
     if use_validation == "separate":
         return X_train_base, X_val_base, X_test_base, y_train_base, y_val_base, y_test_base
-    
+
     #Option B: Split validation 80/20 into train/test
     elif use_validation == "merge_train_test":
         if X_val_base.shape[0] > 0:
@@ -131,7 +130,7 @@ def prepare_data_split(X, y, df, use_validation="separate"):
         else:
             X_train, X_val, X_test = X_train_base, X_val_base, X_test_base
             y_train, y_val, y_test = y_train_base, y_val_base, y_test_base
-        
+
         return X_train, X_val, X_test, y_train, y_val, y_test
 
 
@@ -155,10 +154,10 @@ def pipeline(
 
     #Identify model kind (string)
     model_name_norm = model_name.strip().lower()
-    if model_name_norm in ("logisticregression", "lr"):
+    if model_name_norm in ("logisticregression"):
         model_kind = "Logistic Regression"
         step = 50  #For FS: larger step for regression makes sense
-    elif model_name_norm in ("decisiontree", "dt"):
+    elif model_name_norm in ("decisiontree"):
         model_kind = "Decision Tree"
         step = 30  #For FS: smaller step for trees makes sense
     elif model_name_norm in ("svm", "svc"):
@@ -168,7 +167,7 @@ def pipeline(
         model_kind = "DNN"
         step = 50
     else:
-        raise ValueError("Unknown model. Use: DecisionTree/DT or LogisticRegression/LR or SVM/SVC or DNN")
+        raise ValueError("Unknown model. Use: DecisionTree or LogisticRegression or SVM/SVC or DNN")
 
 
     #Identify preprocessing steps (list of strings)
@@ -178,7 +177,7 @@ def pipeline(
 
         if(any(s in ("recursive feature elimination with cross-validation","recursive feature elimination" , "rfecv", "rfe") for s in steps)):
             fs_method.append("rfecv")
-            
+
         if(any(s in ("kbest", "selectkbest", "select_k_best", "k best") for s in steps)):
             fs_method.append("kbest")
 
@@ -200,7 +199,7 @@ def pipeline(
             "Threshold tuning requires a validation set. Please use --use_validation separate "
             "or remove the --postprocess flag."
         )
-    
+
     #XAI idenitification
     xai_flag = False
     if XAI:
@@ -216,7 +215,7 @@ def pipeline(
         raise ValueError("Only .csv files are supported. Please provide a valid CSV file.")
     if path.stat().st_size == 0:
         raise ValueError("The provided CSV file is empty. Please provide a non-empty, valid CSV file.")
-    
+
     df = pd.read_csv(path, low_memory=False)
 
 
@@ -235,7 +234,7 @@ def pipeline(
 
     #Validate split columns (isTraining, isValidation, isTest)
     validate_split_columns(df)
-    
+
     #target: cancer
     y_df = df.cancer
 
@@ -244,7 +243,7 @@ def pipeline(
 
     X = X_df.to_numpy()
     y = y_df.to_numpy()
-    
+
     #Call prepare_data_split to get train/val/test splits
     X_train, X_val, X_test, y_train, y_val, y_test = prepare_data_split(
         X, y, df, use_validation=use_validation
@@ -283,14 +282,14 @@ def pipeline(
 
         if fs_mask is not None:
             X_val = X_val[:, fs_mask]
-        
+
 
     #MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
     if model_kind in ("Logistic Regression", "SVM", "DNN"):
         print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models:{model_kind})")
         scaler = MinMaxScaler()
         X_train = scaler.fit_transform(X_train)  #Learn min/max from train, then scale
-        
+
         if X_val.shape[0] > 0:
             X_val = scaler.transform(X_val)  #Apply train statistics (no data leakage)
             print(f"[SCALING] Applied to validation set: {X_val.shape}")
@@ -303,7 +302,7 @@ def pipeline(
 #endregion
 
 #region Model selection + training
-    
+
     model, model_kind = train_model(
         model_kind=model_kind,
         model_params=model_params,
@@ -333,7 +332,7 @@ def pipeline(
         cost_fn = postprocess_params.get("cost_fn", 10.0)  #False Negative cost
         cost_fp = postprocess_params.get("cost_fp", 1.0)   #False Positive cost
         show_plots = postprocess_params.get("show_tuning_plots", True)
-        
+
         y_pred, tuning_info = threshold_tuning(
             model=model,
             X_val=X_val,
@@ -433,7 +432,7 @@ def pipeline(
             "best_score": float(tuning_info['best_score']),
             "tuning_performed": tuning_info['tuning_performed']
         }
-        
+
     # Generate output folder name
     dataset_name = "liquid_biopsy_dataset" if str(path) == r"data_sources\liquid_biopsy_data.csv" else "custom_dataset"
     preprocessing_abbr = "_".join([s[:4] for s in preprocesing]) if preprocesing else "no_pre"
@@ -494,7 +493,7 @@ def main(argv=None):
         eval_list = ast.literal_eval(args.eval)
         if not isinstance(eval_list, list):
             raise ValueError("--eval must be a Python list (np. ['AUC ROC','accuracy'])")
-            
+
     except Exception as e:
         print(f"Parameter parsing error: {e}", file=sys.stderr)
         sys.exit(2)

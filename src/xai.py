@@ -5,7 +5,6 @@ from sklearn.tree import _tree, plot_tree
 import numpy as np
 from pathlib import Path
 
-
 def _save_fig(output_dir, filename):
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -228,6 +227,7 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
         X_train = pd.DataFrame(X_train, columns=feature_names)
         X_val = pd.DataFrame(X_val, columns=feature_names)
 
+
     #Logistic Regression
     if model_kind == "Logistic Regression":
         top5_features = explain_lr_with_coeffs(model, feature_names, top_k=15, output_dir=output_dir)
@@ -260,4 +260,3 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
     #Fallback
     else:
         print("[XAI] Model not recognized - using generic SHAP KernelExplainer")
-        return (" generic fallback = SHAP KernelExplainer", top5_features)
