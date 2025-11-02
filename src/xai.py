@@ -51,7 +51,7 @@ def auto_left_margin(labels):
     return min(0.55, 0.18 + 0.012 * L)
 
 
-def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names=None, output_dir=None):
+def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=None):
     explainer = None
 
     if explainer_type == "linear":
@@ -187,7 +187,10 @@ def SHAP(explainer_type, model, X_train, X_test, X_val, feature_names=None, outp
         #Kernel SHAP fallback (e.g., non-linear SVM without Tree/Deep explainers)
         #Prefer proba if available (better for binary classification)
         f = (lambda X: model.predict_proba(X)[:, 1]) if hasattr(model, "predict_proba") else model.predict
-        explainer = shap.KernelExplainer(f, X_train)
+        background = X_train
+        if X_train.shape[0] > 1000:
+            background = shap.sample(X_train, 100, random_state=42)
+        explainer = shap.KernelExplainer(f, background)
         shap_values = explainer(X_val)
 
         #Extract top 15 features directly from SHAP values
@@ -224,7 +227,6 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
     if model_kind != "DNN":
         X_train = pd.DataFrame(X_train, columns=feature_names)
         X_val = pd.DataFrame(X_val, columns=feature_names)
-        X_test = pd.DataFrame(X_test, columns=feature_names)
 
     #Logistic Regression
     if model_kind == "Logistic Regression":
@@ -233,26 +235,26 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
 
     #Decision Tree
     elif model_kind == "Decision Tree":
-        top5_features = SHAP("tree", model, X_train, X_test, X_val, output_dir=output_dir)
+        top5_features = SHAP("tree", model, X_train, X_val, output_dir=output_dir)
         return ("SHAP TreeExplainer for Decision Tree", top5_features)
 
     #SVM (linear)
     elif (model_kind == "SVM linear" or model_kind == "SVM linear calibrated"):
         if model_kind == "SVM linear calibrated":
             base_model = model.calibrated_classifiers_[0].estimator
-            top5_features = SHAP("linear", base_model, X_train, X_test, X_val, output_dir=output_dir)
+            top5_features = SHAP("linear", base_model, X_train, X_val, output_dir=output_dir)
         else:
-            top5_features = SHAP("linear", model, X_train, X_test, X_val, output_dir=output_dir)
+            top5_features = SHAP("linear", model, X_train, X_val, output_dir=output_dir)
         return ("SHAP (linear) for SVM", top5_features)
 
     #SVM (non-linear, e.g., RBF)
     elif model_kind == "SVM":
-        top5_features = SHAP("kernel", model, X_train, X_test, X_val, feature_names, output_dir=output_dir)
+        top5_features = SHAP("kernel", model, X_train, X_val, feature_names, output_dir=output_dir)
         return ("Kernel SHAP / LIME for SVM-RBF", top5_features)
 
     #Deep Neural Network
     elif model_kind == "DNN":
-        top5_features = SHAP("deep", model, X_train, X_test, X_val, feature_names, output_dir=output_dir)
+        top5_features = SHAP("deep", model, X_train, X_val, feature_names, output_dir=output_dir)
         return ("Deep SHAP for DNN", top5_features)
 
     #Fallback

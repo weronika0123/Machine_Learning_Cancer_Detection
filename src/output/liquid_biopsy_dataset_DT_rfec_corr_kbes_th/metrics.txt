@@ -1,6 +1,6 @@
 Evaluation Metrics:
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-threshold_tuning: {'best_threshold': 0.01, 'best_score': 0.8080495356037152, 'tuning_performed': True}
+accuracy: 0.6726342710997443
+precision: 0.6858638743455497
+recall: 0.9703703703703703
+f1: 0.803680981595092
+threshold_tuning: {'best_threshold': 0.01, 'best_score': 0.8037383177570093, 'tuning_performed': True}

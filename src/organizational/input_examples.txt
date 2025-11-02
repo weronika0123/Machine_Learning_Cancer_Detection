@@ -177,3 +177,13 @@ python .\main.py `
   --eval "['accuracy','F1','AUC ROC','Confusion Matrix']" `
   --xai
 
+#17. Non-linear SVM xai
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 100}" `
+  --model SVM `
+  --model_params "{'kernel': 'rbf', 'C': 1.0, 'use_calibrated': True, 'cv_calibration': 5}" `
+  --eval "['accuracy','F1','recall','precision','AUC ROC']" `
+  --xai
