@@ -114,7 +114,7 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
 
         #Feature names fallback if None
         if feature_names is None:
-            feat_names_vec = [f"feat_{i}" for i in range(X_val_np.shape[1])]
+            feat_names_vec = [f"gene_{i}" for i in range(X_val_np.shape[1])]
         else:
             feat_names_vec = list(feature_names)
 
