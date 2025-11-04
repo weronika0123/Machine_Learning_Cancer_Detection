@@ -145,6 +145,7 @@ def pipeline(
                 postprocess: bool,
                 EVAL: list,
                 XAI: bool,
+                xai_sample: int = None,  # Add xai_feature as an argument
                 ):
 
 #region Data Prep
@@ -321,7 +322,9 @@ def pipeline(
     XAI_top_features = None
 
     if xai_flag:
-        XAI_method, XAI_top_features = run_xai(model_kind, model, feature_names, X_train, X_test, X_val, output_dir)
+        XAI_method, XAI_top_features = run_xai(
+            model_kind, model, feature_names, X_train, X_test, X_val, output_dir, xai_sample=xai_sample
+        )
 #endregion
 
 #region Post-processing = Threshold tuning
@@ -508,7 +511,9 @@ def main(argv=None):
         postprocess_params=postprocess_params,
         postprocess=args.postprocess,
         EVAL=eval_list,
-        XAI=args.xai)
+        XAI=args.xai,
+        xai_sample=args.xai_sample
+    )
 
     print(json.dumps(out, indent=2, ensure_ascii=False))
 

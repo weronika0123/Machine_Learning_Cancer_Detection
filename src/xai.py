@@ -10,6 +10,7 @@ def _save_fig(output_dir, filename):
     outdir.mkdir(parents=True, exist_ok=True)
     full = outdir / filename
     plt.savefig(full, bbox_inches="tight", dpi=150)
+    plt.close() 
     return str(full)
 
 def explain_lr_with_coeffs(model, feature_names, top_k=15, output_dir=None):
@@ -50,24 +51,24 @@ def auto_left_margin(labels):
     return min(0.55, 0.18 + 0.012 * L)
 
 
-def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=None):
+def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=None, xai_sample=None):
     explainer = None
 
     if explainer_type == "linear":
         explainer = shap.LinearExplainer(model, X_train)
         shap_values = explainer(X_val)
 
-        #Extract top 15 features directly from SHAP values
+        # Extract top 15 features directly from SHAP values
         feature_importance = np.abs(shap_values.values).mean(axis=0)
         top_15_indices = np.argsort(feature_importance)[-15:][::-1]
         top_15_features = X_val.columns[top_15_indices]
 
-        #Beeswarm plot
+        # Beeswarm plot
         shap_values_top_15 = shap_values[:, top_15_indices]
         print(f"[XAI] Generating beeswarm plot (top 15 features) for LinearExplainer")
+        plt.figure(figsize=(12, 6))  
         shap.plots.beeswarm(shap_values_top_15, show=False, max_display=15)
         fig = plt.gcf()
-        fig.set_size_inches(12, 6)
         plt.title("Global Feature Importance (Top 15) - Linear SHAP", fontsize=14, pad=10)
         fig.tight_layout()
         saved = _save_fig(output_dir, "shap_beeswarm_linear.png")
@@ -75,6 +76,44 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
             print(f"[XAI] SHAP beeswarm plot saved to {saved}")
         else:
             plt.show()
+
+        # Generate waterfall plot for the specified feature
+        if xai_sample is not None:
+            sample_idx = int(xai_sample)  
+            if 0 <= sample_idx < len(shap_values):
+                print(f"[XAI] Generating waterfall plot (top 15 features) for sample index: {sample_idx}")
+
+                # Get SHAP values for that single sample
+                sample_values = shap_values[sample_idx].values
+                sample_base = shap_values[sample_idx].base_values
+                sample_data = shap_values[sample_idx].data
+                feature_names = shap_values.feature_names
+
+                # Sort features by absolute importance for this sample and keep top 15
+                top_k = 15
+                top_idx = np.argsort(np.abs(sample_values))[-top_k:][::-1]
+
+                sample_expl = shap.Explanation(
+                    values=sample_values[top_idx],
+                    base_values=sample_base,
+                    data=np.array(sample_data)[top_idx],
+                    feature_names=np.array(feature_names)[top_idx]
+                )
+
+                plt.figure(figsize=(12, 6))
+                shap.plots.waterfall(sample_expl, max_display=top_k, show=False)
+                plt.title(f"Waterfall Plot (Top {top_k}) – Sample #{sample_idx}", fontsize=14, pad=10)
+                plt.tight_layout()
+                saved = _save_fig(output_dir, f"shap_waterfall_top{top_k}_sample_{sample_idx}.png")
+                if saved is not None:
+                    print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
+                else:
+                    plt.show()
+                    plt.close()
+            else:
+                print(f"[XAI] Invalid sample index: {sample_idx}. Must be between 0 and {len(shap_values)-1}.")
+        else:
+            print("[XAI] No sample index provided for waterfall plot.")
 
         top_5_features = top_15_features[:5].tolist()
         return top_5_features
@@ -146,6 +185,43 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
         else:
             plt.show()
 
+        # --- Waterfall: TOP 15 cech dla WYBRANEJ próbki (DNN) ---
+        if xai_sample is not None:
+            sample_idx = int(xai_sample)
+            if 0 <= sample_idx < len(expl):
+                print(f"[XAI] Generating DNN waterfall (top 15) for sample #{sample_idx}")
+
+                # SHAP dla tej próbki
+                sample_values = expl.values[sample_idx]      # (n_features,)
+                sample_base   = expl.base_values[sample_idx] # skalar
+                sample_data   = expl.data[sample_idx]        # (n_features,)
+                feat_names    = np.array(expl.feature_names)
+
+                # TOP-15 wg |SHAP| dla TEJ próbki
+                top_k  = 15
+                top_ix = np.argsort(np.abs(sample_values))[-top_k:][::-1]
+
+                # Skonstruuj tymczasowe Explanation tylko dla TOP-15
+                sample_expl = shap.Explanation(
+                    values       = sample_values[top_ix],
+                    base_values  = sample_base,
+                    data         = np.asarray(sample_data)[top_ix],
+                    feature_names= feat_names[top_ix]
+                )
+
+                plt.figure(figsize=(12, 6))  # osobny wykres
+                shap.plots.waterfall(sample_expl, max_display=top_k, show=False)
+                plt.title(f"Waterfall (Top {top_k}) – DNN – Sample #{sample_idx}", fontsize=14, pad=10)
+                plt.tight_layout()
+                saved = _save_fig(output_dir, f"shap_waterfall_dnn_top{top_k}_sample_{sample_idx}.png")
+                if saved is None:
+                    plt.show(); plt.close()
+            else:
+                print(f"[XAI] Invalid sample index: {sample_idx}. Must be between 0 and {len(expl)-1}.")
+        else:
+            print("[XAI] No sample index provided for DNN waterfall.")
+
+
         top_5_features = list(top_15_features[:5])
         print(f"[XAI] Top 5 most important features (absolute mean SHAP): {top_5_features}")
         return top_5_features
@@ -166,6 +242,41 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
         top_k = 15
         top_15_indices = np.argsort(feature_importance)[-top_k:][::-1]
         top_15_features = X_val.columns[top_15_indices]
+
+        if xai_sample is not None:
+            sample_idx = int(xai_sample)
+            if 0 <= sample_idx < len(shap_values_pos):
+                print(f"[XAI] Generating Decision Tree waterfall (top 15) for sample #{sample_idx}")
+
+                # SHAP dla tej próbki
+                sample_values = shap_values_pos.values[sample_idx]     # (n_features,)
+                sample_base   = shap_values_pos.base_values[sample_idx] # skalar
+                sample_data   = shap_values_pos.data[sample_idx]        # (n_features,)
+                feat_names    = np.array(shap_values_pos.feature_names)
+
+                # TOP-15 wg |SHAP| dla TEJ próbki
+                top_k  = 15
+                top_ix = np.argsort(np.abs(sample_values))[-top_k:][::-1]
+
+                # tymczasowy obiekt Explanation tylko dla top 15
+                sample_expl = shap.Explanation(
+                    values        = sample_values[top_ix],
+                    base_values   = sample_base,
+                    data          = np.asarray(sample_data)[top_ix],
+                    feature_names = feat_names[top_ix]
+                )
+
+                plt.figure(figsize=(12, 6))
+                shap.plots.waterfall(sample_expl, max_display=top_k, show=False)
+                plt.title(f"Waterfall (Top {top_k}) – Decision Tree – Sample #{sample_idx}", fontsize=14, pad=10)
+                plt.tight_layout()
+                saved = _save_fig(output_dir, f"shap_waterfall_tree_top{top_k}_sample_{sample_idx}.png")
+                if saved is None:
+                    plt.show(); plt.close()
+            else:
+                print(f"[XAI] Invalid sample index: {sample_idx}. Must be between 0 and {len(shap_values_pos)-1}.")
+        else:
+            print("[XAI] No sample index provided for Tree waterfall.")
 
         #Beeswarm plot for top 15 features
         shap_values_top_15 = shap_values_pos[:, top_15_indices]
@@ -211,12 +322,49 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
         else:
             plt.show()
 
+        # Generate waterfall plot for the specified feature
+        if xai_sample is not None:
+            sample_idx = int(xai_sample)  
+            if 0 <= sample_idx < len(shap_values):
+                print(f"[XAI] Generating waterfall plot (top 15 features) for sample index: {sample_idx}")
+
+                # Get SHAP values for that single sample
+                sample_values = shap_values[sample_idx].values
+                sample_base = shap_values[sample_idx].base_values
+                sample_data = shap_values[sample_idx].data
+                feature_names = shap_values.feature_names
+
+                # Sort features by absolute importance for this sample and keep top 15
+                top_k = 15
+                top_idx = np.argsort(np.abs(sample_values))[-top_k:][::-1]
+
+                sample_expl = shap.Explanation(
+                    values=sample_values[top_idx],
+                    base_values=sample_base,
+                    data=np.array(sample_data)[top_idx],
+                    feature_names=np.array(feature_names)[top_idx]
+                )
+
+                plt.figure(figsize=(12, 6))
+                shap.plots.waterfall(sample_expl, max_display=top_k, show=False)
+                plt.title(f"Waterfall Plot (Top {top_k}) – Sample #{sample_idx}", fontsize=14, pad=10)
+                plt.tight_layout()
+                saved = _save_fig(output_dir, f"shap_waterfall_top{top_k}_sample_{sample_idx}.png")
+                if saved is not None:
+                    print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
+                else:
+                    plt.show()
+                    plt.close()
+            else:
+                print(f"[XAI] Invalid sample index: {sample_idx}. Must be between 0 and {len(shap_values)-1}.")
+        else:
+            print("[XAI] No sample index provided for waterfall plot.")
         #Extract top 5 features
         top_5_features = top_15_features[:5].tolist()
         return top_5_features
 
 
-def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, output_dir=None):
+def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, output_dir=None, xai_sample=None):
     print(f"[XAI] Running explanations for model: {model_kind}")
     top5_features = []
 
@@ -235,26 +383,26 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
 
     #Decision Tree
     elif model_kind == "Decision Tree":
-        top5_features = SHAP("tree", model, X_train, X_val, output_dir=output_dir)
+        top5_features = SHAP("tree", model, X_train, X_val, output_dir=output_dir, xai_sample=xai_sample)
         return ("SHAP TreeExplainer for Decision Tree", top5_features)
 
     #SVM (linear)
     elif (model_kind == "SVM linear" or model_kind == "SVM linear calibrated"):
         if model_kind == "SVM linear calibrated":
             base_model = model.calibrated_classifiers_[0].estimator
-            top5_features = SHAP("linear", base_model, X_train, X_val, output_dir=output_dir)
+            top5_features = SHAP("linear", base_model, X_train, X_val, feature_names, output_dir=output_dir, xai_sample=xai_sample)
         else:
-            top5_features = SHAP("linear", model, X_train, X_val, output_dir=output_dir)
+            top5_features = SHAP("linear", model, X_train, X_val,feature_names,  output_dir=output_dir, xai_sample=xai_sample)
         return ("SHAP (linear) for SVM", top5_features)
 
     #SVM (non-linear, e.g., RBF)
     elif model_kind == "SVM":
-        top5_features = SHAP("kernel", model, X_train, X_val, feature_names, output_dir=output_dir)
+        top5_features = SHAP("kernel", model, X_train, X_val, feature_names, output_dir=output_dir,  xai_sample=xai_sample)
         return ("Kernel SHAP / LIME for SVM-RBF", top5_features)
 
     #Deep Neural Network
     elif model_kind == "DNN":
-        top5_features = SHAP("deep", model, X_train, X_val, feature_names, output_dir=output_dir)
+        top5_features = SHAP("deep", model, X_train, X_val, feature_names, output_dir=output_dir,  xai_sample=xai_sample)
         return ("Deep SHAP for DNN", top5_features)
 
     #Fallback

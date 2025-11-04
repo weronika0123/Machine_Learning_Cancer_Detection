@@ -105,13 +105,17 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "   'Confusion Matrix': 2x2 confusion matrix with TN/FP/FN/TP\n"
              "Example: \"['accuracy','F1','AUC ROC','Confusion Matrix']\""
     )
-    eval_group.add_argument("--xai",action="store_true",
+    eval_group.add_argument("--xai", action="store_true",
         help="Enable Explainable AI (XAI) analysis using SHAP.\n"
              "Provides feature importance rankings and model interpretation.\n"
              "   Decision Tree: SHAP TreeExplainer with waterfall/beeswarm plots\n"
              "   Logistic Regression: Coefficient-based analysis\n"
              "   SVM: SHAP LinearExplainer or KernelExplainer\n"
              "   DNN: SHAP DeepExplainer with beeswarm plots"
+    )
+    eval_group.add_argument("--xai_sample", default=None,
+        help="Optional sample index for XAI analysis. If provided, generates a SHAP waterfall plot "
+             "explaining the contribution of features for this sample to the model's predictions."
     )
     return p.parse_args(argv)
 
