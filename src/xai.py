@@ -10,7 +10,7 @@ def _save_fig(output_dir, filename):
     outdir.mkdir(parents=True, exist_ok=True)
     full = outdir / filename
     plt.savefig(full, bbox_inches="tight", dpi=150)
-    plt.close() 
+    plt.show()
     return str(full)
 
 def explain_lr_with_coeffs(model, feature_names, top_k=15, output_dir=None):
@@ -35,11 +35,8 @@ def explain_lr_with_coeffs(model, feature_names, top_k=15, output_dir=None):
     fig.tight_layout()
 
     #Save (if requested) and/or show
-    saved = _save_fig(output_dir, "logistic_regression_xai_plot.png")
-    if saved is not None:
-        print(f"[XAI] Coefficients plot saved to {saved}")
-    else:
-        plt.show()
+    saved = _save_fig(output_dir, "logistic_regression_coeff_xai_plot.png")
+    print(f"[XAI] Coefficients plot saved to {saved}")
 
     return top5_features
 
@@ -53,7 +50,7 @@ def auto_left_margin(labels):
 
 def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=None, xai_sample=None):
     explainer = None
-
+#region Linear SHAP
     if explainer_type == "linear":
         explainer = shap.LinearExplainer(model, X_train)
         shap_values = explainer(X_val)
@@ -105,11 +102,8 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
                 plt.title(f"Waterfall Plot (Top {top_k}) – Sample #{sample_idx}", fontsize=14, pad=10)
                 plt.tight_layout()
                 saved = _save_fig(output_dir, f"shap_waterfall_top{top_k}_sample_{sample_idx}.png")
-                if saved is not None:
-                    print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
-                else:
-                    plt.show()
-                    plt.close()
+                print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
+
             else:
                 print(f"[XAI] Invalid sample index: {sample_idx}. Must be between 0 and {len(shap_values)-1}.")
         else:
@@ -117,7 +111,8 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
 
         top_5_features = top_15_features[:5].tolist()
         return top_5_features
-
+#endregion 
+#region Deep SHAP
     elif explainer_type == "deep":
         #Unwrap the Keras model if a wrapper is used
         keras_model = model.get_keras_model() if hasattr(model, "get_keras_model") else model
@@ -180,28 +175,26 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
         plt.title(f"Global Feature Importance (Top {top_k}) - Deep Neural Network", fontsize=14, pad=10)
         fig.tight_layout()
         saved = _save_fig(output_dir, "shap_beeswarm_dnn.png")
-        if saved is not None:
-            print(f"[XAI] SHAP beeswarm plot saved to {saved}")
-        else:
-            plt.show()
+        print(f"[XAI] SHAP beeswarm plot saved to {saved}")
 
-        # --- Waterfall: TOP 15 cech dla WYBRANEJ próbki (DNN) ---
+
+        #  TOP 15 genes for picked sample 
         if xai_sample is not None:
             sample_idx = int(xai_sample)
             if 0 <= sample_idx < len(expl):
                 print(f"[XAI] Generating DNN waterfall (top 15) for sample #{sample_idx}")
 
-                # SHAP dla tej próbki
+                # SHAP for the picked sample
                 sample_values = expl.values[sample_idx]      # (n_features,)
                 sample_base   = expl.base_values[sample_idx] # skalar
                 sample_data   = expl.data[sample_idx]        # (n_features,)
                 feat_names    = np.array(expl.feature_names)
 
-                # TOP-15 wg |SHAP| dla TEJ próbki
+                # TOP-15 based on |SHAP| for the picked sample
                 top_k  = 15
                 top_ix = np.argsort(np.abs(sample_values))[-top_k:][::-1]
 
-                # Skonstruuj tymczasowe Explanation tylko dla TOP-15
+                # Temporary Explanation 
                 sample_expl = shap.Explanation(
                     values       = sample_values[top_ix],
                     base_values  = sample_base,
@@ -209,13 +202,12 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
                     feature_names= feat_names[top_ix]
                 )
 
-                plt.figure(figsize=(12, 6))  # osobny wykres
+                plt.figure(figsize=(12, 6))  
                 shap.plots.waterfall(sample_expl, max_display=top_k, show=False)
                 plt.title(f"Waterfall (Top {top_k}) – DNN – Sample #{sample_idx}", fontsize=14, pad=10)
                 plt.tight_layout()
                 saved = _save_fig(output_dir, f"shap_waterfall_dnn_top{top_k}_sample_{sample_idx}.png")
-                if saved is None:
-                    plt.show(); plt.close()
+                print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
             else:
                 print(f"[XAI] Invalid sample index: {sample_idx}. Must be between 0 and {len(expl)-1}.")
         else:
@@ -225,7 +217,8 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
         top_5_features = list(top_15_features[:5])
         print(f"[XAI] Top 5 most important features (absolute mean SHAP): {top_5_features}")
         return top_5_features
-
+#endregion
+#region Tree SHAP
     elif explainer_type == "tree":
         explainer = shap.TreeExplainer(model)
         shap_values = explainer(X_val)
@@ -287,12 +280,13 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
         plt.title(f"Global Feature Importance (Top {top_k}) - Decision Tree", fontsize=14, pad=10)
         fig.tight_layout()
         saved = _save_fig(output_dir, "shap_beeswarm_tree.png")
-        plt.show()
+        print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
 
         top_5_features = top_15_features[:5].tolist()
         print(f"[XAI] Top 5 most important features: {top_5_features}")
         return top_5_features
-
+#endregion
+#region Kernel SHAP
     else:
         #Kernel SHAP fallback (e.g., non-linear SVM without Tree/Deep explainers)
         #Prefer proba if available (better for binary classification)
@@ -350,11 +344,8 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
                 plt.title(f"Waterfall Plot (Top {top_k}) – Sample #{sample_idx}", fontsize=14, pad=10)
                 plt.tight_layout()
                 saved = _save_fig(output_dir, f"shap_waterfall_top{top_k}_sample_{sample_idx}.png")
-                if saved is not None:
-                    print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
-                else:
-                    plt.show()
-                    plt.close()
+                print(f"[XAI] SHAP waterfall plot (top {top_k}) saved to {saved}")
+
             else:
                 print(f"[XAI] Invalid sample index: {sample_idx}. Must be between 0 and {len(shap_values)-1}.")
         else:
@@ -362,7 +353,7 @@ def SHAP(explainer_type, model, X_train, X_val, feature_names=None, output_dir=N
         #Extract top 5 features
         top_5_features = top_15_features[:5].tolist()
         return top_5_features
-
+#endregion
 
 def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, output_dir=None, xai_sample=None):
     print(f"[XAI] Running explanations for model: {model_kind}")
@@ -379,6 +370,8 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
     #Logistic Regression
     if model_kind == "Logistic Regression":
         top5_features = explain_lr_with_coeffs(model, feature_names, top_k=15, output_dir=output_dir)
+        if xai_sample is not None:
+            SHAP("linear", model, X_train, X_val, feature_names, output_dir=output_dir, xai_sample=xai_sample)
         return ("Coefficient-based analysis", top5_features)
 
     #Decision Tree

@@ -473,7 +473,7 @@ def pipeline(
         "metrics_requested": EVAL,
         "metrics": results,
         "xai_method": XAI_method,
-        "XAI_top_features": XAI_top_features,
+        "XAI_top_global_features": XAI_top_features,
     }
 #endregion
 

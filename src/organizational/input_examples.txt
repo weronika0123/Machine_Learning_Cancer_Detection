@@ -199,7 +199,7 @@ python .\main.py `
   --postprocess_params "{'tuning_method': 'f1'}" `
   --eval "['accuracy','F1','recall','precision','AUC ROC']" `
   --xai `
-  --xai_sample 2
+  --xai_sample 215
 
   #19
 
@@ -214,7 +214,7 @@ python .\main.py `
   --postprocess_params "{'tuning_method': 'f1'}" `
   --eval "['accuracy','F1','AUC ROC','Confusion Matrix']" `
   --xai `
-  --xai_sample 2
+  --xai_sample 200
 
 #20
 python .\main.py `
@@ -228,4 +228,19 @@ python .\main.py `
   --postprocess_params "{'tuning_method': 'f1'}" `
   --eval "['accuracy','F1','recall','precision','Confusion Matrix']" `
   --xai `
-  --xai_sample 2
+  --xai_sample 12
+
+  #21
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
+  --model LogisticRegression `
+  --model_params "{'max_iter': 1000, 'C': 1.0}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'recall'}" `
+  --eval "['AUC ROC','accuracy','F1']" `
+  --xai `
+  --xai_sample 12
+
