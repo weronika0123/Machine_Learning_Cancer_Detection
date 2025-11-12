@@ -264,7 +264,8 @@ def pipeline(
     preprocessing_abbr = "_".join([s[:4] for s in preprocesing]) if preprocesing else "no_pre"
     threshold_abbr = "th" if postprocess else "no_th"
     folder_name = f"{dataset_name}_{model_name}_{preprocessing_abbr}_{threshold_abbr}"
-    output_dir = Path("output") / folder_name
+    run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+    output_dir = Path("output") / folder_name / run_id 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # === RUN NAMING + LOGDIR (musi być PRZED sanity) ===

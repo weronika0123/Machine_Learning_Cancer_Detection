@@ -1,0 +1,7 @@
+[SANITY] Overfit 1-batch report
+Run name: liquid_biopsy_dataset_DNN_no_pre_no_th_20251112_190125_sanity
+Batch size: 64
+Epochs: 50
+Final loss: 0.000000
+Min loss: 0.000000
+Curves saved: output\liquid_biopsy_dataset_DNN_no_pre_no_th\20251112_190125\sanity\sanity_curves_loss.png

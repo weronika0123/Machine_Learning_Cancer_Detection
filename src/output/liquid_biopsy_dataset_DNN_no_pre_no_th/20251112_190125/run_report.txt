@@ -1,0 +1,9 @@
+=== RUN REPORT (Phase 2) ===
+Run name: liquid_biopsy_dataset_DNN_no_pre_no_th_20251112_190125
+Model: DNN
+Dataset rows total: 2351
+Splits: train=(1575, 5277), val=(385, 5277), test=(391, 5277)
+Preprocessing: []
+Preprocess params: {}
+Postprocess enabled: False | params: {}
+XAI enabled: False

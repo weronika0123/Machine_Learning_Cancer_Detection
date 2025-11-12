@@ -1,0 +1,36 @@
+
+=== RESULTS ===
+epochs = 30
+accuracy: 0.7544757033248082
+f1: 0.8350515463917526
+AUC ROC: 0.8515151515151513
+
+Artifacts:
+- Metrics TXT : output\liquid_biopsy_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\liquid_biopsy_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\liquid_biopsy_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\liquid_biopsy_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+epochs = 50
+accuracy: 0.7953964194373402
+f1: 0.8545454545454545
+AUC ROC: 0.860070400979492
+
+Artifacts:
+- Metrics TXT : output\liquid_biopsy_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\liquid_biopsy_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\liquid_biopsy_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\liquid_biopsy_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+epochs = 20
+accuracy: 0.7442455242966752
+f1: 0.8376623376623377
+AUC ROC: 0.8290021426385064
+
+Artifacts:
+- Metrics TXT : output\liquid_biopsy_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\liquid_biopsy_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\liquid_biopsy_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\liquid_biopsy_dataset_DNN_no_pre_no_th\confusion_matrix.png
