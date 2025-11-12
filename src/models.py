@@ -7,6 +7,10 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 import numpy as np
 import tensorflow as tf
+from datetime import datetime
+from pathlib import Path
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, CSVLogger, EarlyStopping
+from tensorboard.plugins.hparams import api as hp
 
 RANDOM_STATE = 42
 tf.random.set_seed(RANDOM_STATE)
@@ -133,12 +137,46 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
             metrics=["accuracy"]
         )
 
-        #(Optional) simple EarlyStopping can be added here
-        callbacks = []
+        # -- ścieżki: odbierz z model_params (albo ustaw domyślne)
+        out_dir = Path(model_params.get('output_dir', 'output/dnn_default'))
+        log_root = Path(model_params.get('log_dir', 'runs'))
+        run_name = model_params.get('run_name', f"DNN_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        log_dir = log_root / run_name
+        out_dir.mkdir(parents=True, exist_ok=True)
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        # -- HParams do logów
+        hparams = {
+        'hidden_layers': str(dnn_defaults['hidden_layers']),
+        'activation': dnn_defaults['activation'],
+        'dropout_rate': float(dnn_defaults['dropout_rate']),
+        'learning_rate': float(dnn_defaults['learning_rate']),
+        'epochs': int(dnn_defaults['epochs']),
+        'batch_size': int(dnn_defaults['batch_size'])
+        }
+
+        # -- callbacki: CSV log, TensorBoard (+HParams), checkpoint best, early stopping
+        callbacks = [
+        CSVLogger(str(out_dir / 'training_log.csv'), append=False),
+        TensorBoard(log_dir=str(log_dir), histogram_freq=1, write_graph=True, write_images=False),
+        hp.KerasCallback(str(log_dir), hparams),
+        ModelCheckpoint(
+        filepath=str(out_dir / 'model_best.keras'),
+        monitor='val_loss' if use_val else 'loss',
+        save_best_only=True,
+        save_weights_only=False
+        ),
+        EarlyStopping(monitor='val_loss' if use_val else 'loss', patience=10, restore_best_weights=True)
+        ]
+
+        # Zapis model.summary() do TXT
+        summary_txt = out_dir / 'model_summary.txt'
+        with open(summary_txt, 'w', encoding='utf-8') as f:
+            model_keras.summary(print_fn=lambda s: f.write(s + '\n'))
 
         #Model training
         if use_val:
-            model_keras.fit(
+            history = model_keras.fit(
                 X_train, y_train,
                 epochs=dnn_defaults["epochs"],
                 batch_size=dnn_defaults["batch_size"],
@@ -147,7 +185,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
                 callbacks=callbacks
             )
         else:
-            model_keras.fit(
+            history = model_keras.fit(
                 X_train, y_train,
                 epochs=dnn_defaults["epochs"],
                 batch_size=dnn_defaults["batch_size"],
@@ -170,4 +208,4 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
     if model_kind != "DNN":
         model.fit(X_train, y_train)
 
-    return (model, model_kind)
+    return (model, model_kind, history) if model_kind == 'DNN' else (model, model_kind, None)

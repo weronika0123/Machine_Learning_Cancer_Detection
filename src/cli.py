@@ -117,6 +117,14 @@ Supports multiple models, feature selection methods, threshold optimization, and
         help="Optional sample index for XAI analysis. If provided, generates a SHAP waterfall plot "
              "explaining the contribution of features for this sample to the model's predictions."
     )
+    # === Logging & Sanity ===
+    logging_group = p.add_argument_group('Logging & Sanity')
+    logging_group.add_argument('--sanity', action='store_true',
+    help='Sanity check: overfit do jednego batcha i zapisz logi do osobnego runu')
+    logging_group.add_argument('--log_dir', default='runs',
+    help='Folder bazowy dla logów TensorBoard/HParams (domyślnie: runs)')
+    logging_group.add_argument('--txt_logs', action='store_true',
+    help='Zapisuj pełny przebieg i wyniki do plików tekstowych (reporty *.txt/*.csv/*.json)')
     return p.parse_args(argv)
 
 

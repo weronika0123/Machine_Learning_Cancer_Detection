@@ -19,6 +19,7 @@ from xai import run_xai
 from cli import parse_args
 from models import train_model
 import os
+from datetime import datetime
 #Must be set BEFORE importing tensorflow:
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  #Suppress TF C++ logs: 0=ALL,1=INFO,2=WARNING,3=ERROR
 
@@ -146,8 +147,9 @@ def pipeline(
                 EVAL: list,
                 XAI: bool,
                 xai_sample: int = None,  # Add xai_feature as an argument
+                sanity=False
                 ):
-
+    history_sanity = None
 #region Data Prep
     #Flag innit
     feature_selection_flag = False
@@ -265,6 +267,18 @@ def pipeline(
     output_dir = Path("output") / folder_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # === RUN NAMING + LOGDIR (musi być PRZED sanity) ===
+    run_name = f"{dataset_name}_{model_name}_{preprocessing_abbr}_{threshold_abbr}_" + datetime.now().strftime('%Y%m%d_%H%M%S')
+    # jeśli nie masz tu dostępu do args, fallback na 'runs/'
+    log_dir = Path('runs') / run_name
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+
+    model_params = dict(model_params)
+    model_params['output_dir'] = str(output_dir)
+    model_params['log_dir'] = str(log_dir)
+    model_params['run_name'] = run_name
+
     # Feature selection
 
 
@@ -304,7 +318,58 @@ def pipeline(
 
 #region Model selection + training
 
-    model, model_kind = train_model(
+    if sanity: # lub: if args.sanity:
+        print('[SANITY] Overfit do jednego batcha (tylko sanity run)...')
+        batch_size = int(model_params.get('batch_size', 32))
+        Xb, yb = X_train[:batch_size], y_train[:batch_size]
+
+        tmp_params = dict(model_params)
+        tmp_params['epochs'] = 50
+        tmp_params['run_name'] = run_name + '_sanity'
+
+        model_sanity, _, history_sanity = train_model(
+            model_kind='DNN',
+            model_params=tmp_params,
+            X_train=Xb, y_train=yb,
+            X_test=Xb, y_test=yb,
+            X_val=Xb, y_val=yb
+        )
+
+
+        if history_sanity is not None:
+            plt.figure(figsize=(10,4))
+            plt.plot(history_sanity.history.get('loss', []), label='loss (sanity)')
+            plt.xlabel('Epoch'); plt.ylabel('Loss'); plt.title('Sanity run — overfit 1 batch'); plt.legend(); plt.grid(True, ls=':')
+            plt.tight_layout(); plt.savefig(output_dir / 'sanity_curves_loss.png'); plt.close()
+        print('[SANITY] Zapisano sanity logi/krzywe, kontynuuję normalny trening...')
+
+        # --- SANITY: własny podkatalog i nazwy plików ---
+        sanity_out = output_dir / 'sanity'
+        sanity_out.mkdir(parents=True, exist_ok=True)
+
+        tmp_params['output_dir'] = str(sanity_out)
+        tmp_params['run_name'] = run_name + '_sanity'
+
+        # (opcjonalnie inny log_dir sanity, żeby eventy TB były rozdzielone)
+        sanity_log_dir = Path('runs') / (run_name + '_sanity')
+        sanity_log_dir.mkdir(parents=True, exist_ok=True)
+        tmp_params['log_dir'] = str(sanity_log_dir)
+
+        # --- SANITY: pełny raport tekstowy ---
+        sanity_txt = sanity_out / 'sanity_report.txt'
+        with open(sanity_txt, 'w', encoding='utf-8') as f:
+            f.write('[SANITY] Overfit 1-batch report\n')
+            f.write(f'Run name: {run_name}_sanity\n')
+            f.write(f'Batch size: {batch_size}\n')
+            if history_sanity is not None:
+                hist = history_sanity.history
+                f.write(f"Epochs: {len(hist.get('loss', []))}\n")
+                if 'loss' in hist:
+                    f.write(f"Final loss: {hist['loss'][-1]:.6f}\n")
+                    f.write(f"Min loss: {min(hist['loss']):.6f}\n")
+            f.write(f"Curves saved: {sanity_out / 'sanity_curves_loss.png'}\n")
+
+    model, model_kind, history = train_model(
         model_kind=model_kind,
         model_params=model_params,
         X_train=X_train,
@@ -315,6 +380,61 @@ def pipeline(
         y_val=y_val
     )
 
+    # --- MODEL PARAMS → JSON/TXT ---
+    try:
+        # Sklearnowe modele:
+        if hasattr(model, 'get_params'):
+            import json as _json
+            with open(output_dir / 'model_params.json', 'w', encoding='utf-8') as f:
+                _json.dump(model.get_params(deep=False), f, indent=2)
+    except Exception as _:
+        pass  # DNN obsłużymy osobno w models.py (summary + CSVLogger)
+
+    # --- Wstępny szkielet raportu biegu ---
+    run_txt = output_dir / 'run_report.txt'
+    with open(run_txt, 'w', encoding='utf-8') as f:
+        f.write('=== RUN REPORT (Phase 2) ===\n')
+        f.write(f'Run name: {run_name}\n')
+        f.write(f'Model: {model_kind}\n')
+        f.write(f'Dataset rows total: {len(df)}\n')
+        f.write(f"Splits: train={X_train.shape}, val={X_val.shape}, test={X_test.shape}\n")
+        f.write(f"Preprocessing: {preprocesing}\n")
+        f.write(f"Preprocess params: {preprocess_params}\n")
+        f.write(f"Postprocess enabled: {postprocess_flag} | params: {postprocess_params}\n")
+        f.write(f"XAI enabled: {xai_flag}\n")
+
+        # zapis hparams do JSON
+        hp_json = {
+        'model_kind': model_kind,
+        'hidden_layers': model_params.get('hidden_layers', [128, 64]),
+        'activation': model_params.get('activation', 'relu'),
+        'dropout_rate': model_params.get('dropout_rate', 0.2),
+        'learning_rate': model_params.get('learning_rate', 0.001),
+        'epochs': model_params.get('epochs', 50),
+        'batch_size': model_params.get('batch_size', 32)
+        }
+        with open(output_dir / 'hparams.json', 'w') as f:
+            json.dump(hp_json, f, indent=2)
+
+
+    # krzywe uczenia (loss/acc)
+    if history is not None:
+        plt.figure(figsize=(10,4))
+        plt.plot(history.history.get('loss', []), label='train_loss')
+        if 'val_loss' in history.history:
+            plt.plot(history.history['val_loss'], label='val_loss')
+        plt.xlabel('Epoch'); plt.ylabel('Loss'); plt.title('Training curves (loss)'); plt.legend(); plt.grid(True, ls=':')
+        plt.tight_layout(); plt.savefig(output_dir / 'training_curves_loss.png'); plt.close()
+
+
+        if 'accuracy' in history.history or 'val_accuracy' in history.history:
+            plt.figure(figsize=(10,4))
+            if 'accuracy' in history.history:
+                plt.plot(history.history['accuracy'], label='train_acc')
+            if 'val_accuracy' in history.history:
+                plt.plot(history.history['val_accuracy'], label='val_acc')
+            plt.xlabel('Epoch'); plt.ylabel('Accuracy'); plt.title('Training curves (accuracy)'); plt.legend(); plt.grid(True, ls=':')
+            plt.tight_layout(); plt.savefig(output_dir / 'training_curves_acc.png'); plt.close()
 #endregion
 
 #region XAI
@@ -466,6 +586,26 @@ def pipeline(
 
     print(f"[OUTPUT] Results saved to folder: {output_dir}")
 
+    # --- DOPISZ do raportu głównego końcowe wyniki ---
+    with open(output_dir / 'run_report.txt', 'a', encoding='utf-8') as f:
+        f.write('\n=== RESULTS ===\n')
+        for k, v in results.items():
+            if k != "Confusion matrix":
+                f.write(f'{k}: {v}\n')
+        if tuning_info is not None and tuning_info.get('tuning_performed'):
+            f.write('\n[Threshold tuning]\n')
+            f.write(f"best_threshold: {tuning_info['best_threshold']}\n")
+            f.write(f"best_score: {tuning_info['best_score']}\n")
+        if XAI_method is not None:
+            f.write('\n[XAI]\n')
+            f.write(f"method: {XAI_method}\n")
+            if XAI_top_features is not None:
+                f.write(f"top_features: {XAI_top_features}\n")
+        f.write('\nArtifacts:\n')
+        f.write(f"- Metrics TXT : {output_dir / 'metrics.txt'}\n")
+        f.write(f"- Curves PNG  : {output_dir / 'training_curves_loss.png'}\n")
+        f.write(f"- ROC/PR PNG  : {(output_dir / 'roc_pr_curves.png') if (('AUC ROC' in results) or ('AUC PR' in results)) else 'n/a'}\n")
+        f.write(f"- ConfMat PNG : {output_dir / 'confusion_matrix.png' if 'Confusion matrix' in results else 'n/a'}\n")
 
         
     return {
@@ -512,7 +652,8 @@ def main(argv=None):
         postprocess=args.postprocess,
         EVAL=eval_list,
         XAI=args.xai,
-        xai_sample=args.xai_sample
+        xai_sample=args.xai_sample,
+        sanity=args.sanity
     )
 
     print(json.dumps(out, indent=2, ensure_ascii=False))
