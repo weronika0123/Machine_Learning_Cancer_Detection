@@ -122,7 +122,7 @@ python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['rfecv','corr','kbest']" `
-  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 500}" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 100}" `
   --model LogisticRegression `
   --model_params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0}" `
   --postprocess `
@@ -191,7 +191,7 @@ python .\main.py `
 python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
-  --preprocess "['corr','kbest']" `
+  --preprocess "['corr','kbest', 'rfecv']" `
   --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
   --model SVM `
   --model_params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True, 'cv_calibration': 5}" `
