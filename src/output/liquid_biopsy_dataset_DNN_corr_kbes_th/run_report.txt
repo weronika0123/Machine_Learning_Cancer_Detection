@@ -1,0 +1,25 @@
+=== RUN REPORT (Phase 2) ===
+Run name: liquid_biopsy_dataset_DNN_corr_kbes_th_20251112_152830
+Model: DNN
+Dataset rows total: 2351
+Splits: train=(1575, 100), val=(385, 100), test=(391, 100)
+Preprocessing: ['corr', 'kbest']
+Preprocess params: {'corr_threshold': 0.9, 'prefilter_k': 100}
+Postprocess enabled: True | params: {'tuning_method': 'f1'}
+XAI enabled: False
+
+=== RESULTS ===
+accuracy: 0.7442455242966752
+f1: 0.8333333333333334
+AUC ROC: 0.814539332721151
+threshold_tuning: {'best_threshold': 0.3242284569138277, 'best_score': 0.8327759197324415, 'tuning_performed': True}
+
+[Threshold tuning]
+best_threshold: 0.3242284569138277
+best_score: 0.8327759197324415
+
+Artifacts:
+- Metrics TXT : output\liquid_biopsy_dataset_DNN_corr_kbes_th\metrics.txt
+- Curves PNG  : output\liquid_biopsy_dataset_DNN_corr_kbes_th\training_curves_loss.png
+- ROC/PR PNG  : output\liquid_biopsy_dataset_DNN_corr_kbes_th\roc_pr_curves.png
+- ConfMat PNG : output\liquid_biopsy_dataset_DNN_corr_kbes_th\confusion_matrix.png
