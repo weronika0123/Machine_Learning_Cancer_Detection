@@ -288,6 +288,7 @@ def pipeline(
     #MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
     if model_kind in ("Logistic Regression", "SVM", "DNN"):
         print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models:{model_kind})")
+        print(f"[SCALING] Feature ranges original: [{X_train.min():.3f}, {X_train.max():.3f}] ")
         scaler = MinMaxScaler()
         X_train = scaler.fit_transform(X_train)  #Learn min/max from train, then scale
 
