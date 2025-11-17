@@ -384,9 +384,9 @@ def pipeline(
         cm = confusion_matrix(y_test, y_pred)
         TN, FP, FN, TP = cm.ravel()
         print(f"[EVAL] Confusion Matrix: TN={TN}, FP={FP}, FN={FN}, TP={TP}")
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ConfusionMatrixDisplay(confusion_matrix=cm).plot(ax=ax)
-        ax.set_title("Confusion Matrix — Test Set", fontsize=14)
+        fig_cm, ax_cm = plt.subplots(figsize=(8, 6))
+        ConfusionMatrixDisplay(confusion_matrix=cm).plot(ax=ax_cm)
+        ax_cm.set_title("Confusion Matrix — Test Set", fontsize=14)
         plt.tight_layout()
         plt.show()
         results["Confusion matrix"] = cm.tolist()
@@ -456,8 +456,8 @@ def pipeline(
     # Save confusion matrix visualization
     if want_cm:
         cm_file = output_dir / "confusion_matrix.png"
-        fig.savefig(cm_file)
-        plt.close(fig)
+        fig_cm.savefig(cm_file)
+        plt.close(fig_cm)
 
     # Save ROC and PR visualizations
     if (want_roc or want_pr) and hasattr(model, "predict_proba"):
