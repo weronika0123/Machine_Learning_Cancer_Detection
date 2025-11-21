@@ -244,3 +244,101 @@ python .\main.py `
   --xai `
   --xai_sample 12
 
+  #USE CASE 1
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 12
+
+terminql output od USE CASE 1
+
+"PS C:\Users\user\Documents\GitHub\Machine_Learning_Cancer_Detection\src> python .\main.py `
+>> --data "data_sources\\liquid_biopsy_data.csv" `
+>> --use_validation "merge_train_test" `
+>> --preprocess "['corr']" `
+>> --preprocess_params "{'corr_threshold': 0.92}" `
+>> --model SVM `
+>> --model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+>> --eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+>> --xai `
+>> --xai_sample 12
+>>
+2025-11-17 16:01:26.309130: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-11-17 16:01:31.770747: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[DATA] Using liquid_biopsy_data.csv dataset
+[VALIDATION] Checking data split columns...
+[VALIDATION] Data distribution:
+- Training: 1575 rows ( 67.0%)
+- Validation:  385 rows ( 16.4%)
+- Test:  391 rows ( 16.6%)
+- Total: 2351 rows
+[DATA] Merged validation: +308 to train, +77 to test
+[DATA] Total: 2351 rows
+[DATA] Data split - X_train: (1883, 5277), y_train: (1883,)
+[DATA] Data split - X_val: (0, 5277), y_val: (0,)
+[DATA] Data split - X_test: (468, 5277), y_test: (468,)
+[FEATURE_SEL] Starting feature selection...
+[PREPROCESS] Starting correlation-based feature removal with threshold=0.92...
+[PREPROCESS] Correlation removal: threshold=0.92 | kept=5194 out of 5277 (dropped_const=0, dropped_corr=83)
+[SCALING] Applying MinMaxScaler to 5194 features (models:SVM)
+[SCALING] Feature ranges original: [3.165, 17.221] 
+[SCALING] Feature ranges after scaling: [0.000, 1.000]
+Used X_train shape: (1883, 5194)
+Used X_test shape: (468, 5194)
+C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\sklearn\svm\_base.py:1250: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\sklearn\svm\_base.py:1250: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\sklearn\svm\_base.py:1250: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+[XAI] Running explanations for model: SVM linear calibrated
+[XAI] Generating beeswarm plot (top 15 features) for LinearExplainer
+[XAI] SHAP beeswarm plot saved to output\liquid_biopsy_dataset_SVM_corr_no_th\shap_beeswarm_linear.png
+[XAI] Generating waterfall plot (top 15 features) for sample index: 12
+[XAI] SHAP waterfall plot (top 15) saved to output\liquid_biopsy_dataset_SVM_corr_no_th\shap_waterfall_top15_sample_12.png
+[EVAL] Confusion Matrix: TN=90, FP=56, FN=31, TP=291
+[OUTPUT] Results saved to folder: output\liquid_biopsy_dataset_SVM_corr_no_th
+{
+  "model": "CalibratedClassifierCV",
+  "metrics_requested": [
+    "AUC ROC",
+    "AUC PR",
+    "accuracy",
+    "F1",
+    "recall",
+    "precision",
+    "Confusion Matrix"
+  ],
+  "metrics": {
+    "accuracy": 0.8141025641025641,
+    "precision": 0.8386167146974063,
+    "recall": 0.9037267080745341,
+    "f1": 0.8699551569506726,
+    "Confusion matrix": [
+      [
+        90,
+        56
+      ],
+      [
+        31,
+        291
+      ]
+    ],
+    "AUC ROC": 0.8681613205139114,
+    "AUC PR": 0.9362591692792722
+  },
+  "xai_method": "SHAP (linear) for SVM",
+  "XAI_top_global_features": [
+    "ENSG00000131711",
+    "ENSG00000136854",
+    "ENSG00000149131",
+    "ENSG00000065833",
+    "ENSG00000095002"
+  ]
+}"
