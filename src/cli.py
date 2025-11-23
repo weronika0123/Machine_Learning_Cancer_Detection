@@ -40,12 +40,13 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "Example: \"{'corr_threshold': 0.85, 'prefilter_k': 1000}\""
     )
     model_group = p.add_argument_group('Model Configuration')
-    model_group.add_argument("--model", required=True, choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC", "DNN"],
+    model_group.add_argument("--model", required=True, choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC", "DNN", "XGBoost"],
         help="Machine learning model:\n"
              "   DT (Decision Tree)\n"
              "   LR (Logistic Regression)\n"
              "   SVM (Support Vector Machine)\n"
-             "   DNN (Deep Neural Network)"
+             "   DNN (Deep Neural Network)\n"
+             "   XGBoost (Extreme Gradient Boosting)"
     )
     model_group.add_argument("--model_params", default="{}",
         help="Model-specific hyperparameters as Python dict:\n\n"
@@ -73,7 +74,16 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "   learning_rate (float, default=0.001): Learning rate for Adam optimizer\n"
              "   epochs (int, default=50): Number of training epochs\n"
              "   batch_size (int, default=32): Batch size\n"
-             "  Example: \"{'hidden_layers': [128, 64], 'activation': 'relu', 'epochs': 100}\""
+             "  Example: \"{'hidden_layers': [128, 64], 'activation': 'relu', 'epochs': 100}\"\n\n"
+             "XGBoost:\n"
+             "   n_estimators (int, default=100): Number of boosting rounds (trees)\n"
+             "   max_depth (int, default=6): Maximum tree depth\n"
+             "   learning_rate (float, default=0.1): Step size shrinkage (eta)\n"
+             "   subsample (float, default=0.8): Subsample ratio of training instances\n"
+             "   colsample_bytree (float, default=0.8): Subsample ratio of features per tree\n"
+             "   gamma (float, default=0): Minimum loss reduction for split\n"
+             "   min_child_weight (int, default=1): Minimum sum of weights in child node\n"
+             "  Example: \"{'n_estimators': 100, 'max_depth': 6, 'learning_rate': 0.1}\""
     )
     postprocess_group = p.add_argument_group('Postprocessing (Threshold Tuning)')
     postprocess_group.add_argument("--postprocess",action="store_true",
@@ -118,8 +128,3 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "explaining the contribution of features for this sample to the model's predictions."
     )
     return p.parse_args(argv)
-
-
-
-
-

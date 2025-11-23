@@ -117,6 +117,15 @@ def estimator(model_name: str):
             class_weight="balanced", 
             random_state=RANDOM_STATE
         )
+    elif model_name == "XGBoost":
+        from xgboost import XGBClassifier
+        fs_estimator = XGBClassifier(
+            n_estimators=50,
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=RANDOM_STATE,
+            eval_metric='logloss'
+        )
 
     else:
         print("[FEATURE_SEL][WARN] Model name unknown - fallback: LogisticRegression")

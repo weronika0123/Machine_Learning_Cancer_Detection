@@ -379,6 +379,11 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
         top5_features = SHAP("tree", model, X_train, X_val, output_dir=output_dir, xai_sample=xai_sample)
         return ("SHAP TreeExplainer for Decision Tree", top5_features)
 
+    # XGBoost
+    elif model_kind == "XGBoost":
+        top5_features = SHAP("tree", model, X_train, X_val, output_dir=output_dir, xai_sample=xai_sample)
+        return ("SHAP TreeExplainer for XGBoost", top5_features)
+
     # SVM (linear)
     elif (model_kind == "SVM linear" or model_kind == "SVM linear calibrated"):
         if model_kind == "SVM linear calibrated":

@@ -167,8 +167,11 @@ def pipeline(
     elif model_name_norm in ("dnn", "deepneuralnetwork"):
         model_kind = "DNN"
         step = 50
+    elif model_name_norm in ("xgboost"):
+        model_kind = "XGBoost"
+        step = 30  #For FS: similar to Decision Tree
     else:
-        raise ValueError("Unknown model. Use: DecisionTree or LogisticRegression or SVM/SVC or DNN")
+        raise ValueError("Unknown model. Use: DecisionTree or LogisticRegression or SVM/SVC or DNN or XGBoost")
 
 
     #Identify preprocessing steps (list of strings)

@@ -244,6 +244,47 @@ python .\main.py `
   --xai `
   --xai_sample 12
 
+#22. XGBoost with preprocessing and threshold tuning
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
+  --model XGBoost `
+  --model_params "{'n_estimators': 100, 'max_depth': 6, 'learning_rate': 0.1}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['accuracy','F1','recall','precision','AUC ROC','Confusion Matrix']" `
+  --xai
+
+#23. XGBoost with custom hyperparameters optimized for RNA-seq
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr','kbest']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
+  --model XGBoost `
+  --model_params "{'n_estimators': 150, 'max_depth': 8, 'learning_rate': 0.05, 'subsample': 0.8, 'colsample_bytree': 0.8, 'gamma': 0.1}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'recall'}" `
+  --eval "['accuracy','F1','recall','precision','AUC ROC','AUC PR','Confusion Matrix']" `
+  --xai `
+  --xai_sample 12
+
+#24. XGBoost with RFECV feature selection and XAI
+python .\main.py `
+  --data "data_sources\liquid_biopsy_data.csv" `
+  --use_validation "separate" `
+  --preprocess "['corr','kbest','rfecv']" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
+  --model XGBoost `
+  --model_params "{'n_estimators': 100, 'max_depth': 6}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
+  --eval "['accuracy','F1','recall','precision','AUC ROC']" `
+  --xai `
+  --xai_sample 200
+
   #USE CASE 1
 python .\main.py `
 --data "data_sources\\liquid_biopsy_data.csv" `

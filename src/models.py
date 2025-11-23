@@ -2,6 +2,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
+from xgboost import XGBClassifier
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import Adam
@@ -159,9 +160,34 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
         #Wrap Keras model with sklearn-compatible interface (predict + predict_proba)
         model = KerasSigmoidBinaryWrapper(model_keras)
 
+    elif model_kind == "XGBoost":
+        xgb_defaults = {
+            "n_estimators": 100,
+            "max_depth": 6,
+            "learning_rate": 0.1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "gamma": 0,
+            "min_child_weight": 1,
+            "scale_pos_weight": None,  #will be calculated if None
+            "random_state": RANDOM_STATE,
+            "objective": "binary:logistic",
+            "eval_metric": "logloss"
+        }
+        xgb_defaults.update(model_params)
+        
+        #Calculate scale_pos_weight for class imbalance if not provided
+        if xgb_defaults["scale_pos_weight"] is None:
+            neg_count = (y_train == 0).sum()
+            pos_count = (y_train == 1).sum()
+            xgb_defaults["scale_pos_weight"] = neg_count / pos_count if pos_count > 0 else 1.0
+            print(f"[XGBoost] Calculated scale_pos_weight: {xgb_defaults['scale_pos_weight']:.3f} (neg/pos = {neg_count}/{pos_count})")
+        
+        model = XGBClassifier(**xgb_defaults)
+
     else:
         raise ValueError(
-            "Unknown model. Use one of: DecisionTree, LogisticRegression, SVM/SVC, or Deep Neural Network/DNN."
+            "Unknown model. Use one of: DecisionTree, LogisticRegression, SVM/SVC, DNN, or XGBoost."
         )
 
     print("Used X_train shape:", X_train.shape)
