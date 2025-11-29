@@ -283,7 +283,7 @@ python .\main.py `
   --postprocess_params "{'tuning_method': 'f1'}" `
   --eval "['accuracy','F1','recall','precision','AUC ROC']" `
   --xai `
-  --xai_sample 200
+  --xai_sample 222
 
 USE CASE 1.1 - Sample #13 -> true label: 0, predicted label: 1
 python .\main.py `
@@ -307,9 +307,9 @@ python .\main.py `
 --model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
 --eval "['accuracy','F1','recall','precision']" `
 --xai `
---xai_sample 378
+--xai_sample 222
 
-  #USE CASE 1 - Sample #12 -> true label: 0, predicted label: 0
+#USE CASE 1 - Sample #12 -> true label: 0, predicted label: 0
 python .\main.py `
 --data "data_sources\\liquid_biopsy_data.csv" `
 --use_validation "merge_train_test" `

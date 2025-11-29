@@ -358,8 +358,6 @@ def pipeline(
         
     if xai_sample is not None:
         idx = int(xai_sample)
-
-        # sprawdzamy, czy indeks mieści się w zakresie test setu
         if 0 <= idx < len(y_test):
             true_label = int(y_test[idx])
             pred_label = int(y_pred[idx])
