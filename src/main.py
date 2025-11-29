@@ -393,7 +393,7 @@ def pipeline(
         for text in disp.text_.ravel():
             text.set_fontsize(16)
         ax_cm.tick_params(axis='both', labelsize=12)
-        ax_cm.set_title("Confusion Matrix — Test Set", fontsize=16)
+        ax_cm.set_title("Confusion Matrix - Test Set", fontsize=16)
         fig_cm.tight_layout()
         plt.show()
         results["Confusion matrix"] = cm.tolist()
@@ -429,7 +429,7 @@ def pipeline(
             ax[1].plot(recall, precision, color='#2E86AB', linewidth=2, label=f"AUC = {pr_auc:.4f} (AP={ap:.4f})")
             ax[1].set_xlabel("Recall", fontsize=11)
             ax[1].set_ylabel("Precision", fontsize=11)
-            ax[1].set_title("Precision-Recall Curve — Test Set", fontsize=14)
+            ax[1].set_title("Precision-Recall Curve - Test Set", fontsize=14)
             ax[1].legend(loc="lower left", fontsize=10)
             ax[1].grid(True, ls=':', alpha=0.6)
             results["AUC PR"] = float(ap)  #Store AP as in previous style
