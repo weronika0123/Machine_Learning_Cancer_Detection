@@ -387,12 +387,17 @@ def pipeline(
         cm = confusion_matrix(y_test, y_pred)
         TN, FP, FN, TP = cm.ravel()
         print(f"[EVAL] Confusion Matrix: TN={TN}, FP={FP}, FN={FN}, TP={TP}")
-        fig_cm, ax_cm = plt.subplots(figsize=(8, 6))
-        ConfusionMatrixDisplay(confusion_matrix=cm).plot(ax=ax_cm)
-        ax_cm.set_title("Confusion Matrix — Test Set", fontsize=14)
-        plt.tight_layout()
+        fig_cm, ax_cm = plt.subplots(figsize=(5, 4))
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+        disp.plot(ax=ax_cm)
+        for text in disp.text_.ravel():
+            text.set_fontsize(16)
+        ax_cm.tick_params(axis='both', labelsize=12)
+        ax_cm.set_title("Confusion Matrix — Test Set", fontsize=16)
+        fig_cm.tight_layout()
         plt.show()
         results["Confusion matrix"] = cm.tolist()
+
 
     #ROC + PR on a single figure (1x2)
     if (want_roc or want_pr) and hasattr(model, "predict_proba"):
