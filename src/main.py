@@ -355,6 +355,17 @@ def pipeline(
         )
     else:
         y_pred = model.predict(X_test)
+        
+    if xai_sample is not None:
+        idx = int(xai_sample)
+
+        # sprawdzamy, czy indeks mieści się w zakresie test setu
+        if 0 <= idx < len(y_test):
+            true_label = int(y_test[idx])
+            pred_label = int(y_pred[idx])
+            print(f"[XAI] Sample #{idx} -> true label: {true_label}, predicted label: {pred_label}")
+        else:
+            print(f"[XAI] Sample index {idx} is out of range for TEST set (size={len(y_test)})")
 
 #endregion
 
