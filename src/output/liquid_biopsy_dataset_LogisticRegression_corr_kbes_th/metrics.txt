@@ -1,5 +1,6 @@
 Evaluation Metrics:
-accuracy: 0.6956521739130435
-f1: 0.8194233687405159
+accuracy: 0.7519181585677749
+f1: 0.8391376451077943
 AUC ROC: 0.8026936026936027
-threshold_tuning: {'best_threshold': 0.01, 'best_score': 0.9923664122137404, 'tuning_performed': True}
+AUC PR: 0.9009897290165696
+threshold_tuning: {'best_threshold': 0.11605210420841684, 'best_score': 0.8421052631578947, 'tuning_performed': True}
