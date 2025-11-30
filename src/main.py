@@ -165,7 +165,7 @@ def pipeline(
         model_kind = "SVM"
         step = 30
     elif model_name_norm in ("dnn", "deepneuralnetwork"):
-        model_kind = "DNN"
+        model_kind = "Deep Neural Network"
         step = 50
     elif model_name_norm in ("xgboost"):
         model_kind = "XGBoost"
@@ -289,7 +289,7 @@ def pipeline(
 
 
     #MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
-    if model_kind in ("Logistic Regression", "SVM", "DNN"):
+    if model_kind in ("Logistic Regression", "SVM", "Deep Neural Network"):
         print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models:{model_kind})")
         print(f"[SCALING] Feature ranges original: [{X_train.min():.3f}, {X_train.max():.3f}] ")
         scaler = MinMaxScaler()

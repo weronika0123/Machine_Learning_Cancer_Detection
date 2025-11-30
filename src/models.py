@@ -102,7 +102,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
         if (kernel == "linear" and model_kind != "SVM linear calibrated"):
             model_kind = "SVM linear"
 
-    elif model_kind == "DNN":
+    elif model_kind == "Deep Neural Network":
         dnn_defaults = {
             "hidden_layers": [128, 64],
             "activation": "relu",
@@ -193,7 +193,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
     print("Used X_train shape:", X_train.shape)
     print("Used X_test shape:", X_test.shape)
 
-    if model_kind != "DNN":
+    if model_kind != "Deep Neural Network":
         model.fit(X_train, y_train)
 
     return (model, model_kind)

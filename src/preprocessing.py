@@ -100,7 +100,7 @@ def prefilter_select_kbest(X_train, y_train, X_test, full_mask, k=1500):
 
 def estimator(model_name: str):
 
-    if model_name == "Logistic Regression" or model_name == "DNN":
+    if model_name == "Logistic Regression" or model_name == "Deep Neural Network":
         fs_estimator = LogisticRegression(
             max_iter=1000, 
             class_weight="balanced", 

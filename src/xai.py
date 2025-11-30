@@ -362,7 +362,7 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
     if X_val is None or (hasattr(X_val, "shape") and X_val.shape[0] == 0):
         X_val = X_test
 
-    if model_kind != "DNN":
+    if model_kind != "Deep Neural Network":
         X_train = pd.DataFrame(X_train, columns=feature_names)
         X_val = pd.DataFrame(X_val, columns=feature_names)
 
@@ -399,9 +399,9 @@ def run_xai(model_kind, model, feature_names, X_train, X_test, X_val=None, outpu
         return ("Kernel SHAP / LIME for SVM-RBF", top5_features)
 
     # Deep Neural Network
-    elif model_kind == "DNN":
+    elif model_kind == "Deep Neural Network":
         top5_features = SHAP("deep", model, X_train, X_val, feature_names, output_dir=output_dir,  xai_sample=xai_sample)
-        return ("Deep SHAP for DNN", top5_features)
+        return ("Deep SHAP for Deep Neural Network", top5_features)
 
     # Fallback
     else:

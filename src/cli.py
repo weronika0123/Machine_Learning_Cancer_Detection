@@ -40,7 +40,7 @@ Supports multiple models, feature selection methods, threshold optimization, and
              "Example: \"{'corr_threshold': 0.85, 'prefilter_k': 1000}\""
     )
     model_group = p.add_argument_group('Model Configuration')
-    model_group.add_argument("--model", required=True, choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC", "DNN", "XGBoost"],
+    model_group.add_argument("--model", required=True, choices=["DecisionTree", "DT", "LogisticRegression", "LR", "SVM", "SVC", "DeepNeuralNetwork", "DNN", "XGBoost"],
         help="Machine learning model:\n"
              "   DT (Decision Tree)\n"
              "   LR (Logistic Regression)\n"
