@@ -321,6 +321,43 @@ python .\main.py `
 --xai `
 --xai_sample 12
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+USE CASE 1.0 - TN (true=0, pred=0)
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 12
+
+USE CASE 1.1 - FP (true=0, pred=1)
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 48
+
+USE CASE 1.2 - FN (true=1, pred=0)
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 143
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 terminql output od USE CASE 1
 
 "PS C:\Users\user\Documents\GitHub\Machine_Learning_Cancer_Detection\src> python .\main.py `
