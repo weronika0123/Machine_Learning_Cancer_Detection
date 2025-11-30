@@ -42,12 +42,14 @@ python .\main.py `
   - `LogisticRegression` (LR)
   - `DecisionTree` (DT)
   - `SVM` (Support Vector Machine)
-  - `DNN` (Deep Neural Network)
+  - `DeepNeuralNetwork` (Deep Neural Network)
+  - `XGBoost` (Extreme Gradient Boosting)
 - `--model_params`: Model-specific hyperparameters as a Python dictionary. Examples:
   - Logistic Regression: `{'max_iter': 1000, 'C': 1.0, 'solver': 'lbfgs'}`
   - Decision Tree: `{'max_depth': 6, 'min_samples_leaf': 5}`
   - SVM: `{'kernel': 'linear', 'C': 1.0}`
-  - DNN: `{'hidden_layers': [128, 64], 'activation': 'relu', 'epochs': 50}`
+  - Deep Neural Network: `{'hidden_layers': [128, 64], 'activation': 'relu', 'epochs': 50}`
+  - XGBoost: `{'n_estimators': 100, 'max_depth': 6, 'learning_rate': 0.1, 'subsample': 0.8, 'colsample_bytree': 0.8}`
 - `--postprocess`: Enables threshold tuning (requires `--use_validation separate`).
 - `--postprocess_params`: Parameters for threshold tuning as a Python dictionary:
   - `tuning_method` (default=`recall`): Options include `recall`, `f1`, `youden`, etc.
@@ -58,4 +60,3 @@ python .\main.py `
 - `--xai_sample`: Index of the sample in a test set for detailed XAI analysis. Generates a SHAP waterfall plot for the specified sample.
 
 This example demonstrates the full pipeline, including feature selection, model training, threshold tuning, evaluation, and explainability analysis.
-

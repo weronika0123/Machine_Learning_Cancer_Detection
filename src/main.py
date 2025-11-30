@@ -165,10 +165,13 @@ def pipeline(
         model_kind = "SVM"
         step = 30
     elif model_name_norm in ("dnn", "deepneuralnetwork"):
-        model_kind = "DNN"
+        model_kind = "Deep Neural Network"
         step = 50
+    elif model_name_norm in ("xgboost"):
+        model_kind = "XGBoost"
+        step = 30  #For FS: similar to Decision Tree
     else:
-        raise ValueError("Unknown model. Use: DecisionTree or LogisticRegression or SVM/SVC or DNN")
+        raise ValueError("Unknown model. Use: DecisionTree or LogisticRegression or SVM/SVC or DNN or XGBoost")
 
 
     #Identify preprocessing steps (list of strings)
@@ -286,8 +289,9 @@ def pipeline(
 
 
     #MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
-    if model_kind in ("Logistic Regression", "SVM", "DNN"):
+    if model_kind in ("Logistic Regression", "SVM", "Deep Neural Network"):
         print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models:{model_kind})")
+        print(f"[SCALING] Feature ranges original: [{X_train.min():.3f}, {X_train.max():.3f}] ")
         scaler = MinMaxScaler()
         X_train = scaler.fit_transform(X_train)  #Learn min/max from train, then scale
 
@@ -351,6 +355,15 @@ def pipeline(
         )
     else:
         y_pred = model.predict(X_test)
+        
+    if xai_sample is not None:
+        idx = int(xai_sample)
+        if 0 <= idx < len(y_test):
+            true_label = int(y_test[idx])
+            pred_label = int(y_pred[idx])
+            print(f"[XAI] Sample #{idx} -> true label: {true_label}, predicted label: {pred_label}")
+        else:
+            print(f"[XAI] Sample index {idx} is out of range for TEST set (size={len(y_test)})")
 
 #endregion
 
@@ -383,12 +396,17 @@ def pipeline(
         cm = confusion_matrix(y_test, y_pred)
         TN, FP, FN, TP = cm.ravel()
         print(f"[EVAL] Confusion Matrix: TN={TN}, FP={FP}, FN={FN}, TP={TP}")
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ConfusionMatrixDisplay(confusion_matrix=cm).plot(ax=ax)
-        ax.set_title("Confusion Matrix — Test Set", fontsize=14)
-        plt.tight_layout()
+        fig_cm, ax_cm = plt.subplots(figsize=(5, 4))
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+        disp.plot(ax=ax_cm)
+        for text in disp.text_.ravel():
+            text.set_fontsize(16)
+        ax_cm.tick_params(axis='both', labelsize=12)
+        ax_cm.set_title("Confusion Matrix - Test Set", fontsize=16)
+        fig_cm.tight_layout()
         plt.show()
         results["Confusion matrix"] = cm.tolist()
+
 
     #ROC + PR on a single figure (1x2)
     if (want_roc or want_pr) and hasattr(model, "predict_proba"):
@@ -420,7 +438,7 @@ def pipeline(
             ax[1].plot(recall, precision, color='#2E86AB', linewidth=2, label=f"AUC = {pr_auc:.4f} (AP={ap:.4f})")
             ax[1].set_xlabel("Recall", fontsize=11)
             ax[1].set_ylabel("Precision", fontsize=11)
-            ax[1].set_title("Precision-Recall Curve — Test Set", fontsize=14)
+            ax[1].set_title("Precision-Recall Curve - Test Set", fontsize=14)
             ax[1].legend(loc="lower left", fontsize=10)
             ax[1].grid(True, ls=':', alpha=0.6)
             results["AUC PR"] = float(ap)  #Store AP as in previous style
@@ -455,8 +473,8 @@ def pipeline(
     # Save confusion matrix visualization
     if want_cm:
         cm_file = output_dir / "confusion_matrix.png"
-        fig.savefig(cm_file)
-        plt.close(fig)
+        fig_cm.savefig(cm_file)
+        plt.close(fig_cm)
 
     # Save ROC and PR visualizations
     if (want_roc or want_pr) and hasattr(model, "predict_proba"):

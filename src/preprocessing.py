@@ -100,7 +100,7 @@ def prefilter_select_kbest(X_train, y_train, X_test, full_mask, k=1500):
 
 def estimator(model_name: str):
 
-    if model_name == "Logistic Regression" or model_name == "DNN":
+    if model_name == "Logistic Regression" or model_name == "Deep Neural Network":
         fs_estimator = LogisticRegression(
             max_iter=1000, 
             class_weight="balanced", 
@@ -116,6 +116,15 @@ def estimator(model_name: str):
             max_iter=100000,
             class_weight="balanced", 
             random_state=RANDOM_STATE
+        )
+    elif model_name == "XGBoost":
+        from xgboost import XGBClassifier
+        fs_estimator = XGBClassifier(
+            n_estimators=50,
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=RANDOM_STATE,
+            eval_metric='logloss'
         )
 
     else:
