@@ -1,0 +1,161 @@
+# USE CASE 1 - TN
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 12
+
+# USE CASE 1 - FP
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 100
+
+# USE CASE 1 -  TP
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['accuracy','F1','recall','precision']" `
+--xai `
+--xai_sample 450
+
+# USE CASE 1 -  FN
+python .\main.py `
+--data "data_sources\\liquid_biopsy_data.csv" `
+--use_validation "merge_train_test" `
+--preprocess "['corr']" `
+--preprocess_params "{'corr_threshold': 0.92}" `
+--model SVM `
+--model_params "{'kernel': 'linear', 'C': 0.1, 'class_weight': 'balanced', 'use_calibrated': True, 'cv_calibration': 3, 'calibration_method': 'sigmoid'}" `
+--eval "['accuracy','F1','recall','precision']" `
+--xai `
+--xai_sample 143
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+# USE CASE 2 - TN
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest','rfecv']"  
+--preprocess_params "{'corr_threshold': 0.88, 'prefilter_k': 500}" `
+--model LogisticRegression `
+--model_params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0}" ` 
+--postprocess `
+--postprocess_params "{'tuning_method': 'f1', 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+--xai `
+--xai_sample 26
+
+# USE CASE 2 - FP
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest','rfecv']"  
+--preprocess_params "{'corr_threshold': 0.88, 'prefilter_k': 500}" `
+--model LogisticRegression `
+--model_params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0}" ` 
+--postprocess `
+--postprocess_params "{'tuning_method': 'f1', 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+--xai `
+--xai_sample 54
+
+# USE CASE 2 - TP
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest','rfecv']"  
+--preprocess_params "{'corr_threshold': 0.88, 'prefilter_k': 500}" `
+--model LogisticRegression `
+--model_params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0}" ` 
+--postprocess `
+--postprocess_params "{'tuning_method': 'f1', 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+--xai `
+--xai_sample 128
+
+# USE CASE 2 - FN
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest','rfecv']"  
+--preprocess_params "{'corr_threshold': 0.88, 'prefilter_k': 500}" `
+--model LogisticRegression `
+--model_params "{'max_iter': 1000, 'solver': 'lbfgs', 'penalty': 'l2', 'C': 1.0}" ` 
+--postprocess `
+--postprocess_params "{'tuning_method': 'f1', 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','Confusion Matrix','F1','recall','precision']" `
+--xai `
+--xai_sample 299
+#----------------------------------------------------------------------------------------------------------------------------
+#USE CASE 3 - TN
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest']"  `
+--preprocess_params "{'corr_threshold': 0.90, 'prefilter_k': 1500}" `
+--model XGBoost `
+--model_params "{'n_estimators': 300, 'max_depth': 4, 'learning_rate': 0.05, 'subsample': 0.8, 'colsample_bytree': 0.8, 'gamma': 0, 'min_child_weight': 1}" `
+--postprocess `
+--postprocess_params "{'tuning_method': 'f2', 'cost_fn': 10.0, 'cost_fp': 1.0, 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 43
+
+#USE CASE 3 - FP
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest']"  `
+--preprocess_params "{'corr_threshold': 0.90, 'prefilter_k': 1500}" `
+--model XGBoost `
+--model_params "{'n_estimators': 300, 'max_depth': 4, 'learning_rate': 0.05, 'subsample': 0.8, 'colsample_bytree': 0.8, 'gamma': 0, 'min_child_weight': 1}" `
+--postprocess `
+--postprocess_params "{'tuning_method': 'f2', 'cost_fn': 10.0, 'cost_fp': 1.0, 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 21
+
+#USE CASE 3 - TP
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest']"  `
+--preprocess_params "{'corr_threshold': 0.90, 'prefilter_k': 1500}" `
+--model XGBoost `
+--model_params "{'n_estimators': 300, 'max_depth': 4, 'learning_rate': 0.05, 'subsample': 0.8, 'colsample_bytree': 0.8, 'gamma': 0, 'min_child_weight': 1}" `
+--postprocess `
+--postprocess_params "{'tuning_method': 'f2', 'cost_fn': 10.0, 'cost_fp': 1.0, 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 143
+
+#USE CASE 3 - FN
+python .\main.py ` 
+--data "data_sources\liquid_biopsy_data.csv" `
+--use_validation "separate" `
+--preprocess "['corr','kbest']"  `
+--preprocess_params "{'corr_threshold': 0.90, 'prefilter_k': 1500}" `
+--model XGBoost `
+--model_params "{'n_estimators': 300, 'max_depth': 4, 'learning_rate': 0.05, 'subsample': 0.8, 'colsample_bytree': 0.8, 'gamma': 0, 'min_child_weight': 1}" `
+--postprocess `
+--postprocess_params "{'tuning_method': 'f2', 'cost_fn': 10.0, 'cost_fp': 1.0, 'show_tuning_plots': True}" `
+--eval "['AUC ROC','AUC PR','accuracy','F1','recall','precision','Confusion Matrix']" `
+--xai `
+--xai_sample 141
+
