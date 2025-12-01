@@ -364,7 +364,32 @@ def pipeline(
             print(f"[XAI] Sample #{idx} -> true label: {true_label}, predicted label: {pred_label}")
         else:
             print(f"[XAI] Sample index {idx} is out of range for TEST set (size={len(y_test)})")
+            
+        TP = []
+        TN = []
+        FP = []
+        FN = []
 
+        for i in range(len(y_test)):
+            true = int(y_test[i])
+            pred = int(y_pred[i])
+
+            if true == 1 and pred == 1:
+                TP.append(i)
+            elif true == 0 and pred == 0:
+                TN.append(i)
+            elif true == 0 and pred == 1:
+                FP.append(i)
+            elif true == 1 and pred == 0:
+                FN.append(i)
+
+        print("\n======= PERFORMANCE SAMPLE INDEXES =======")
+        print(f"TP (true=1, pred=1) count={len(TP)}:\n {TP[:20]} ...")
+        print(f"TN (true=0, pred=0) count={len(TN)}:\n {TN[:20]} ...")
+        print(f"FP (true=0, pred=1) count={len(FP)}:\n {FP[:20]} ...")
+        print(f"FN (true=1, pred=0) count={len(FN)}:\n {FN[:20]} ...")
+        print("==========================================\n")
+    
 #endregion
 
 #region Ewaluacja
