@@ -165,7 +165,7 @@ def pipeline(
         model_kind = "SVM"
         step = 30
     elif model_name_norm in ("dnn", "deepneuralnetwork"):
-        model_kind = "DNN"
+        model_kind = "Deep Neural Network"
         step = 50
     elif model_name_norm in ("xgboost"):
         model_kind = "XGBoost"
@@ -289,7 +289,7 @@ def pipeline(
 
 
     #MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
-    if model_kind in ("Logistic Regression", "SVM", "DNN"):
+    if model_kind in ("Logistic Regression", "SVM", "Deep Neural Network"):
         print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models:{model_kind})")
         print(f"[SCALING] Feature ranges original: [{X_train.min():.3f}, {X_train.max():.3f}] ")
         scaler = MinMaxScaler()
@@ -364,6 +364,32 @@ def pipeline(
             print(f"[XAI] Sample #{idx} -> true label: {true_label}, predicted label: {pred_label}")
         else:
             print(f"[XAI] Sample index {idx} is out of range for TEST set (size={len(y_test)})")
+            
+        TP = []
+        TN = []
+        FP = []
+        FN = []
+
+        for i in range(len(y_test)):
+            true = int(y_test[i])
+            pred = int(y_pred[i])
+
+            if true == 1 and pred == 1:
+                TP.append(i)
+            elif true == 0 and pred == 0:
+                TN.append(i)
+            elif true == 0 and pred == 1:
+                FP.append(i)
+            elif true == 1 and pred == 0:
+                FN.append(i)
+
+        print("\n======= PERFORMANCE SAMPLE INDEXES =======")
+        print(f"TP (true=1, pred=1) count={len(TP)}:\n {TP[:20]} ...")
+        print(f"TN (true=0, pred=0) count={len(TN)}:\n {TN[:20]} ...")
+        print(f"FP (true=0, pred=1) count={len(FP)}:\n {FP[:20]} ...")
+        print(f"FN (true=1, pred=0) count={len(FN)}:\n {FN[:20]} ...")
+        print("==========================================\n")
+    
             
         TP = []
         TN = []

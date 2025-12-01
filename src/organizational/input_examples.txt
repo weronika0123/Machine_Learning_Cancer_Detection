@@ -162,6 +162,8 @@ python .\main.py `
   --use_validation "separate" `
   --model DNN `
   --model_params "{'hidden_layers': [128, 64], 'activation': 'relu', 'epochs': 50, 'batch_size': 32}" `
+  --postprocess `
+  --postprocess_params "{'tuning_method': 'f1'}" `
   --eval "['accuracy','F1','AUC ROC','Confusion Matrix']"
 
 #16.Deep Neural Network (DNN) with custom parameters
@@ -209,7 +211,7 @@ python .\main.py `
   --preprocess "['corr','kbest']" `
   --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 100}" `
   --model DNN `
-  --model_params "{'hidden_layers': [256, 128, 64], 'activation': 'relu', 'dropout_rate': 0.3, 'learning_rate': 0.0005, 'epochs': 20, 'batch_size': 64}" `
+  --model_params "{'hidden_layers': [256, 128, 64], 'activation': 'relu', 'dropout_rate': 0.3, 'learning_rate': 0.0005, 'epochs': 20, 'batch_size': 64,'class_weight': 'balanced'}" `
   --postprocess `
   --postprocess_params "{'tuning_method': 'f1'}" `
   --eval "['accuracy','F1','AUC ROC','Confusion Matrix']" `

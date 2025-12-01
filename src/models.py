@@ -6,6 +6,7 @@ from xgboost import XGBClassifier
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import Adam
+from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 import tensorflow as tf
 
@@ -102,16 +103,28 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
         if (kernel == "linear" and model_kind != "SVM linear calibrated"):
             model_kind = "SVM linear"
 
-    elif model_kind == "DNN":
+    elif model_kind == "Deep Neural Network":
         dnn_defaults = {
             "hidden_layers": [128, 64],
             "activation": "relu",
             "dropout_rate": 0.2,
             "learning_rate": 0.001,
             "epochs": 50,
-            "batch_size": 32
+            "batch_size": 32,
+            "class_weight": "balanced"
         }
         dnn_defaults.update(model_params)
+        #Calculate class weights
+        if dnn_defaults["class_weight"] == "balanced":
+            classes = np.unique(y_train)
+            weights = compute_class_weight(
+                class_weight="balanced",
+                classes=classes,
+                y=y_train
+            )
+            class_weight_arg = {cls: w for cls, w in zip(classes, weights)}
+        else:
+            class_weight_arg = None
 
         #Neural network architecture
         model_keras = Sequential()
@@ -133,8 +146,6 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
             loss="binary_crossentropy",
             metrics=["accuracy"]
         )
-
-        #(Optional) simple EarlyStopping can be added here
         callbacks = []
 
         #Model training
@@ -145,7 +156,8 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
                 batch_size=dnn_defaults["batch_size"],
                 validation_data=(X_val, y_val),
                 verbose=1,
-                callbacks=callbacks
+                callbacks=callbacks,
+                class_weight=class_weight_arg
             )
         else:
             model_keras.fit(
@@ -154,7 +166,8 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
                 batch_size=dnn_defaults["batch_size"],
                 validation_data=(X_test, y_test),
                 verbose=1,
-                callbacks=callbacks
+                callbacks=callbacks,
+                class_weight=class_weight_arg
             )
 
         #Wrap Keras model with sklearn-compatible interface (predict + predict_proba)
@@ -193,7 +206,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
     print("Used X_train shape:", X_train.shape)
     print("Used X_test shape:", X_test.shape)
 
-    if model_kind != "DNN":
+    if model_kind != "Deep Neural Network":
         model.fit(X_train, y_train)
 
     return (model, model_kind)
