@@ -14,20 +14,17 @@ RANDOM_STATE = 42
 tf.random.set_seed(RANDOM_STATE)
 
 class KerasSigmoidBinaryWrapper:
-    #Adapter: Keras model (sigmoid output) → sklearn-compatible interface (predict, predict_proba)
+    #Adapter: Keras model (sigmoid output) => sklearn-compatible interface (predict, predict_proba)
     def __init__(self, keras_model):
         self.model = keras_model
         self.classes_ = np.array([0, 1])
-
     def predict_proba(self, X):
         #Keras with sigmoid output returns shape (n, 1) or (n,)
-        p1 = self.model.predict(X, verbose=0).ravel() # P(y=1)
-        return np.column_stack([1.0 - p1, p1]) # [P(y=0), P(y=1)]
-
+        p1 = self.model.predict(X, verbose=0).ravel() #P(y=1)
+        return np.column_stack([1.0 - p1, p1]) #[P(y=0), P(y=1)]
     def predict(self, X):
         p1 = self.predict_proba(X)[:, 1]
         return (p1 >= 0.5).astype(int)
-
     def get_keras_model(self):
         return self.model
 
@@ -48,34 +45,29 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
         model = DecisionTreeClassifier(**dt_defaults)
 
     elif model_kind == "Logistic Regression":
-
         max_iter = model_params.get("max_iter", 100)
         solver = model_params.get("solver", "lbfgs")
         penalty = model_params.get("penalty", "l2")
         C = model_params.get("C", 1.0)
-
         model = LogisticRegression(
             max_iter=max_iter, solver=solver, penalty=penalty, C=C, 
             class_weight="balanced", random_state=RANDOM_STATE
         )
 
     elif model_kind == "SVM":
-    
         svm_defaults = {
-            "kernel": "linear",                # 'linear' | 'rbf' | 'poly' | 'sigmoid'
+            "kernel": "linear",                #'linear' | 'rbf' | 'poly' | 'sigmoid'
             "C": 1.0,
-            "gamma": "scale",                  # for rbf/poly/sigmoid kernels
-            "degree": 3,                       # for polynomial kernel
-            "class_weight": "balanced",        # always applied for class imbalance
-            "use_calibrated": True,            # for linear case: LinearSVC + CalibratedClassifierCV
-            "calibration_method": "sigmoid",   # 'sigmoid' | 'isotonic'
+            "gamma": "scale",                  #for rbf/poly/sigmoid kernels
+            "degree": 3,                       #for polynomial kernel
+            "class_weight": "balanced",        #always applied for class imbalance
+            "use_calibrated": True,            #for linear case: LinearSVC + CalibratedClassifierCV
+            "calibration_method": "sigmoid",   #'sigmoid' | 'isotonic'
             "cv_calibration": 5,
-            "probability": True                # required for SVC to enable predict_proba()
+            "probability": True                #required for SVC to enable predict_proba()
         }
         svm_defaults.update(model_params)
-
         kernel = svm_defaults["kernel"]
-
         if kernel == "linear" and svm_defaults["use_calibrated"]:
             #Efficient approach for high-dimensional data: LinearSVC + calibration
             base = LinearSVC(
@@ -98,11 +90,10 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
                 gamma=svm_defaults["gamma"],
                 degree=svm_defaults["degree"],
                 class_weight=svm_defaults["class_weight"],
-                probability=True,          #required for ROC/PR analysis and threshold tuning
+                probability=True, #required for ROC/PR analysis and threshold tuning
             )
         if (kernel == "linear" and model_kind != "SVM linear calibrated"):
             model_kind = "SVM linear"
-
     elif model_kind == "Deep Neural Network":
         dnn_defaults = {
             "hidden_layers": [128, 64],
@@ -114,6 +105,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
             "class_weight": "balanced"
         }
         dnn_defaults.update(model_params)
+
         #Calculate class weights
         if dnn_defaults["class_weight"] == "balanced":
             classes = np.unique(y_train)
@@ -169,7 +161,6 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
                 callbacks=callbacks,
                 class_weight=class_weight_arg
             )
-
         #Wrap Keras model with sklearn-compatible interface (predict + predict_proba)
         model = KerasSigmoidBinaryWrapper(model_keras)
 
@@ -182,7 +173,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
             "colsample_bytree": 0.8,
             "gamma": 0,
             "min_child_weight": 1,
-            "scale_pos_weight": None,  #will be calculated if None
+            "scale_pos_weight": None, #will be calculated if None
             "random_state": RANDOM_STATE,
             "objective": "binary:logistic",
             "eval_metric": "logloss"
@@ -197,16 +188,12 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
             print(f"[XGBoost] Calculated scale_pos_weight: {xgb_defaults['scale_pos_weight']:.3f} (neg/pos = {neg_count}/{pos_count})")
         
         model = XGBClassifier(**xgb_defaults)
-
     else:
         raise ValueError(
             "Unknown model. Use one of: DecisionTree, LogisticRegression, SVM/SVC, DNN, or XGBoost."
         )
-
     print("Used X_train shape:", X_train.shape)
     print("Used X_test shape:", X_test.shape)
-
     if model_kind != "Deep Neural Network":
         model.fit(X_train, y_train)
-
     return (model, model_kind)

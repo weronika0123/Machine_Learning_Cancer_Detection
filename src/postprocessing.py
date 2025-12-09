@@ -129,7 +129,6 @@ def threshold_tuning(
     
     return y_pred, info
 
-
 def _optimize_recall(y_true, y_proba, threshold_range):
     scores = []
     for thresh in threshold_range:
@@ -140,7 +139,6 @@ def _optimize_recall(y_true, y_proba, threshold_range):
     best_idx = np.argmax(scores)
     return threshold_range[best_idx], scores[best_idx]
 
-
 def _optimize_fbeta(y_true, y_proba, threshold_range, beta=1.0):
     scores = []
     for thresh in threshold_range:
@@ -150,7 +148,6 @@ def _optimize_fbeta(y_true, y_proba, threshold_range, beta=1.0):
     scores = np.array(scores)
     best_idx = np.argmax(scores)
     return threshold_range[best_idx], scores[best_idx]
-
 
 def _optimize_youden(y_true, y_proba):
     fpr, tpr, thresholds = roc_curve(y_true, y_proba)
@@ -177,13 +174,13 @@ def _create_visualizations(y_val, y_val_proba, y_test, y_test_proba,
     """Create comprehensive visualization plots."""
     fig = plt.figure(figsize=(16, 5))
     
-    # Subplot 1: Threshold vs Metric Curve
+    #Subplot 1: Threshold vs Metric Curve
     ax1 = plt.subplot(1, 3, 1)
     _plot_threshold_curve(ax1, y_val, y_val_proba, threshold_range, best_threshold, method)
-    # Subplot 2: ROC Curve with Optimal Point
+    #Subplot 2: ROC Curve with Optimal Point
     ax2 = plt.subplot(1, 3, 2)
     _plot_roc_with_optimal(ax2, y_test, y_test_proba, best_threshold)
-    # Subplot 3: Precision-Recall Curve with Optimal Point
+    #Subplot 3: Precision-Recall Curve with Optimal Point
     ax3 = plt.subplot(1, 3, 3)
     _plot_pr_with_optimal(ax3, y_test, y_test_proba, best_threshold)
     
@@ -222,7 +219,6 @@ def _plot_threshold_curve(ax, y_true, y_proba, threshold_range, best_threshold, 
         ax.scatter([best_threshold], [scores[best_idx]], s=60, c='#D8504D', 
                   marker='o', zorder=3,
                   label=f'Optimal: {best_threshold:.3f}')
-    
     ax.axvline(best_threshold, ls='--', color='#D8504D', linewidth=2, alpha=0.7)
     ax.set_xlabel('Threshold', fontsize=11)
     ax.set_ylabel('Score (Validation)', fontsize=11)
@@ -234,13 +230,11 @@ def _plot_roc_with_optimal(ax, y_true, y_proba, best_threshold):
     fpr, tpr, thresholds = roc_curve(y_true, y_proba)
     roc_auc = auc(fpr, tpr)
     best_idx = np.argmin(np.abs(thresholds - best_threshold))
-    
     ax.plot(fpr, tpr, linewidth=2.5, color='#2E86AB', label=f'ROC (AUC={roc_auc:.3f})')
     ax.plot([0, 1], [0, 1], 'k--', linewidth=1.5, alpha=0.5, label='Random Classifier')
     ax.scatter([fpr[best_idx]], [tpr[best_idx]], s=60, c='#D8504D', marker='o', 
               zorder=3,
               label=f'Optimal (thr={best_threshold:.3f})')
-    
     ax.set_xlabel('False Positive Rate', fontsize=11)
     ax.set_ylabel('True Positive Rate', fontsize=11)
     ax.set_title('ROC Curve with Optimal Point', fontsize=14)
@@ -251,7 +245,6 @@ def _plot_pr_with_optimal(ax, y_true, y_proba, best_threshold):
     precision, recall, thresholds = precision_recall_curve(y_true, y_proba)
     pr_auc = auc(recall, precision)
     best_idx = np.argmin(np.abs(thresholds - best_threshold))
-    
     ax.plot(recall, precision, linewidth=2.5, color='#2E86AB', label=f'PR (AUC={pr_auc:.3f})')
     ax.scatter([recall[best_idx]], [precision[best_idx]], s=60, c='#D8504D', marker='o', 
               zorder=3,
@@ -307,12 +300,10 @@ def _print_improvement(metrics_before, metrics_after):
     print("="*70)
     print(f"{'Metric':<12} | {'Before (0.5)':>12} | {'After (tuned)':>14} | {'Change':>10}")
     print("-"*70)
-    
     for metric in ['recall', 'precision', 'f1', 'f2']:
         before = metrics_before[metric]
         after = metrics_after[metric]
         change = after - before
         sign = '+' if change >= 0 else ''
         print(f"{metric.upper():<12} | {before:>12.4f} | {after:>14.4f} | {sign}{change:>9.4f}")
-    
     print("="*70 + "\n")

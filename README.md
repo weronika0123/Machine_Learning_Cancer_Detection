@@ -16,7 +16,7 @@ python .\main.py `
   --data "data_sources\liquid_biopsy_data.csv" `
   --use_validation "separate" `
   --preprocess "['corr','kbest', 'rfecv']" `
-  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 1000}" `
+  --preprocess_params "{'corr_threshold': 0.9, 'prefilter_k': 100}" `
   --model SVM `
   --model_params "{'kernel': 'linear', 'C': 1.0, 'use_calibrated': True, 'cv_calibration': 5}" `
   --postprocess `

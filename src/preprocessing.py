@@ -15,23 +15,20 @@ import warnings
 
 RANDOM_STATE = 42
 
-
 def correlation_removal(X_train, X_test, threshold, full_mask):
-    
     print(f"[PREPROCESS] Starting correlation-based feature removal with threshold={threshold}...")
-
     #Initial number of features
     n_features = X_train.shape[1]
 
-    #Step 1: Dropping constant features (zero variance) 
+    #Step 1:Dropping constant features (zero variance) 
     variances = X_train.var(axis=0)
     nonconst_mask = variances > 0.0  # True = keep
     dropped_const = (~nonconst_mask).sum()
 
-    #Step 2: Using training set only for correlation matrix
+    #Step 2:Using training set only for correlation matrix
     X_train_non_const = X_train[:, nonconst_mask]
 
-    #Step 3: Computing Pearson's Correlation matrix 
+    #Step 3:Computing Pearson's Correlation matrix 
     corr = np.corrcoef(X_train_non_const, rowvar=False)
     candidate_nr = corr.shape[0]
     start_mask = np.ones(candidate_nr, dtype=bool)  # True = keep
@@ -69,13 +66,12 @@ def correlation_removal(X_train, X_test, threshold, full_mask):
           f"kept={info['kept']} out of {info['initial_features']} "
           f"(dropped_const={info['dropped_constant']}, "
           f"dropped_corr={info['dropped_corr']})")
-        
-
+    
     return X_train_red, X_test_red, full_mask, info
 
 def prefilter_select_kbest(X_train, y_train, X_test, full_mask, k=1500):
     
-    #Validation - k must not be greater than number of features
+    #Validation-k must not be greater than number of features
     k = min(k, X_train.shape[1])
 
     #SelectKBest with ANOVA F-value
@@ -95,11 +91,9 @@ def prefilter_select_kbest(X_train, y_train, X_test, full_mask, k=1500):
     new_full_mask = np.zeros_like(full_mask)
     new_full_mask[idx_alive] = mask_k
     full_mask = new_full_mask
-
     return X_train_k, X_test_k, full_mask
 
 def estimator(model_name: str):
-
     if model_name == "Logistic Regression" or model_name == "Deep Neural Network":
         fs_estimator = LogisticRegression(
             max_iter=1000, 
@@ -126,7 +120,6 @@ def estimator(model_name: str):
             random_state=RANDOM_STATE,
             eval_metric='logloss'
         )
-
     else:
         print("[FEATURE_SEL][WARN] Model name unknown - fallback: LogisticRegression")
         fs_estimator = LogisticRegression(
@@ -137,9 +130,7 @@ def estimator(model_name: str):
     return fs_estimator
 
 def rfecv(steps: int, X_train, y_train, X_test, model_name, full_mask, output_dir):
-
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
-
     #Scorer based on recall for the positive class (label=1)
     recall_scorer = make_scorer(recall_score, pos_label=1)
 
@@ -201,10 +192,8 @@ def feature_selection(steps: int, X_train, y_train, X_test,
                       model_name: str, fs_methods: list, prefilter_k: int=1500, corr_threshold: float=0.95, output_dir=None):
 
     print("[FEATURE_SEL] Starting feature selection...")
-
-    n0 = X_train.shape[1]  # Original number of features
+    n0 = X_train.shape[1]  #Original number of features
     mask_best = np.ones(n0, dtype=bool)  # Full mask relative to original feature set
-
     if "corr" in fs_methods:
         X_train, X_test, mask_best, corr_info = correlation_removal(X_train, X_test, corr_threshold, mask_best)
 

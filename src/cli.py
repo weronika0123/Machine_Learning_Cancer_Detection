@@ -12,7 +12,6 @@ Supports multiple models, feature selection methods, threshold optimization, and
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=True
     )
-    
     data_group = p.add_argument_group('Data & Validation Strategy')
     data_group.add_argument("--data",required=True,
         help="Path to CSV file with gene expression data. Must contain split columns "

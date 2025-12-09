@@ -19,11 +19,12 @@ from xai import run_xai
 from cli import parse_args
 from models import train_model
 import os
+
 #Must be set BEFORE importing tensorflow:
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  #Suppress TF C++ logs: 0=ALL,1=INFO,2=WARNING,3=ERROR
-
 import warnings
 import logging
+
 #Filter unwanted warnings
 warnings.filterwarnings("ignore", message=r"The structure of `inputs`.*", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"shap")
@@ -32,14 +33,10 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"shap")
 #Global logging configuration (set once at entry point)
 logging.basicConfig(level=logging.WARNING)  #Show WARNING+ by default
 log = logging.getLogger("xai")              #Used in xai.py
-
-#Now import TF
 import tensorflow as tf
 tf.get_logger().setLevel("ERROR") #Python TF logger to ERROR level
 
-
 RANDOM_STATE = 42
-
 
 def validate_split_columns(df):
     print("[VALIDATION] Checking data split columns...")
@@ -83,7 +80,7 @@ def validate_split_columns(df):
     if test_count == 0:
         raise ValueError("Test set is empty")
 
-    #Validation can be empty-warning only
+    #Validation can be empty warning only
     if val_count == 0:
         print("[VALIDATION][WARN] Validation set is empty (no rows with isValidation=1)")
         print("[VALIDATION][WARN] This is acceptable if using --use_validation merge_train_test")
@@ -99,7 +96,7 @@ def validate_split_columns(df):
 #Flexible data splitting with validation handling options
 def prepare_data_split(X, y, df, use_validation="separate"):
 
-    # First, extract base splits
+    #First, extract base splits
     X_train_base = X[df["isTraining"] == 1]
     y_train_base = y[df["isTraining"] == 1]
     X_val_base = X[df["isValidation"] == 1]
@@ -107,11 +104,11 @@ def prepare_data_split(X, y, df, use_validation="separate"):
     X_test_base = X[df["isTest"] == 1]
     y_test_base = y[df["isTest"] == 1]
 
-    #Option A: separate train/validation/test
+    #Option A:separate train/validation/test
     if use_validation == "separate":
         return X_train_base, X_val_base, X_test_base, y_train_base, y_val_base, y_test_base
 
-    #Option B: Split validation 80/20 into train/test
+    #Option B:Split validation 80/20 into train/test
     elif use_validation == "merge_train_test":
         if X_val_base.shape[0] > 0:
             X_val_train, X_val_test, y_val_train, y_val_test = train_test_split(
@@ -132,7 +129,6 @@ def prepare_data_split(X, y, df, use_validation="separate"):
             y_train, y_val, y_test = y_train_base, y_val_base, y_test_base
 
         return X_train, X_val, X_test, y_train, y_val, y_test
-
 
 def pipeline(
                 dane: str,
@@ -157,10 +153,10 @@ def pipeline(
     model_name_norm = model_name.strip().lower()
     if model_name_norm in ("logisticregression"):
         model_kind = "Logistic Regression"
-        step = 50  #For FS: larger step for regression makes sense
+        step = 50
     elif model_name_norm in ("decisiontree"):
         model_kind = "Decision Tree"
-        step = 30  #For FS: smaller step for trees makes sense
+        step = 30
     elif model_name_norm in ("svm", "svc"):
         model_kind = "SVM"
         step = 30
@@ -169,7 +165,7 @@ def pipeline(
         step = 50
     elif model_name_norm in ("xgboost"):
         model_kind = "XGBoost"
-        step = 30  #For FS: similar to Decision Tree
+        step = 30
     else:
         raise ValueError("Unknown model. Use: DecisionTree or LogisticRegression or SVM/SVC or DNN or XGBoost")
 
@@ -231,7 +227,7 @@ def pipeline(
         print("[DATA] Using your dataset, assuming last column is target")
         X_df = df.iloc[:,:-1]
 
-    #Missing values check - close the pipeline if found
+    #Missing values check close the pipeline if found
     if X_df.isnull().values.any():
         print("[DATA][ERROR] Missing values detected. Please provide data without any missing values.")
         sys.exit(1)
@@ -255,6 +251,7 @@ def pipeline(
 
     total = len(df)
     print(f"[DATA] Total:{total:5d} rows")
+
     #Log the split sizes
     print(f"[DATA] Data split - X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"[DATA] Data split - X_val: {X_val.shape}, y_val: {y_val.shape}")
@@ -267,10 +264,6 @@ def pipeline(
     folder_name = f"{dataset_name}_{model_name}_{preprocessing_abbr}_{threshold_abbr}"
     output_dir = Path("output") / folder_name
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Feature selection
-
-
 
     #Feature selection
     fs_mask = None
@@ -287,7 +280,6 @@ def pipeline(
         if fs_mask is not None:
             X_val = X_val[:, fs_mask]
 
-
     #MinMaxScaler - Applied AFTER feature engineering for correct scaling statistics
     if model_kind in ("Logistic Regression", "SVM", "Deep Neural Network"):
         print(f"[SCALING] Applying MinMaxScaler to {X_train.shape[1]} features (models:{model_kind})")
@@ -302,12 +294,9 @@ def pipeline(
         print(f"[SCALING] Feature ranges after scaling: [{X_train.min():.3f}, {X_train.max():.3f}]")
     else:
         print(f"[SCALING] Skipped for {model_kind} (tree-based models don't require scaling)")
-
-
 #endregion
 
 #region Model selection + training
-
     model, model_kind = train_model(
         model_kind=model_kind,
         model_params=model_params,
@@ -318,7 +307,6 @@ def pipeline(
         X_val=X_val,
         y_val=y_val
     )
-
 #endregion
 
 #region XAI
@@ -339,7 +327,6 @@ def pipeline(
         cost_fn = postprocess_params.get("cost_fn", 10.0)  #False Negative cost
         cost_fp = postprocess_params.get("cost_fp", 1.0)   #False Positive cost
         show_plots = postprocess_params.get("show_tuning_plots", True)
-
         y_pred, tuning_info = threshold_tuning(
             model=model,
             X_val=X_val,
@@ -355,7 +342,6 @@ def pipeline(
         )
     else:
         y_pred = model.predict(X_test)
-        
     if xai_sample is not None:
         idx = int(xai_sample)
         if 0 <= idx < len(y_test):
@@ -364,11 +350,9 @@ def pipeline(
             print(f"[XAI] Sample #{idx} -> true label: {true_label}, predicted label: {pred_label}")
         else:
             print(f"[XAI] Sample index {idx} is out of range for TEST set (size={len(y_test)})")
-
 #endregion
 
 #region Ewaluacja
-
     results = {}
 
     #flags (aliases)
@@ -407,7 +391,6 @@ def pipeline(
         plt.show()
         results["Confusion matrix"] = cm.tolist()
 
-
     #ROC + PR on a single figure (1x2)
     if (want_roc or want_pr) and hasattr(model, "predict_proba"):
         y_score = model.predict_proba(X_test)[:, 1]
@@ -445,7 +428,6 @@ def pipeline(
         plt.tight_layout()
         plt.show()
 
-
     #Add threshold tuning info to results if performed
     if tuning_info is not None and tuning_info['tuning_performed']:
         results["threshold_tuning"] = {
@@ -462,7 +444,7 @@ def pipeline(
     output_dir = Path("output") / folder_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save metrics to a text file
+    #Save metrics to a text file
     metrics_file = output_dir / "metrics.txt"
     with open(metrics_file, "w") as f:
         f.write("Evaluation Metrics:\n")
@@ -470,21 +452,18 @@ def pipeline(
             if metric != "Confusion matrix":  # Exclude confusion matrix from text output
                 f.write(f"{metric}: {value}\n")
 
-    # Save confusion matrix visualization
+    #Save confusion matrix visualization
     if want_cm:
         cm_file = output_dir / "confusion_matrix.png"
         fig_cm.savefig(cm_file)
         plt.close(fig_cm)
 
-    # Save ROC and PR visualizations
+    #Save ROC and PR visualizations
     if (want_roc or want_pr) and hasattr(model, "predict_proba"):
         roc_pr_file = output_dir / "roc_pr_curves.png"
         fig.savefig(roc_pr_file)
         plt.close(fig)
-
     print(f"[OUTPUT] Results saved to folder: {output_dir}")
-
-
         
     return {
         "model": model.__class__.__name__,
@@ -494,7 +473,6 @@ def pipeline(
         "XAI_top_global_features": XAI_top_features,
     }
 #endregion
-
 
 def main(argv=None):
     args = parse_args(argv)
@@ -532,9 +510,7 @@ def main(argv=None):
         XAI=args.xai,
         xai_sample=args.xai_sample
     )
-
     print(json.dumps(out, indent=2, ensure_ascii=False))
-
 
 if __name__ == "__main__":
     main()
