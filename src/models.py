@@ -137,15 +137,19 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
             metrics=["accuracy"]
         )
 
-        # -- ścieżki: odbierz z model_params (albo ustaw domyślne)
+        #paths
         out_dir = Path(model_params.get('output_dir', 'output/dnn_default'))
         log_root = Path(model_params.get('log_dir', 'runs'))
-        run_name = model_params.get('run_name', f"DNN_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        run_name = model_params.get('run_name', (
+        f"dnn_lr{dnn_defaults['learning_rate']:.0e}_"
+        f"do{int(dnn_defaults['dropout_rate']*10):02d}_"
+        f"bs{dnn_defaults['batch_size']}_"
+        f"l{len(dnn_defaults['hidden_layers'])}"))
         log_dir = log_root / run_name
         out_dir.mkdir(parents=True, exist_ok=True)
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        # -- HParams do logów
+        # HParams for logs
         hparams = {
         'hidden_layers': str(dnn_defaults['hidden_layers']),
         'activation': dnn_defaults['activation'],
@@ -155,7 +159,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
         'batch_size': int(dnn_defaults['batch_size'])
         }
 
-        # -- callbacki: CSV log, TensorBoard (+HParams), checkpoint best, early stopping
+        #callbacks: CSV log, TensorBoard (+HParams), checkpoint best, early stopping
         callbacks = [
         CSVLogger(str(out_dir / 'training_log.csv'), append=False),
         TensorBoard(log_dir=str(log_dir), histogram_freq=1, write_graph=True, write_images=False),
@@ -169,7 +173,7 @@ def train_model(model_kind, model_params, X_train, y_train, X_test, y_test, X_va
         EarlyStopping(monitor='val_loss' if use_val else 'loss', patience=10, restore_best_weights=True)
         ]
 
-        # Zapis model.summary() do TXT
+        # model.summary() to TXT
         summary_txt = out_dir / 'model_summary.txt'
         with open(summary_txt, 'w', encoding='utf-8') as f:
             model_keras.summary(print_fn=lambda s: f.write(s + '\n'))

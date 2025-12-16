@@ -268,9 +268,14 @@ def pipeline(
     output_dir = Path("output") / folder_name / run_id 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # === RUN NAMING + LOGDIR (musi być PRZED sanity) ===
-    run_name = f"{dataset_name}_{model_name}_{preprocessing_abbr}_{threshold_abbr}_" + datetime.now().strftime('%Y%m%d_%H%M%S')
-    # jeśli nie masz tu dostępu do args, fallback na 'runs/'
+    # run naming
+    run_name = (
+    f"dnn_p0_"
+    f"lr{model_params['learning_rate']:.0e}_"
+    f"do{int(model_params['dropout_rate']*10):02d}_"
+    f"bs{model_params['batch_size']}_"
+    f"{datetime.now().strftime('%m%d_%H%M%S')}")
+
     log_dir = Path('runs') / run_name
     log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -279,9 +284,6 @@ def pipeline(
     model_params['output_dir'] = str(output_dir)
     model_params['log_dir'] = str(log_dir)
     model_params['run_name'] = run_name
-
-    # Feature selection
-
 
 
     #Feature selection
