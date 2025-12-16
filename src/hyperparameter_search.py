@@ -225,7 +225,7 @@ def save_results(results, output_file):
 def main():
     """Main hyperparameter search routine."""
     # Number of experiments
-    n_experiments = 25
+    n_experiments = 40
     
     print(f"\n{'='*80}")
     print(f"HYPERPARAMETER SEARCH - PHASE 3")

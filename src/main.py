@@ -509,7 +509,7 @@ def pipeline(
         ConfusionMatrixDisplay(confusion_matrix=cm).plot(ax=ax)
         ax.set_title("Confusion Matrix — Test Set", fontsize=14)
         plt.tight_layout()
-        plt.show()
+        # plt.show()  # Disabled for batch processing
         results["Confusion matrix"] = cm.tolist()
 
     #ROC + PR on a single figure (1x2)
@@ -547,7 +547,7 @@ def pipeline(
             ax[1].grid(True, ls=':', alpha=0.6)
             results["AUC PR"] = float(ap)  #Store AP as in previous style
         plt.tight_layout()
-        plt.show()
+        # plt.show()  # Disabled for batch processing
 
 
     #Add threshold tuning info to results if performed
