@@ -24,7 +24,7 @@ from datetime import datetime
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  #Suppress TF C++ logs: 0=ALL,1=INFO,2=WARNING,3=ERROR
 
 import warnings
-import logging
+import logging\
 #Filter unwanted warnings
 warnings.filterwarnings("ignore", message=r"The structure of `inputs`.*", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"shap")
@@ -221,11 +221,10 @@ def pipeline(
 
     df = pd.read_csv(path, low_memory=False)
 
-
-    if str(path)==r"data_sources\liquid_biopsy_data.csv":
+    # Check if this is the liquid_biopsy_data.csv file (check filename, not full path)
+    if path.name == "liquid_biopsy_data.csv" or "liquid_biopsy_data.csv" in str(path):
         print("[DATA] Using liquid_biopsy_data.csv dataset")
         X_df = df.iloc[:,1:-16]
-
     else:
         print("[DATA] Using your dataset, assuming last column is target")
         X_df = df.iloc[:,:-1]
