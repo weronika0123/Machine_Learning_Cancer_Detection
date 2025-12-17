@@ -1,0 +1,22 @@
+{
+  "accuracy": 0.7877237851662404,
+  "f1": 0.8561525129982669,
+  "precision": 0.8045602605863192,
+  "recall": 0.9148148148148149,
+  "auc_roc": 0.8744413835322927,
+  "auc_pr": 0.9442876740558945,
+  "tn": 61,
+  "fp": 60,
+  "fn": 23,
+  "tp": 247,
+  "experiment_id": 39,
+  "timestamp": "20251217_233513",
+  "hidden_layers": "[256, 64]",
+  "learning_rate": 0.001,
+  "dropout_rate": 0.4,
+  "batch_size": 16,
+  "activation": "selu",
+  "epochs": 50,
+  "status": "success",
+  "error": ""
+}

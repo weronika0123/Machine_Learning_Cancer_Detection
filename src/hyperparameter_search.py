@@ -39,7 +39,7 @@ FIXED_PARAMS = {
     'preprocess_params': '{}',
     'postprocess': False,
     'postprocess_params': '{}',
-    'eval': "['accuracy','F1','AUC ROC','Confusion Matrix']",
+    'eval': "['accuracy','F1','Precision','Recall','AUC ROC','AUC PR','Confusion Matrix']",
     'xai': False
 }
 
@@ -176,13 +176,25 @@ def parse_metrics_from_output(output):
             result = json.loads(json_str)
             
             metrics = result.get('metrics', {})
+            
+            # Extract confusion matrix and parse it
+            cm = metrics.get('Confusion matrix', None)
+            tn, fp, fn, tp = None, None, None, None
+            if cm is not None and len(cm) == 2 and len(cm[0]) == 2:
+                tn, fp = cm[0][0], cm[0][1]
+                fn, tp = cm[1][0], cm[1][1]
+            
             return {
                 'accuracy': metrics.get('accuracy', None),
                 'f1': metrics.get('f1', None),
                 'precision': metrics.get('precision', None),
                 'recall': metrics.get('recall', None),
                 'auc_roc': metrics.get('AUC ROC', None),
-                'auc_pr': metrics.get('AUC PR', None)
+                'auc_pr': metrics.get('AUC PR', None),
+                'tn': tn,
+                'fp': fp,
+                'fn': fn,
+                'tp': tp
             }
     except:
         pass
@@ -193,7 +205,11 @@ def parse_metrics_from_output(output):
         'precision': None,
         'recall': None,
         'auc_roc': None,
-        'auc_pr': None
+        'auc_pr': None,
+        'tn': None,
+        'fp': None,
+        'fn': None,
+        'tp': None
     }
 
 
@@ -209,6 +225,7 @@ def save_results(results, output_file):
         'hidden_layers', 'learning_rate', 'dropout_rate', 
         'batch_size', 'activation', 'epochs',
         'accuracy', 'f1', 'precision', 'recall', 'auc_roc', 'auc_pr',
+        'tn', 'fp', 'fn', 'tp',
         'error'
     ]
 

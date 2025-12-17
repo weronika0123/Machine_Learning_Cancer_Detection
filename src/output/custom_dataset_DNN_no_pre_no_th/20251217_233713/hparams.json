@@ -1,0 +1,12 @@
+{
+  "model_kind": "DNN",
+  "hidden_layers": [
+    512,
+    256
+  ],
+  "activation": "elu",
+  "dropout_rate": 0.4,
+  "learning_rate": 0.001,
+  "epochs": 100,
+  "batch_size": 16
+}
