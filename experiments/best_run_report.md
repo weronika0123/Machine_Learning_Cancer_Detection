@@ -1,31 +1,31 @@
 # Best Model Report - Phase 3
 
-**Generated:** 2025-12-18 00:03:31
+**Generated:** 2025-12-18 01:17:34
 
 ---
 
 ## Best Model
 
-**Experiment ID:** 39
-**Timestamp:** 20251217_233513
+**Experiment ID:** 24
+**Timestamp:** 20251218_005639
 
 ##Performance Metrics
 
-- **AUC ROC:** 0.8744
-- **Accuracy:** 0.7877
-- **F1 Score:** 0.8562
-- **Precision:** 0.8046
-- **Recall:** 0.9148
-- **AUC PR:** 0.9443
+- **AUC ROC:** 0.8743
+- **Accuracy:** 0.7903
+- **F1 Score:** 0.8525
+- **Precision:** 0.8287
+- **Recall:** 0.8778
+- **AUC PR:** 0.9442
 
 ## Hyperparameters
 
-- **Hidden Layers:** [256, 64]
-- **Learning Rate:** 0.001
-- **Dropout Rate:** 0.4
-- **Batch Size:** 16
-- **Activation Function:** selu
-- **Epochs:** 50
+- **Hidden Layers:** [512, 256]
+- **Learning Rate:** 0.0005
+- **Dropout Rate:** 0.3
+- **Batch Size:** 32
+- **Activation Function:** tanh
+- **Epochs:** 100
 
 ## Model Artifacts
 

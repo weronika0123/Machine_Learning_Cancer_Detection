@@ -1,277 +1,11 @@
 
 === RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.637894092439547
-AUC PR: 0.8005343485305563
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7877237851662404
-precision: 0.8327402135231317
-recall: 0.8666666666666667
-f1: 0.8493647912885662
-AUC ROC: 0.8648913376186104
-AUC PR: 0.9410886285596992
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7647058823529411
-precision: 0.8027210884353742
-recall: 0.8740740740740741
-f1: 0.8368794326241135
-AUC ROC: 0.8487909397000306
-AUC PR: 0.9333257583313858
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7953964194373402
-precision: 0.8044871794871795
-recall: 0.9296296296296296
-f1: 0.8625429553264605
-AUC ROC: 0.8598714416896235
-AUC PR: 0.9374382889165681
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7851662404092071
-precision: 0.803921568627451
-recall: 0.9111111111111111
-f1: 0.8541666666666666
-AUC ROC: 0.8643403734312826
-AUC PR: 0.9382477976398015
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.4225742271196817
-AUC PR: 0.6478954688068016
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7800511508951407
-precision: 0.7967741935483871
-recall: 0.9148148148148149
-f1: 0.8517241379310345
-AUC ROC: 0.8539332721150904
-AUC PR: 0.9347157654234634
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.80306905370844
-precision: 0.8409893992932862
-recall: 0.8814814814814815
-f1: 0.8607594936708861
-AUC ROC: 0.8610651974288338
-AUC PR: 0.9375718146312596
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.8497245179063361
-AUC PR: 0.9340186651836541
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7800511508951407
-precision: 0.7787878787878788
-recall: 0.9518518518518518
-f1: 0.8566666666666667
-AUC ROC: 0.8631772268135905
-AUC PR: 0.9376101911549307
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.782608695652174
-precision: 0.7917981072555205
-recall: 0.9296296296296296
-f1: 0.8551959114139693
-AUC ROC: 0.8588307315580042
-AUC PR: 0.9372723670512335
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7953964194373402
-precision: 0.8231292517006803
-recall: 0.8962962962962963
-f1: 0.8581560283687943
-AUC ROC: 0.869574533210897
-AUC PR: 0.9416875636460593
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.48666972757881855
-AUC PR: 0.717312852140123
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7928388746803069
-precision: 0.8098360655737705
-recall: 0.9148148148148149
-f1: 0.8591304347826086
-AUC ROC: 0.8676155494337312
-AUC PR: 0.9385669954448603
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.8528007346189164
-AUC PR: 0.9316286807626136
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7851662404092071
-precision: 0.8251748251748252
-recall: 0.8740740740740741
-f1: 0.8489208633093526
-AUC ROC: 0.8531986531986531
-AUC PR: 0.9344738774972399
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.610651974288338
-AUC PR: 0.7987163988619559
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7774936061381074
-precision: 0.8210526315789474
-recall: 0.8666666666666667
-f1: 0.8432432432432433
-AUC ROC: 0.8482093663911845
-AUC PR: 0.932695588146634
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7851662404092071
-precision: 0.8120805369127517
-recall: 0.8962962962962963
-f1: 0.852112676056338
-AUC ROC: 0.8584634220997857
-AUC PR: 0.9349618203141661
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7979539641943734
-precision: 0.8215488215488216
+accuracy: 0.7493606138107417
+precision: 0.7721518987341772
 recall: 0.9037037037037037
-f1: 0.8606701940035273
-AUC ROC: 0.8616467707376798
-AUC PR: 0.9375475684422263
+f1: 0.8327645051194539
+AUC ROC: 0.8393327211509031
+AUC PR: 0.9280521903781482
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -280,12 +14,12 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.7544757033248082
-precision: 0.7824675324675324
-recall: 0.8925925925925926
-f1: 0.8339100346020761
-AUC ROC: 0.8314049586776859
-AUC PR: 0.9230332884277125
+accuracy: 0.6982097186700768
+precision: 0.7032085561497327
+recall: 0.9740740740740741
+f1: 0.8167701863354038
+AUC ROC: 0.8073767982858893
+AUC PR: 0.9111722415017519
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -294,12 +28,12 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.7774936061381074
-precision: 0.8505747126436781
-recall: 0.8222222222222222
-f1: 0.8361581920903954
-AUC ROC: 0.8469696969696969
-AUC PR: 0.9236114558659692
+accuracy: 0.7698209718670077
+precision: 0.8082191780821918
+recall: 0.8740740740740741
+f1: 0.8398576512455516
+AUC ROC: 0.8502907866544231
+AUC PR: 0.9332033839796203
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -312,8 +46,8 @@ accuracy: 0.690537084398977
 precision: 0.690537084398977
 recall: 1.0
 f1: 0.8169440242057489
-AUC ROC: 0.6981022344658708
-AUC PR: 0.8426594120865614
+AUC ROC: 0.5009641873278237
+AUC PR: 0.6901391313369147
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -322,12 +56,124 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.7544757033248082
-precision: 0.7753164556962026
-recall: 0.9074074074074074
-f1: 0.8361774744027304
-AUC ROC: 0.8430670339761249
-AUC PR: 0.9288943899716635
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.5
+AUC PR: 0.690537084398977
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.6103611876339149
+AUC PR: 0.7906428717580476
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.6735231098867462
+AUC PR: 0.818574963711266
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7851662404092071
+precision: 0.8394160583941606
+recall: 0.8518518518518519
+f1: 0.8455882352941176
+AUC ROC: 0.8653504744413836
+AUC PR: 0.9407369691192847
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.6626874808692991
+AUC PR: 0.8309248553843672
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.8107416879795396
+precision: 0.8426573426573427
+recall: 0.8925925925925926
+f1: 0.8669064748201439
+AUC ROC: 0.8640955004591369
+AUC PR: 0.9379476858593916
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.40930517294153657
+AUC PR: 0.6398177938768685
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7902813299232737
+precision: 0.8241379310344827
+recall: 0.8851851851851852
+f1: 0.8535714285714285
+AUC ROC: 0.8585858585858585
+AUC PR: 0.934734710063686
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.8036118763391491
+AUC PR: 0.90977268846063
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -337,11 +183,67 @@ Artifacts:
 
 === RESULTS ===
 accuracy: 0.7595907928388747
-precision: 0.7634730538922155
-recall: 0.9444444444444444
-f1: 0.8443708609271523
-AUC ROC: 0.8603917967554331
-AUC PR: 0.939540103092279
+precision: 0.782051282051282
+recall: 0.9037037037037037
+f1: 0.8384879725085911
+AUC ROC: 0.8445974900520355
+AUC PR: 0.9297983788728926
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.7920110192837466
+AUC PR: 0.9009848778339662
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7544757033248082
+precision: 0.7880794701986755
+recall: 0.8814814814814815
+f1: 0.8321678321678322
+AUC ROC: 0.8396388123660852
+AUC PR: 0.9294430764859836
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.6724517906336088
+AUC PR: 0.8124792303591344
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.5
+AUC PR: 0.690537084398977
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -351,11 +253,11 @@ Artifacts:
 
 === RESULTS ===
 accuracy: 0.7979539641943734
-precision: 0.8576779026217228
-recall: 0.8481481481481481
-f1: 0.8528864059590316
-AUC ROC: 0.863269054178145
-AUC PR: 0.9392736033579614
+precision: 0.8631178707224335
+recall: 0.8407407407407408
+f1: 0.851782363977486
+AUC ROC: 0.8653810835629017
+AUC PR: 0.9396550538625326
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -368,8 +270,8 @@ accuracy: 0.7979539641943734
 precision: 0.8281786941580757
 recall: 0.8925925925925926
 f1: 0.8591800356506238
-AUC ROC: 0.8628711355984083
-AUC PR: 0.9374436044506732
+AUC ROC: 0.8594429139883686
+AUC PR: 0.9357535890848376
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -378,12 +280,12 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.5
-AUC PR: 0.690537084398977
+accuracy: 0.8005115089514067
+precision: 0.8453237410071942
+recall: 0.8703703703703703
+f1: 0.8576642335766423
+AUC ROC: 0.8597796143250689
+AUC PR: 0.9372546780993312
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -392,12 +294,12 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.690537084398977
-precision: 0.690537084398977
-recall: 1.0
-f1: 0.8169440242057489
-AUC ROC: 0.5
-AUC PR: 0.690537084398977
+accuracy: 0.7672634271099744
+precision: 0.8013468013468014
+recall: 0.8814814814814815
+f1: 0.8395061728395061
+AUC ROC: 0.846250382614019
+AUC PR: 0.9302332534542691
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -407,81 +309,39 @@ Artifacts:
 
 === RESULTS ===
 accuracy: 0.7800511508951407
-precision: 0.8333333333333334
+precision: 0.7948717948717948
+recall: 0.9185185185185185
+f1: 0.852233676975945
+AUC ROC: 0.86455463728191
+AUC PR: 0.9398786887178288
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7902813299232737
+precision: 0.8286713286713286
+recall: 0.8777777777777778
+f1: 0.8525179856115108
+AUC ROC: 0.874349556167738
+AUC PR: 0.9441504852509708
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7774936061381074
+precision: 0.8303249097472925
 recall: 0.8518518518518519
-f1: 0.8424908424908425
-AUC ROC: 0.8544842363024181
-AUC PR: 0.9355234035563609
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7928388746803069
-precision: 0.8181818181818182
-recall: 0.9
-f1: 0.8571428571428571
-AUC ROC: 0.8553412917049281
-AUC PR: 0.9349216187121175
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7723785166240409
-precision: 0.8290909090909091
-recall: 0.8444444444444444
-f1: 0.8366972477064221
-AUC ROC: 0.8587082950719315
-AUC PR: 0.9379758156311664
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7621483375959079
-precision: 0.7845659163987139
-recall: 0.9037037037037037
-f1: 0.8399311531841652
-AUC ROC: 0.8361493725130089
-AUC PR: 0.9254021255463605
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.710997442455243
-precision: 0.7150684931506849
-recall: 0.9666666666666667
-f1: 0.8220472440944881
-AUC ROC: 0.8052035506580961
-AUC PR: 0.9118898297359448
-
-Artifacts:
-- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
-- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
-- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
-- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
-
-=== RESULTS ===
-accuracy: 0.7851662404092071
-precision: 0.805921052631579
-recall: 0.9074074074074074
-f1: 0.8536585365853658
-AUC ROC: 0.8637281910009184
-AUC PR: 0.939707814653489
+f1: 0.8409506398537477
+AUC ROC: 0.8591674318947046
+AUC PR: 0.9388177790879991
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -491,11 +351,11 @@ Artifacts:
 
 === RESULTS ===
 accuracy: 0.7698209718670077
-precision: 0.7795031055900621
-recall: 0.9296296296296296
-f1: 0.847972972972973
-AUC ROC: 0.853443526170799
-AUC PR: 0.9352843255582379
+precision: 0.8061224489795918
+recall: 0.8777777777777778
+f1: 0.8404255319148937
+AUC ROC: 0.8571166207529843
+AUC PR: 0.9355995332750854
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -504,12 +364,12 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.7800511508951407
-precision: 0.8309352517985612
-recall: 0.8555555555555555
-f1: 0.843065693430657
-AUC ROC: 0.8466789103152739
-AUC PR: 0.9343063379695233
+accuracy: 0.7953964194373402
+precision: 0.8104575163398693
+recall: 0.9185185185185185
+f1: 0.8611111111111112
+AUC ROC: 0.8644628099173555
+AUC PR: 0.9396662044082432
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -522,8 +382,8 @@ accuracy: 0.690537084398977
 precision: 0.690537084398977
 recall: 1.0
 f1: 0.8169440242057489
-AUC ROC: 0.6139730639730638
-AUC PR: 0.7728782539478041
+AUC ROC: 0.5
+AUC PR: 0.690537084398977
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -532,12 +392,12 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.7877237851662404
-precision: 0.8045602605863192
-recall: 0.9148148148148149
-f1: 0.8561525129982669
-AUC ROC: 0.8744413835322927
-AUC PR: 0.9442876740558945
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.5
+AUC PR: 0.690537084398977
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
@@ -546,12 +406,152 @@ Artifacts:
 - ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
 
 === RESULTS ===
-accuracy: 0.7877237851662404
-precision: 0.8257839721254355
-recall: 0.8777777777777778
-f1: 0.8509874326750448
-AUC ROC: 0.8509029690847872
-AUC PR: 0.9321647422104133
+accuracy: 0.7851662404092071
+precision: 0.8
+recall: 0.9185185185185185
+f1: 0.8551724137931035
+AUC ROC: 0.8558310376492194
+AUC PR: 0.932160159643723
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7621483375959079
+precision: 0.7959866220735786
+recall: 0.8814814814814815
+f1: 0.836555360281195
+AUC ROC: 0.8352004897459443
+AUC PR: 0.9232609581600928
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7928388746803069
+precision: 0.8648648648648649
+recall: 0.8296296296296296
+f1: 0.8468809073724007
+AUC ROC: 0.8684726048362412
+AUC PR: 0.9416869090098906
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.6258034894398531
+AUC PR: 0.7789473933634139
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.7535353535353535
+AUC PR: 0.8719345383727556
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7979539641943734
+precision: 0.825938566552901
+recall: 0.8962962962962963
+f1: 0.8596802841918295
+AUC ROC: 0.8612182430364248
+AUC PR: 0.9386720933803063
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.80306905370844
+precision: 0.8293515358361775
+recall: 0.9
+f1: 0.8632326820603907
+AUC ROC: 0.8640955004591369
+AUC PR: 0.9396404043194831
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.80306905370844
+precision: 0.8669201520912547
+recall: 0.8444444444444444
+f1: 0.8555347091932458
+AUC ROC: 0.8660544842363024
+AUC PR: 0.9399120370937313
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7774936061381074
+precision: 0.8452830188679246
+recall: 0.8296296296296296
+f1: 0.8373831775700935
+AUC ROC: 0.857208448117539
+AUC PR: 0.9366789878286544
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.7595907928388747
+precision: 0.7802547770700637
+recall: 0.9074074074074074
+f1: 0.839041095890411
+AUC ROC: 0.8457606366697276
+AUC PR: 0.9313087723335621
+
+Artifacts:
+- Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt
+- Curves PNG  : output\custom_dataset_DNN_no_pre_no_th\training_curves_loss.png
+- ROC/PR PNG  : output\custom_dataset_DNN_no_pre_no_th\roc_pr_curves.png
+- ConfMat PNG : output\custom_dataset_DNN_no_pre_no_th\confusion_matrix.png
+
+=== RESULTS ===
+accuracy: 0.690537084398977
+precision: 0.690537084398977
+recall: 1.0
+f1: 0.8169440242057489
+AUC ROC: 0.5
+AUC PR: 0.690537084398977
 
 Artifacts:
 - Metrics TXT : output\custom_dataset_DNN_no_pre_no_th\metrics.txt

@@ -1,9 +1,0 @@
-=== RUN REPORT (Phase 2) ===
-Run name: dnn_p0_lr3e-04_do05_bs16_1217_233525
-Model: DNN
-Dataset rows total: 2351
-Splits: train=(1575, 5277), val=(385, 5277), test=(391, 5277)
-Preprocessing: []
-Preprocess params: {}
-Postprocess enabled: False | params: {}
-XAI enabled: False
