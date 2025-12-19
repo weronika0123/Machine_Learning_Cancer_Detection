@@ -1,31 +1,38 @@
 # Best Model Report - Phase 3
 
-**Generated:** 2025-12-18 01:17:34
+**Generated:** 2025-12-19 15:37:03
 
 ---
 
 ## Best Model
 
-**Experiment ID:** 24
-**Timestamp:** 20251218_005639
+**Experiment ID:** 36
+**Timestamp:** 20251219_151845
 
-##Performance Metrics
+## Performance Metrics
 
-- **AUC ROC:** 0.8743
-- **Accuracy:** 0.7903
-- **F1 Score:** 0.8525
-- **Precision:** 0.8287
-- **Recall:** 0.8778
-- **AUC PR:** 0.9442
+**Primary Metric (used for model selection):**
+
+- **AUC PR:** 0.9455
+
+**Secondary Metrics (for complementary analysis):**
+
+- **AUC ROC:** 0.8796
+- **Accuracy:** 0.8107
+- **F1 Score:** 0.8733
+- **Precision:** 0.8121
+- **Recall:** 0.9444
+
+**Note:** AUC PR was chosen as the primary metric due to class imbalance in the dataset, making it more informative than AUC ROC for evaluating model performance on the minority class.
 
 ## Hyperparameters
 
-- **Hidden Layers:** [512, 256]
-- **Learning Rate:** 0.0005
+- **Hidden Layers:** [128, 64, 32]
+- **Learning Rate:** 0.005
 - **Dropout Rate:** 0.3
-- **Batch Size:** 32
-- **Activation Function:** tanh
-- **Epochs:** 100
+- **Batch Size:** 64
+- **Activation Function:** selu
+- **Epochs:** 75
 
 ## Model Artifacts
 
