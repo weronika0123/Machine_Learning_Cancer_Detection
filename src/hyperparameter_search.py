@@ -294,12 +294,13 @@ def main():
     print(f"Successful experiments: {sum(1 for r in results if r['status'] == 'success')}/{n_experiments}")
     print(f"Failed experiments: {sum(1 for r in results if r['status'] != 'success')}/{n_experiments}")
     
-    # Find best experiment
-    successful_results = [r for r in results if r.get('auc_roc') is not None]
+    # Find best experiment (by AUC PR - optimal for imbalanced data)
+    successful_results = [r for r in results if r.get('auc_pr') is not None]
     if successful_results:
-        best = max(successful_results, key=lambda x: x.get('auc_roc', 0))
-        print(f"\nBEST EXPERIMENT:")
+        best = max(successful_results, key=lambda x: x.get('auc_pr', 0))
+        print(f"\nBEST EXPERIMENT (selected by AUC PR):")
         print(f"   ID: {best['experiment_id']}")
+        print(f"   AUC PR (Primary Metric): {best['auc_pr']:.4f}")
         print(f"   AUC ROC: {best['auc_roc']:.4f}")
         print(f"   Accuracy: {best['accuracy']:.4f}")
         print(f"   F1 Score: {best['f1']:.4f}")
@@ -311,6 +312,7 @@ def main():
         with open(best_config_path, 'w', encoding='utf-8') as f:
             json.dump(best, f, indent=2)
         print(f"\nBest configuration saved to: {best_config_path}")
+        print("\nNote: Best model selected based on AUC PR (optimal for imbalanced datasets)")
     
     print(f"\n{'='*80}\n")
     print("Next steps:")

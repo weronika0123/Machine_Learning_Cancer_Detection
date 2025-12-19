@@ -146,8 +146,9 @@ def main():
         with open(best_info_path, 'r', encoding='utf-8') as f:
             best_info = json.load(f)
         
-        print("BEST MODEL FOUND:")
+        print("BEST MODEL FOUND (selected by AUC PR):")
         print(f"   Experiment ID: {best_info['experiment_id']}")
+        print(f"   AUC PR (Primary Metric): {best_info['auc_pr']:.4f}")
         print(f"   AUC ROC: {best_info['auc_roc']:.4f}")
         print(f"   Accuracy: {best_info['accuracy']:.4f}")
         print(f"   F1 Score: {best_info['f1']:.4f}")
@@ -169,7 +170,11 @@ def main():
             f.write(f"**Experiment ID:** {best_info['experiment_id']}\n")
             f.write(f"**Timestamp:** {best_info['timestamp']}\n\n")
             
-            f.write("##Performance Metrics\n\n")
+            f.write("## Performance Metrics\n\n")
+            f.write("**Primary Metric (used for model selection):**\n\n")
+            if best_info.get('auc_pr'):
+                f.write(f"- **AUC PR:** {best_info['auc_pr']:.4f}\n")
+            f.write("\n**Secondary Metrics (for complementary analysis):**\n\n")
             f.write(f"- **AUC ROC:** {best_info['auc_roc']:.4f}\n")
             f.write(f"- **Accuracy:** {best_info['accuracy']:.4f}\n")
             f.write(f"- **F1 Score:** {best_info['f1']:.4f}\n")
@@ -177,8 +182,9 @@ def main():
                 f.write(f"- **Precision:** {best_info['precision']:.4f}\n")
             if best_info.get('recall'):
                 f.write(f"- **Recall:** {best_info['recall']:.4f}\n")
-            if best_info.get('auc_pr'):
-                f.write(f"- **AUC PR:** {best_info['auc_pr']:.4f}\n")
+            
+            f.write("\n**Note:** AUC PR was chosen as the primary metric due to class imbalance in the dataset, ")
+            f.write("making it more informative than AUC ROC for evaluating model performance on the minority class.\n")
             
             f.write("\n## Hyperparameters\n\n")
             f.write(f"- **Hidden Layers:** {best_info['hidden_layers']}\n")

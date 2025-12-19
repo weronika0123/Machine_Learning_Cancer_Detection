@@ -269,13 +269,21 @@ def plot_hyperparameter_impact(df, output_dir):
     print("8. Performance Timeline...")
     fig, ax = plt.subplots(figsize=(14, 6))
     
-    ax.plot(df.index, df['auc_roc'], marker='o', label='AUC ROC', linewidth=2, markersize=6)
-    ax.plot(df.index, df['accuracy'], marker='s', label='Accuracy', linewidth=2, markersize=6)
-    ax.plot(df.index, df['f1'], marker='^', label='F1 Score', linewidth=2, markersize=6)
+    # Plot AUC PR as primary metric (thicker line)
+    if 'auc_pr' in df.columns and df['auc_pr'].notna().any():
+        ax.plot(df.index, df['auc_pr'], marker='D', label='AUC PR (Primary)', 
+                linewidth=3, markersize=7, color='#1f77b4', zorder=3)
+    
+    ax.plot(df.index, df['auc_roc'], marker='o', label='AUC ROC', 
+            linewidth=2, markersize=6, alpha=0.7)
+    ax.plot(df.index, df['accuracy'], marker='s', label='Accuracy', 
+            linewidth=2, markersize=6, alpha=0.7)
+    ax.plot(df.index, df['f1'], marker='^', label='F1 Score', 
+            linewidth=2, markersize=6, alpha=0.7)
     
     ax.set_xlabel('Experiment Number', fontsize=12)
     ax.set_ylabel('Score', fontsize=12)
-    ax.set_title('Performance Across Experiments', fontsize=14)
+    ax.set_title('Performance Across Experiments (AUC PR as Primary Metric)', fontsize=14)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     
@@ -294,14 +302,15 @@ def plot_hyperparameter_impact(df, output_dir):
         df_cm['sensitivity'] = df_cm['tp'] / (df_cm['tp'] + df_cm['fn'])
         df_cm['specificity'] = df_cm['tn'] / (df_cm['tn'] + df_cm['fp'])
         
-        # Scatter plot colored by AUC ROC
+        # Scatter plot colored by AUC PR (primary metric)
+        color_metric = 'auc_pr' if 'auc_pr' in df_cm.columns else 'auc_roc'
         scatter = ax.scatter(df_cm['specificity'], df_cm['sensitivity'], 
-                           c=df_cm['auc_roc'], cmap='viridis', 
+                           c=df_cm[color_metric], cmap='viridis', 
                            s=150, alpha=0.7, edgecolors='black', linewidth=1.5)
         
         ax.set_xlabel('Specificity (True Negative Rate)', fontsize=14)
         ax.set_ylabel('Sensitivity (True Positive Rate / Recall)', fontsize=14)
-        ax.set_title('Sensitivity vs Specificity Trade-off', fontsize=16, pad=20)
+        ax.set_title('Sensitivity vs Specificity Trade-off (colored by AUC PR)', fontsize=16, pad=20)
         ax.grid(True, alpha=0.3)
         
         # Add diagonal line (random classifier)
@@ -312,7 +321,7 @@ def plot_hyperparameter_impact(df, output_dir):
         
         # Colorbar
         cbar = plt.colorbar(scatter, ax=ax)
-        cbar.set_label('AUC ROC', fontsize=12)
+        cbar.set_label('AUC PR' if color_metric == 'auc_pr' else 'AUC ROC', fontsize=12)
         
         ax.legend(fontsize=11)
         ax.set_xlim(0, 1.05)
@@ -371,6 +380,8 @@ def generate_markdown_report(df, top10, output_dir):
         # Overview
         f.write("## Overview\n\n")
         f.write(f"- **Total Experiments:** {len(df)}\n")
+        if 'auc_pr' in df.columns:
+            f.write(f"- **Best AUC PR (Primary Metric):** {df['auc_pr'].max():.4f}\n")
         f.write(f"- **Best AUC ROC:** {df['auc_roc'].max():.4f}\n")
         f.write(f"- **Best Accuracy:** {df['accuracy'].max():.4f}\n")
         f.write(f"- **Best F1 Score:** {df['f1'].max():.4f}\n\n")
@@ -392,28 +403,28 @@ def generate_markdown_report(df, top10, output_dir):
         f.write("## Key Findings\n\n")
         
         # Best learning rate
-        best_lr_df = df.groupby('learning_rate')['auc_roc'].mean().sort_values(ascending=False)
+        best_lr_df = df.groupby('learning_rate')['auc_pr'].mean().sort_values(ascending=False)
         f.write(f"### Learning Rate\n")
-        f.write(f"- **Best:** {best_lr_df.index[0]} (Avg AUC ROC: {best_lr_df.values[0]:.4f})\n")
-        f.write(f"- **Worst:** {best_lr_df.index[-1]} (Avg AUC ROC: {best_lr_df.values[-1]:.4f})\n\n")
+        f.write(f"- **Best:** {best_lr_df.index[0]} (Avg AUC PR: {best_lr_df.values[0]:.4f})\n")
+        f.write(f"- **Worst:** {best_lr_df.index[-1]} (Avg AUC PR: {best_lr_df.values[-1]:.4f})\n\n")
         
         # Best dropout
-        best_dropout_df = df.groupby('dropout_rate')['auc_roc'].mean().sort_values(ascending=False)
+        best_dropout_df = df.groupby('dropout_rate')['auc_pr'].mean().sort_values(ascending=False)
         f.write(f"### Dropout Rate\n")
-        f.write(f"- **Best:** {best_dropout_df.index[0]} (Avg AUC ROC: {best_dropout_df.values[0]:.4f})\n")
-        f.write(f"- **Worst:** {best_dropout_df.index[-1]} (Avg AUC ROC: {best_dropout_df.values[-1]:.4f})\n\n")
+        f.write(f"- **Best:** {best_dropout_df.index[0]} (Avg AUC PR: {best_dropout_df.values[0]:.4f})\n")
+        f.write(f"- **Worst:** {best_dropout_df.index[-1]} (Avg AUC PR: {best_dropout_df.values[-1]:.4f})\n\n")
         
         # Best batch size
-        best_batch_df = df.groupby('batch_size')['auc_roc'].mean().sort_values(ascending=False)
+        best_batch_df = df.groupby('batch_size')['auc_pr'].mean().sort_values(ascending=False)
         f.write(f"### Batch Size\n")
-        f.write(f"- **Best:** {int(best_batch_df.index[0])} (Avg AUC ROC: {best_batch_df.values[0]:.4f})\n")
-        f.write(f"- **Worst:** {int(best_batch_df.index[-1])} (Avg AUC ROC: {best_batch_df.values[-1]:.4f})\n\n")
+        f.write(f"- **Best:** {int(best_batch_df.index[0])} (Avg AUC PR: {best_batch_df.values[0]:.4f})\n")
+        f.write(f"- **Worst:** {int(best_batch_df.index[-1])} (Avg AUC PR: {best_batch_df.values[-1]:.4f})\n\n")
         
         # Best activation
-        best_act_df = df.groupby('activation')['auc_roc'].mean().sort_values(ascending=False)
+        best_act_df = df.groupby('activation')['auc_pr'].mean().sort_values(ascending=False)
         f.write(f"### Activation Function\n")
-        f.write(f"- **Best:** {best_act_df.index[0]} (Avg AUC ROC: {best_act_df.values[0]:.4f})\n")
-        f.write(f"- **Worst:** {best_act_df.index[-1]} (Avg AUC ROC: {best_act_df.values[-1]:.4f})\n\n")
+        f.write(f"- **Best:** {best_act_df.index[0]} (Avg AUC PR: {best_act_df.values[0]:.4f})\n")
+        f.write(f"- **Worst:** {best_act_df.index[-1]} (Avg AUC PR: {best_act_df.values[-1]:.4f})\n\n")
         
         # Top 10 table
         f.write("## Top 10 Experiments\n\n")
