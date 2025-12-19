@@ -1,8 +1,3 @@
-"""
-Hyperparameter Search for Phase 3
-Performs random search over hyperparameter space and logs all experiments.
-"""
-
 import subprocess
 import json
 import random
@@ -27,10 +22,9 @@ SEARCH_SPACE = {
     'dropout_rate': [0.1, 0.2, 0.3, 0.4, 0.5],
     'batch_size': [16, 32, 64, 128],
     'activation': ['relu', 'elu', 'selu', 'tanh'],
-    'epochs': [50, 75, 100]  # Variable epochs for different experiments
+    'epochs': [50, 75, 100] 
 }
 
-# Fixed parameters (not searched)
 FIXED_PARAMS = {
     'data': 'src/data_sources\\liquid_biopsy_data.csv',
     'use_validation': 'separate',
@@ -43,9 +37,7 @@ FIXED_PARAMS = {
     'xai': False
 }
 
-
 def generate_random_config(experiment_id):
-    """Generate a random hyperparameter configuration."""
     config = {
         'experiment_id': experiment_id,
         'timestamp': datetime.now().strftime('%Y%m%d_%H%M%S'),
@@ -60,7 +52,6 @@ def generate_random_config(experiment_id):
 
 
 def run_experiment(config, experiment_num, total_experiments):
-    """Run a single experiment with given hyperparameters."""
     print(f"\n{'='*80}")
     print(f"EXPERIMENT {experiment_num}/{total_experiments}")
     print(f"{'='*80}")
@@ -72,8 +63,6 @@ def run_experiment(config, experiment_num, total_experiments):
     print(f"  - Activation: {config['activation']}")
     print(f"  - Epochs: {config['epochs']}")
     print(f"{'='*80}\n")
-
-    # Build model_params dict
     model_params = {
         'hidden_layers': config['hidden_layers'],
         'learning_rate': config['learning_rate'],
@@ -83,9 +72,8 @@ def run_experiment(config, experiment_num, total_experiments):
         'epochs': config['epochs']
     }
 
-    # Build command
     cmd = [
-        sys.executable,  # Use current Python interpreter
+        sys.executable, 
         'main.py',
         '--data', '../' + FIXED_PARAMS['data'],
         '--use_validation', FIXED_PARAMS['use_validation'],
@@ -96,19 +84,14 @@ def run_experiment(config, experiment_num, total_experiments):
     ]
 
     try:
-        # Run experiment
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            cwd=Path.cwd() / 'src',  # Run from src/ directory so imports work
-            timeout=1800  # 30 min timeout per experiment
+            cwd=Path.cwd() / 'src', 
+            timeout=1800  
         )
-
-        # Parse output for metrics
         metrics = parse_metrics_from_output(result.stdout)
-        
-        # Add config to metrics
         metrics.update({
             'experiment_id': config['experiment_id'],
             'timestamp': config['timestamp'],
@@ -121,7 +104,6 @@ def run_experiment(config, experiment_num, total_experiments):
             'status': 'success' if result.returncode == 0 else 'failed',
             'error': result.stderr if result.returncode != 0 else ''
         })
-
         return metrics
 
     except subprocess.TimeoutExpired:
@@ -155,9 +137,7 @@ def run_experiment(config, experiment_num, total_experiments):
 
 
 def parse_metrics_from_output(output):
-    """Extract metrics from main.py JSON output."""
     try:
-        # Find JSON in output (last JSON block)
         lines = output.strip().split('\n')
         json_started = False
         json_lines = []
@@ -176,8 +156,6 @@ def parse_metrics_from_output(output):
             result = json.loads(json_str)
             
             metrics = result.get('metrics', {})
-            
-            # Extract confusion matrix and parse it
             cm = metrics.get('Confusion matrix', None)
             tn, fp, fn, tp = None, None, None, None
             if cm is not None and len(cm) == 2 and len(cm[0]) == 2:
@@ -214,12 +192,9 @@ def parse_metrics_from_output(output):
 
 
 def save_results(results, output_file):
-    """Save experiment results to CSV."""
     if not results:
         print("No results to save!")
         return
-
-    # Define CSV columns
     fieldnames = [
         'experiment_id', 'timestamp', 'status',
         'hidden_layers', 'learning_rate', 'dropout_rate', 
@@ -230,18 +205,14 @@ def save_results(results, output_file):
     ]
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    
     with open(output_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
-
     print(f"\nResults saved to: {output_file}")
 
 
 def main():
-    """Main hyperparameter search routine."""
-    # Number of experiments
     n_experiments = 40
     
     print(f"\n{'='*80}")
@@ -258,35 +229,26 @@ def main():
     print(f"Estimated time: {n_experiments * 10} - {n_experiments * 15} minutes")
     print(f"{'='*80}\n")
 
-    # Generate configurations
     configs = [generate_random_config(i+1) for i in range(n_experiments)]
-    
-    # Run experiments
     results = []
     start_time = datetime.now()
     
     for i, config in enumerate(configs, 1):
         experiment_start = datetime.now()
-        
         result = run_experiment(config, i, n_experiments)
         results.append(result)
-        
         experiment_end = datetime.now()
         experiment_duration = (experiment_end - experiment_start).total_seconds()
         
-        # Print progress
         print(f"\nExperiment {i}/{n_experiments} completed in {experiment_duration:.1f}s")
         if result.get('accuracy'):
             print(f"   Metrics: Acc={result['accuracy']:.4f}, F1={result['f1']:.4f}, AUC={result['auc_roc']:.4f}")
-        
-        # Save intermediate results
         experiments_dir = Path('experiments')
         save_results(results, experiments_dir / 'experiments_log.csv')
     
     end_time = datetime.now()
     total_duration = (end_time - start_time).total_seconds()
-    
-    # Final summary
+
     print(f"\n{'='*80}")
     print(f"HYPERPARAMETER SEARCH COMPLETED!")
     print(f"{'='*80}")
@@ -294,7 +256,6 @@ def main():
     print(f"Successful experiments: {sum(1 for r in results if r['status'] == 'success')}/{n_experiments}")
     print(f"Failed experiments: {sum(1 for r in results if r['status'] != 'success')}/{n_experiments}")
     
-    # Find best experiment (by AUC PR - optimal for imbalanced data)
     successful_results = [r for r in results if r.get('auc_pr') is not None]
     if successful_results:
         best = max(successful_results, key=lambda x: x.get('auc_pr', 0))
@@ -307,7 +268,6 @@ def main():
         print(f"   Config: layers={best['hidden_layers']}, lr={best['learning_rate']}, "
               f"dropout={best['dropout_rate']}, batch={best['batch_size']}, act={best['activation']}")
         
-        # Save best config
         best_config_path = Path('experiments') / 'best_run_info.json'
         with open(best_config_path, 'w', encoding='utf-8') as f:
             json.dump(best, f, indent=2)
@@ -316,9 +276,9 @@ def main():
     
     print(f"\n{'='*80}\n")
     print("Next steps:")
-    print("1. Run: python src/analyze_experiments.py")
-    print("2. View results in experiments/plots/")
-    print("3. Use TensorBoard: tensorboard --logdir runs")
+    print("1.Run: python src/analyze_experiments.py")
+    print("2.View results in experiments/plots/")
+    print("3.Use TensorBoard: tensorboard --logdir runs")
     print(f"{'='*80}\n")
 
 

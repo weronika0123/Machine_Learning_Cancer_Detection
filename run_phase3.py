@@ -1,8 +1,3 @@
-"""
-Phase 3 Master Script
-Orchestrates all Phase 3 tasks: hyperparameter search, analysis, and reporting.
-"""
-
 import subprocess
 import sys
 from pathlib import Path

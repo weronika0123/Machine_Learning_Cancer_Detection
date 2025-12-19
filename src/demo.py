@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import sys
-import ast
 
 # Suppress TensorFlow warnings
 import os
@@ -24,12 +23,42 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+def find_project_root():
+    """
+    Find the project root directory automatically.
+    Works whether you run from project root or src/ directory.
+    """
+    current = Path(__file__).resolve().parent
+    
+    # If we're in src/ directory, go up one level
+    if current.name == 'src':
+        project_root = current.parent
+    else:
+        project_root = current
+    
+    # Verify we found the right directory by checking for experiments/
+    if not (project_root / 'experiments').exists():
+        # Try going up one more level
+        project_root = project_root.parent
+        if not (project_root / 'experiments').exists():
+            print("Warning: Could not auto-detect project root.")
+            print(f"Current directory: {current}")
+            print(f"Using: {project_root}")
+    
+    return project_root
+
+
+# Get project root once at module level
+PROJECT_ROOT = find_project_root()
+
+
 def load_best_model_info():
     """Load information about the best model from experiments."""
-    best_info_path = Path('experiments') / 'best_run_info.json'
+    best_info_path = PROJECT_ROOT / 'experiments' / 'best_run_info.json'
     
     if not best_info_path.exists():
         print(f"Error: {best_info_path} not found!")
+        print(f"Searched in: {best_info_path.absolute()}")
         print("Please run hyperparameter_search.py first.")
         sys.exit(1)
     
@@ -61,28 +90,43 @@ def load_best_model_info():
 
 def find_model_file(best_info):
     """Find the model file corresponding to the best experiment."""
-    # Search in output directories
-    output_dir = Path('output')
+    # Search in src/output directories (FIXED PATH!)
+    output_dir = PROJECT_ROOT / 'src' / 'output'
+    
+    if not output_dir.exists():
+        print(f"Error: Output directory not found: {output_dir}")
+        print(f"Project root detected as: {PROJECT_ROOT}")
+        sys.exit(1)
     
     # Look for directories matching the timestamp
     timestamp = best_info['timestamp']
     
     print(f"Searching for model file with timestamp: {timestamp}")
+    print(f"Looking in: {output_dir}")
     
     # Search all subdirectories
     model_files = list(output_dir.rglob(f'{timestamp}/model_best.keras'))
     
     if not model_files:
+        print(f"⚠️  Exact timestamp not found, searching for all models...")
         # Try alternative search - find most recent model
         all_models = list(output_dir.rglob('model_best.keras'))
         if all_models:
             # Sort by modification time, get most recent
             model_files = [max(all_models, key=lambda p: p.stat().st_mtime)]
-            print(f"⚠️  Exact timestamp not found, using most recent model")
+            print(f"⚠️  Using most recent model")
     
     if not model_files:
         print(f"Error: Could not find model file!")
-        print(f"Expected path pattern: output/.../{{timestamp}}/model_best.keras")
+        print(f"Searched in: {output_dir}")
+        print(f"Expected pattern: .../{{timestamp}}/model_best.keras")
+        print(f"\nAvailable subdirectories in output/:")
+        try:
+            subdirs = [d for d in output_dir.iterdir() if d.is_dir()]
+            for subdir in subdirs[:10]:  # Show first 10
+                print(f"  - {subdir.name}")
+        except:
+            print("  (Could not list directories)")
         sys.exit(1)
     
     model_path = model_files[0]
@@ -93,10 +137,12 @@ def find_model_file(best_info):
 
 def load_data():
     """Load and prepare the dataset."""
-    data_path = Path('src/data_sources') / 'liquid_biopsy_data.csv'
+    data_path = PROJECT_ROOT / 'src' / 'data_sources' / 'liquid_biopsy_data.csv'
     
     if not data_path.exists():
         print(f"Error: {data_path} not found!")
+        print(f"Searched in: {data_path.absolute()}")
+        print(f"Project root: {PROJECT_ROOT}")
         sys.exit(1)
     
     df = pd.read_csv(data_path, low_memory=False)
@@ -155,9 +201,9 @@ def predict_sample(model, X, y, sample_idx, feature_names):
     print(f"Confidence: {max(prediction_prob, 1-prediction_prob):.4f}")
     
     if prediction_class == true_label:
-        print("Correct prediction!")
+        print("✅ Correct prediction!")
     else:
-        print("Incorrect prediction!")
+        print("❌ Incorrect prediction!")
     
     # Show top features with highest values
     print(f"\nTop 10 Feature Values for this sample:")
@@ -262,6 +308,12 @@ def main():
     
     args = parser.parse_args()
     
+    print(f"\n{'='*80}")
+    print(f"CANCER DETECTION DEMO - Phase 3")
+    print(f"{'='*80}")
+    print(f"Project root: {PROJECT_ROOT}")
+    print(f"{'='*80}\n")
+    
     # Load best model info
     best_info = load_best_model_info()
     
@@ -269,7 +321,7 @@ def main():
     model_path = find_model_file(best_info)
     print(f"Loading model from {model_path}...")
     model = tf.keras.models.load_model(model_path)
-    print("Model loaded successfully!\n")
+    print("✅ Model loaded successfully!\n")
     
     # Load data
     X_train, X_val, X_test, y_train, y_val, y_test, feature_names = load_data()
@@ -290,10 +342,12 @@ def main():
         for i in range(min(5, len(X_test))):
             predict_sample(model, X_test, y_test, i, feature_names)
         
-        print("\nUsage examples:")
+        print("\n" + "="*80)
+        print("Usage examples:")
         print("  python src/demo.py --sample 10        # Predict sample #10")
         print("  python src/demo.py --test_set         # Evaluate full test set")
         print("  python src/demo.py --interactive      # Interactive mode")
+        print("="*80 + "\n")
 
 
 if __name__ == '__main__':
